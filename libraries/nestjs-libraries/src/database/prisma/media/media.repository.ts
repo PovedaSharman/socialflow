@@ -1,12 +1,18 @@
 import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { SaveMediaInformationDto } from '@gitroom/nestjs-libraries/dtos/media/save.media.information.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class MediaRepository {
   constructor(private _media: PrismaRepository<'media'>) {}
 
-  saveFile(org: string, fileName: string, filePath: string, originalName?: string) {
+  saveFile(
+    org: string,
+    fileName: string,
+    filePath: string,
+    originalName?: string
+  ) {
     return this._media.model.media.create({
       data: {
         organization: {
@@ -83,7 +89,7 @@ export class MediaRepository {
           },
         }
       : {};
-    const query = {
+    const query: { where: Prisma.MediaWhereInput } = {
       where: {
         organization: {
           id: org,

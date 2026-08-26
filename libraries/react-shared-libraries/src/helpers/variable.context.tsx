@@ -2,6 +2,13 @@
 
 import { createContext, FC, ReactNode, useContext, useEffect } from 'react';
 interface VariableContextInterface {
+  brandName: string;
+  brandShortName: string;
+  brandPrimary: string;
+  supportUrl: string;
+  sourceUrl: string;
+  termsUrl: string;
+  privacyUrl: string;
   stripeClient: string;
   billingEnabled: boolean;
   isChatBase: boolean;
@@ -34,6 +41,13 @@ interface VariableContextInterface {
   googleAdsTrialTracking?: string;
 }
 const VariableContext = createContext({
+  brandName: 'SocialFlow',
+  brandShortName: 'SocialFlow',
+  brandPrimary: '#4F46E5',
+  supportUrl: '/help',
+  sourceUrl: '',
+  termsUrl: '/legal/terms',
+  privacyUrl: '/legal/privacy',
   stripeClient: '',
   billingEnabled: false,
   isGeneral: true,

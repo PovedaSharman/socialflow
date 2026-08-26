@@ -24,6 +24,7 @@ import {
 import { HtmlComponent } from '@gitroom/frontend/components/layout/html.component';
 import Script from 'next/script';
 import { ChangeDirClient } from '@gitroom/frontend/components/new-layout/change.dir.client';
+import { brandConfig } from '@gitroom/helpers/utils/brand';
 
 const jakartaSans = Plus_Jakarta_Sans({
   weight: ['600', '500'],
@@ -32,6 +33,7 @@ const jakartaSans = Plus_Jakarta_Sans({
 });
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
+  const brand = brandConfig();
   const cookieStore = await cookies();
   const language = cookieStore.get(cookieName)?.value || fallbackLng;
   const Plausible = !!process.env.STRIPE_PUBLISHABLE_KEY
@@ -55,6 +57,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         className={clsx(jakartaSans.className, 'dark text-primary !bg-primary')}
       >
         <VariableContextComponent
+          brandName={brand.name}
+          brandShortName={brand.shortName}
+          brandPrimary={brand.primary}
+          supportUrl={brand.supportUrl}
+          sourceUrl={brand.sourceUrl}
+          termsUrl={brand.termsUrl}
+          privacyUrl={brand.privacyUrl}
           storageProvider={
             process.env.STORAGE_PROVIDER! as 'local' | 'cloudflare'
           }
@@ -101,9 +110,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             <DubAnalytics />
             <FacebookComponent />
             <GoogleTagManagerComponent gtmId={process.env.NEXT_PUBLIC_GTM_ID} />
-            <Plausible
-              domain={!!process.env.IS_GENERAL ? 'postiz.com' : 'gitroom.com'}
-            >
+            <Plausible domain={process.env.NEXT_PUBLIC_ANALYTICS_DOMAIN || ''}>
               <PHProvider
                 phkey={process.env.NEXT_PUBLIC_POSTHOG_KEY}
                 host={process.env.NEXT_PUBLIC_POSTHOG_HOST}

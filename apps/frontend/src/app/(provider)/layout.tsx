@@ -10,6 +10,7 @@ import { Plus_Jakarta_Sans } from 'next/font/google';
 import clsx from 'clsx';
 import { VariableContextComponent } from '@gitroom/react/helpers/variable.context';
 import UtmSaver from '@gitroom/helpers/utils/utm.saver';
+import { brandConfig } from '@gitroom/helpers/utils/brand';
 
 const jakartaSans = Plus_Jakarta_Sans({
   weight: ['600', '500'],
@@ -18,6 +19,7 @@ const jakartaSans = Plus_Jakarta_Sans({
 });
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
+  const brand = brandConfig();
   return (
     <html>
       <head>
@@ -27,6 +29,13 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         className={clsx(jakartaSans.className, 'dark text-primary !bg-primary')}
       >
         <VariableContextComponent
+          brandName={brand.name}
+          brandShortName={brand.shortName}
+          brandPrimary={brand.primary}
+          supportUrl={brand.supportUrl}
+          sourceUrl={brand.sourceUrl}
+          termsUrl={brand.termsUrl}
+          privacyUrl={brand.privacyUrl}
           language="en"
           storageProvider={
             process.env.STORAGE_PROVIDER! as 'local' | 'cloudflare'
