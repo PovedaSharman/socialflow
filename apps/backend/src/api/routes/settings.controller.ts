@@ -47,6 +47,21 @@ export class SettingsController {
     return this._organizationService.inviteTeamMember(org, user, body);
   }
 
+  @Get('/team/invitations')
+  @CheckPolicies([AuthorizationActions.Create, Sections.ADMIN])
+  listTeamInvitations(@GetOrgFromRequest() org: Organization) {
+    return this._organizationService.listTeamInvitations(org.id);
+  }
+
+  @Delete('/team/invitations/:id')
+  @CheckPolicies([AuthorizationActions.Create, Sections.ADMIN])
+  revokeTeamInvitation(
+    @GetOrgFromRequest() org: Organization,
+    @Param('id') id: string
+  ) {
+    return this._organizationService.revokeTeamInvitation(org.id, id);
+  }
+
   @Post('/team/add')
   async addTeamMember(
     @GetUserFromRequest() user: User,

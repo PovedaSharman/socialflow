@@ -6,7 +6,6 @@ import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/us
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { AuthService as AuthChecker } from '@gitroom/helpers/auth/auth.service';
 import { AuthProviderManager } from '@gitroom/backend/services/auth/providers/providers.manager';
-import dayjs from 'dayjs';
 import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/notifications/notification.service';
 import { ForgotReturnPasswordDto } from '@gitroom/nestjs-libraries/dtos/auth/forgot-return.password.dto';
 import { EmailService } from '@gitroom/nestjs-libraries/services/email.service';
@@ -37,7 +36,7 @@ export class AuthService {
     body: CreateOrgUserDto | LoginUserDto,
     ip: string,
     userAgent: string,
-    addToOrg?: boolean | { orgId: string; role: 'USER' | 'ADMIN'; id: string }
+    addToOrg?: false | { token: string }
   ) {
     if (provider === Provider.LOCAL) {
       if (process.env.DISALLOW_PLUS && body.email.includes('+')) {
@@ -63,12 +62,10 @@ export class AuthService {
         );
 
         const addedOrg =
-          addToOrg && typeof addToOrg !== 'boolean'
-            ? await this._organizationService.addUserToOrg(
-                create.users[0].user.id,
-                addToOrg.id,
-                addToOrg.orgId,
-                addToOrg.role
+          addToOrg
+            ? await this._organizationService.acceptTeamInvitation(
+                addToOrg.token,
+                create.users[0].user
               )
             : false;
 
@@ -90,7 +87,14 @@ export class AuthService {
         throw new Error('User is not activated');
       }
 
-      return { addedOrg: false, jwt: await this.jwt(user) };
+      const addedOrg = addToOrg
+        ? await this._organizationService.acceptTeamInvitation(
+            addToOrg.token,
+            user
+          )
+        : false;
+
+      return { addedOrg, jwt: await this.jwt(user) };
     }
 
     const user = await this.loginOrRegisterProvider(
@@ -101,35 +105,26 @@ export class AuthService {
     );
 
     const addedOrg =
-      addToOrg && typeof addToOrg !== 'boolean'
-        ? await this._organizationService.addUserToOrg(
-            user.id,
-            addToOrg.id,
-            addToOrg.orgId,
-            addToOrg.role
+      addToOrg
+        ? await this._organizationService.acceptTeamInvitation(
+            addToOrg.token,
+            user
           )
         : false;
     return { addedOrg, jwt: await this.jwt(user) };
   }
 
-  public getOrgFromCookie(cookie?: string) {
+  public async getOrgFromCookie(cookie?: string) {
     if (!cookie) {
       return false;
     }
 
     try {
-      const getOrg: any = AuthChecker.verifyJWT(cookie);
-      if (dayjs(getOrg.timeLimit).isBefore(dayjs())) {
-        return false;
-      }
-
-      return getOrg as {
-        email: string;
-        role: 'USER' | 'ADMIN';
-        orgId: string;
-        id: string;
-      };
-    } catch (err) {
+      const invitation = await this._organizationService.resolveTeamInvitation(
+        cookie
+      );
+      return invitation ? { token: cookie } : false;
+    } catch {
       return false;
     }
   }

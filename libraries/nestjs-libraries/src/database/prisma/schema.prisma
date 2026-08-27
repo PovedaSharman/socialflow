@@ -43,6 +43,7 @@ model Organization {
   webhooks            Webhooks[]
   oauthApp            OAuthApp[]
   oauthAuthorizations OAuthAuthorization[]
+  teamInvitations     TeamInvitation[]
 
   @@index([apiKey])
   @@index([streakSince])
@@ -113,6 +114,8 @@ model User {
   sendFailureEmails     Boolean              @default(true)
   sendStreakEmails      Boolean              @default(true)
   oauthAuthorizations   OAuthAuthorization[]
+  sentTeamInvitations   TeamInvitation[]      @relation("teamInvitationInviter")
+  acceptedInvitations   TeamInvitation[]      @relation("teamInvitationAcceptor")
 
   @@unique([email, providerName])
   @@index([lastReadNotifications])
@@ -146,6 +149,29 @@ model UserOrganization {
 
   @@unique([userId, organizationId])
   @@index([disabled])
+}
+
+model TeamInvitation {
+  id               String       @id @default(uuid())
+  organizationId   String
+  email            String
+  role             Role
+  tokenHash        String       @unique
+  invitedByUserId  String?
+  acceptedByUserId String?
+  expiresAt        DateTime
+  acceptedAt       DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy        User?        @relation("teamInvitationInviter", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  acceptedBy       User?        @relation("teamInvitationAcceptor", fields: [acceptedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, email])
+  @@index([expiresAt])
+  @@index([acceptedAt])
+  @@index([revokedAt])
 }
 
 model GitHub {

@@ -15,7 +15,6 @@ import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/s
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
 import { StripeService } from '@gitroom/nestjs-libraries/services/stripe.service';
 import { Response, Request } from 'express';
-import { AuthService } from '@gitroom/backend/services/auth/auth.service';
 import { AuthService as AuthChecker } from '@gitroom/helpers/auth/auth.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
@@ -46,7 +45,6 @@ export class UsersController {
   constructor(
     private _subscriptionService: SubscriptionService,
     private _stripeService: StripeService,
-    private _authService: AuthService,
     private _orgService: OrganizationService,
     private _userService: UsersService,
     private _trackService: TrackService
@@ -283,21 +281,10 @@ export class UsersController {
     @Body('org') org: string,
     @Res({ passthrough: true }) response: Response
   ) {
-    const getOrgFromCookie = this._authService.getOrgFromCookie(org);
-
-    if (!getOrgFromCookie) {
-      return response.status(200).json({ id: null });
-    }
-
-    const addedOrg = await this._orgService.addUserToOrg(
-      user.id,
-      getOrgFromCookie.id,
-      getOrgFromCookie.orgId,
-      getOrgFromCookie.role
-    );
+    const addedOrg = await this._orgService.acceptTeamInvitation(org, user);
 
     response.status(200).json({
-      id: typeof addedOrg !== 'boolean' ? addedOrg.organizationId : null,
+      id: addedOrg?.organizationId ?? null,
     });
   }
 

@@ -49,7 +49,7 @@ export class AuthController {
     @UserAgent() userAgent: string
   ) {
     try {
-      const getOrgFromCookie = this._authService.getOrgFromCookie(
+      const getOrgFromCookie = await this._authService.getOrgFromCookie(
         req?.cookies?.org
       );
 
@@ -124,7 +124,7 @@ export class AuthController {
     @UserAgent() userAgent: string
   ) {
     try {
-      const getOrgFromCookie = this._authService.getOrgFromCookie(
+      const getOrgFromCookie = await this._authService.getOrgFromCookie(
         req?.cookies?.org
       );
 

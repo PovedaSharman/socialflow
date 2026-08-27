@@ -1,4 +1,7 @@
-import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
+import {
+  PrismaRepository,
+  PrismaTransaction,
+} from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { Role, ShortLinkPreference, SubscriptionTier } from '@prisma/client';
 import { Injectable } from '@nestjs/common';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
@@ -10,7 +13,9 @@ export class OrganizationRepository {
   constructor(
     private _organization: PrismaRepository<'organization'>,
     private _userOrg: PrismaRepository<'userOrganization'>,
-    private _user: PrismaRepository<'user'>
+    private _user: PrismaRepository<'user'>,
+    private _teamInvitation: PrismaRepository<'teamInvitation'>,
+    private _transaction: PrismaTransaction
   ) {}
 
   createMaxUser(id: string, name: string, saasName: string, email: string) {
@@ -211,6 +216,132 @@ export class OrganizationRepository {
       where: {
         email,
       },
+    });
+  }
+
+  async createTeamInvitation(input: {
+    organizationId: string;
+    email: string;
+    role: Role;
+    tokenHash: string;
+    invitedByUserId: string;
+    expiresAt: Date;
+  }) {
+    return this._transaction.model.$transaction(async (transaction) => {
+      await transaction.teamInvitation.updateMany({
+        where: {
+          organizationId: input.organizationId,
+          email: input.email,
+          acceptedAt: null,
+          revokedAt: null,
+        },
+        data: { revokedAt: new Date() },
+      });
+
+      return transaction.teamInvitation.create({ data: input });
+    });
+  }
+
+  findValidTeamInvitation(tokenHash: string, now = new Date()) {
+    return this._teamInvitation.model.teamInvitation.findFirst({
+      where: {
+        tokenHash,
+        acceptedAt: null,
+        revokedAt: null,
+        expiresAt: { gt: now },
+      },
+      select: {
+        id: true,
+        organizationId: true,
+        email: true,
+        role: true,
+        expiresAt: true,
+      },
+    });
+  }
+
+  listTeamInvitations(organizationId: string) {
+    return this._teamInvitation.model.teamInvitation.findMany({
+      where: { organizationId },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        expiresAt: true,
+        acceptedAt: true,
+        revokedAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  revokeTeamInvitation(organizationId: string, invitationId: string) {
+    return this._teamInvitation.model.teamInvitation.updateMany({
+      where: {
+        id: invitationId,
+        organizationId,
+        acceptedAt: null,
+        revokedAt: null,
+      },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  acceptTeamInvitation(
+    tokenHash: string,
+    user: { id: string; email: string },
+    now = new Date()
+  ) {
+    return this._transaction.model.$transaction(async (transaction) => {
+      const invitation = await transaction.teamInvitation.findFirst({
+        where: {
+          tokenHash,
+          email: user.email.toLowerCase(),
+          acceptedAt: null,
+          revokedAt: null,
+          expiresAt: { gt: now },
+        },
+      });
+
+      if (!invitation) {
+        return null;
+      }
+
+      const claimed = await transaction.teamInvitation.updateMany({
+        where: {
+          id: invitation.id,
+          acceptedAt: null,
+          revokedAt: null,
+          expiresAt: { gt: now },
+        },
+        data: {
+          acceptedAt: now,
+          acceptedByUserId: user.id,
+        },
+      });
+
+      if (claimed.count !== 1) {
+        return null;
+      }
+
+      return transaction.userOrganization.upsert({
+        where: {
+          userId_organizationId: {
+            userId: user.id,
+            organizationId: invitation.organizationId,
+          },
+        },
+        create: {
+          userId: user.id,
+          organizationId: invitation.organizationId,
+          role: invitation.role,
+        },
+        update: {
+          disabled: false,
+          role: invitation.role,
+        },
+      });
     });
   }
 

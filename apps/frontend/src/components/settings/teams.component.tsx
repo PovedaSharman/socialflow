@@ -2,7 +2,7 @@
 
 import { Button } from '@gitroom/react/form/button';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
-import useSWR from 'swr';
+import useSWR, { mutate as mutateSWR } from 'swr';
 import React, { useCallback, useMemo } from 'react';
 import { useUser } from '@gitroom/frontend/components/layout/user.context';
 import { capitalize } from 'lodash';
@@ -57,11 +57,13 @@ export const AddMember = () => {
         })
       ).json();
       if (values.sendEmail) {
+        await mutateSWR('/api/team-invitations');
         modals.closeAll();
         toast.show(t('invitation_link_sent', 'Invitation link sent'));
         return;
       }
       copy(url);
+      await mutateSWR('/api/team-invitations');
       modals.closeAll();
       toast.show(t('link_copied_to_clipboard', 'Link copied to clipboard'));
     },
@@ -74,13 +76,11 @@ export const AddMember = () => {
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(submit)}>
         <div className="relative flex gap-[10px] flex-col flex-1 p-[16px] pt-0">
-          {sendEmail && (
-            <Input
-              label="Email"
-              placeholder={t('enter_email', 'Enter email')}
-              name="email"
-            />
-          )}
+          <Input
+            label="Email"
+            placeholder={t('enter_email', 'Enter email')}
+            name="email"
+          />
           <Select label="Role" name="role">
             <option value="">{t('select_role', 'Select Role')}</option>
             {roles.map((role) => (
@@ -110,7 +110,8 @@ export const TeamsComponent = () => {
   const user = useUser();
   const modals = useModals();
   const t = useT();
-  const myLevel = user?.role === 'USER' ? 0 : user?.role === 'ADMIN' ? 1 : 2;
+  const myLevel =
+    user?.role === 'SUPERADMIN' ? 2 : user?.role === 'ADMIN' ? 1 : 0;
   const getLevel = useCallback(
     (role: 'USER' | 'ADMIN' | 'SUPERADMIN') =>
       role === 'USER' ? 0 : role === 'ADMIN' ? 1 : 2,
@@ -124,6 +125,17 @@ export const TeamsComponent = () => {
         email: string;
         id: string;
       };
+    }>;
+  }, []);
+  const loadInvitations = useCallback(async () => {
+    return (await (await fetch('/settings/team/invitations')).json()) as Array<{
+      id: string;
+      email: string;
+      role: 'ADMIN' | 'USER';
+      expiresAt: string;
+      acceptedAt: string | null;
+      revokedAt: string | null;
+      createdAt: string;
     }>;
   }, []);
   const addMember = useCallback(() => {
@@ -141,6 +153,14 @@ export const TeamsComponent = () => {
     revalidateOnReconnect: false,
     revalidateIfStale: false,
   });
+  const { data: invitations, mutate: mutateInvitations } = useSWR(
+    myLevel > 0 ? '/api/team-invitations' : null,
+    loadInvitations,
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    }
+  );
   const remove = useCallback(
     (toRemove: {
         user: {
@@ -161,6 +181,32 @@ export const TeamsComponent = () => {
         await mutate();
       },
     [t]
+  );
+  const revokeInvitation = useCallback(
+    (invitation: { id: string; email: string }) => async () => {
+      if (
+        !(await deleteDialog(
+          t(
+            'are_you_sure_revoke_invitation',
+            `Revoke the invitation for ${invitation.email}?`
+          )
+        ))
+      ) {
+        return;
+      }
+      await fetch(`/settings/team/invitations/${invitation.id}`, {
+        method: 'DELETE',
+      });
+      await mutateInvitations();
+    },
+    [t, mutateInvitations]
+  );
+
+  const activeInvitations = (invitations || []).filter(
+    (invitation) =>
+      !invitation.acceptedAt &&
+      !invitation.revokedAt &&
+      new Date(invitation.expiresAt).getTime() > Date.now()
   );
 
   return (
@@ -223,6 +269,40 @@ export const TeamsComponent = () => {
             {t('add_another_member', 'Add another member')}
           </Button>
         </div>
+        {myLevel > 0 && activeInvitations.length > 0 ? (
+          <section aria-labelledby="pending-invitations-heading">
+            <h4
+              id="pending-invitations-heading"
+              className="mb-[12px] font-medium"
+            >
+              {t('pending_invitations', 'Pending invitations')}
+            </h4>
+            <div className="flex flex-col gap-[12px]">
+              {activeInvitations.map((invitation) => (
+                <div
+                  key={invitation.id}
+                  className="flex flex-col gap-[8px] sm:flex-row sm:items-center"
+                >
+                  <div className="min-w-0 flex-1 break-all">
+                    {invitation.email}
+                  </div>
+                  <div className="text-customColor18 sm:w-[100px]">
+                    {invitation.role === 'ADMIN'
+                      ? t('admin', 'Admin')
+                      : t('user', 'User')}
+                  </div>
+                  <Button
+                    className="!h-[32px] sm:w-auto"
+                    onClick={revokeInvitation(invitation)}
+                    secondary={true}
+                  >
+                    {t('revoke', 'Revoke')}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
     </div>
   );
