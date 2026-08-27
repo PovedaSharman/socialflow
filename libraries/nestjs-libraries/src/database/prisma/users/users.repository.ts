@@ -178,6 +178,23 @@ export class UsersRepository {
     });
   }
 
+  updatePasswordIfCurrent(
+    id: string,
+    currentPassword: string,
+    password: string
+  ) {
+    return this._user.model.user.updateMany({
+      where: {
+        id,
+        providerName: Provider.LOCAL,
+        password: currentPassword,
+      },
+      data: {
+        password: AuthService.hashPassword(password),
+      },
+    });
+  }
+
   changeAudienceSize(userId: string, audience: number) {
     return this._user.model.user.update({
       where: {

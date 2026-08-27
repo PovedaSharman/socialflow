@@ -24,7 +24,6 @@ type Inputs = {
 export function Login() {
   const t = useT();
   const [loading, setLoading] = useState(false);
-  const [notActivated, setNotActivated] = useState(false);
   const { isGeneral, neynarClientId, billingEnabled, genericOauth } =
     useVariables();
   const resolver = useMemo(() => {
@@ -40,7 +39,6 @@ export function Login() {
   const fetchData = useFetch();
   const onSubmit: SubmitHandler<Inputs> = async (data) => {
     setLoading(true);
-    setNotActivated(false);
     const login = await fetchData('/auth/login', {
       method: 'POST',
       body: JSON.stringify({
@@ -50,13 +48,9 @@ export function Login() {
     });
     if (login.status === 400) {
       const errorMessage = await login.text();
-      if (errorMessage === 'User is not activated') {
-        setNotActivated(true);
-      } else {
-        form.setError('email', {
-          message: errorMessage,
-        });
-      }
+      form.setError('email', {
+        message: errorMessage,
+      });
       setLoading(false);
     }
   };
@@ -110,22 +104,6 @@ export function Login() {
                   placeholder={t('label_password', 'Password')}
                 />
               </div>
-              {notActivated && (
-                <div className="mb-4 rounded-[10px] border border-warning/35 bg-warning/10 p-4">
-                  <p className="mb-2 text-sm text-warning">
-                    {t(
-                      'account_not_activated',
-                      'Your account is not activated yet. Please check your email for the activation link.'
-                    )}
-                  </p>
-                  <Link
-                    href="/auth/activate"
-                    className="text-sm text-warning underline hover:font-bold"
-                  >
-                    {t('resend_activation_email', 'Resend Activation Email')}
-                  </Link>
-                </div>
-              )}
               <div className="text-center mt-6">
                 <div className="w-full flex">
                   <Button
@@ -148,6 +126,17 @@ export function Login() {
                     className="underline hover:font-bold cursor-pointer"
                   >
                     {t('forgot_password', 'Forgot password')}
+                  </Link>
+                </p>
+                <p className="mt-4 text-sm">
+                  <Link
+                    href="/auth/activate"
+                    className="underline hover:font-bold"
+                  >
+                    {t(
+                      'resend_activation_email',
+                      'Resend activation email'
+                    )}
                   </Link>
                 </p>
               </div>

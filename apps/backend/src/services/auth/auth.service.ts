@@ -222,26 +222,52 @@ export class AuthService {
 
     const resetValues = AuthChecker.signJWT({
       id: user.id,
-      expires: dayjs().add(20, 'minutes').format('YYYY-MM-DD HH:mm:ss'),
+      expiresAt: Date.now() + 20 * 60 * 1000,
+      passwordVersion: AuthChecker.fingerprint(user.password || ''),
     });
 
     await this._notificationService.sendEmail(
       user.email,
       'Reset your password',
-      `You have requested to reset your passsord. <br />Click <a href="${process.env.FRONTEND_URL}/auth/forgot/${resetValues}">here</a> to reset your password<br />The link will expire in 20 minutes`
+      `We received a request to reset your password.<br /><a href="${process.env.FRONTEND_URL}/auth/forgot/${resetValues}">Reset your password</a> within 20 minutes. If you did not request this, you can ignore this email.`
     );
   }
 
-  forgotReturn(body: ForgotReturnPasswordDto) {
-    const user = AuthChecker.verifyJWT(body.token) as {
-      id: string;
-      expires: string;
-    };
-    if (dayjs(user.expires).isBefore(dayjs())) {
+  async forgotReturn(body: ForgotReturnPasswordDto) {
+    let reset: { id: string; expiresAt: number; passwordVersion: string };
+    try {
+      reset = AuthChecker.verifyJWT(body.token) as typeof reset;
+    } catch {
       return false;
     }
 
-    return this._userService.updatePassword(user.id, body.password);
+    if (
+      !reset?.id ||
+      !reset.passwordVersion ||
+      !Number.isFinite(reset.expiresAt) ||
+      reset.expiresAt <= Date.now()
+    ) {
+      return false;
+    }
+
+    const user = await this._userService.getUserById(reset.id);
+    if (
+      !user?.password ||
+      user.providerName !== Provider.LOCAL ||
+      !AuthChecker.fingerprintsMatch(
+        reset.passwordVersion,
+        AuthChecker.fingerprint(user.password)
+      )
+    ) {
+      return false;
+    }
+
+    const result = await this._userService.updatePasswordIfCurrent(
+      user.id,
+      user.password,
+      body.password
+    );
+    return result.count === 1;
   }
 
   async activate(code: string, tracking: string) {

@@ -79,6 +79,7 @@ export class OrganizationRepository {
         id,
       },
       select: {
+        disabled: true,
         user: true,
         organization: {
           include: {

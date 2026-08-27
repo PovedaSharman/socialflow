@@ -7,6 +7,7 @@ import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/us
 import { getCookieUrlFromDomain } from '@gitroom/helpers/subdomain/subdomain.management';
 import { HttpForbiddenException } from '@gitroom/nestjs-libraries/services/exception.filter';
 import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
+import { selectActiveOrganization } from '@gitroom/backend/services/auth/organization.selection';
 
 export const removeAuth = (res: Response) => {
   res.cookie('auth', '', {
@@ -62,7 +63,7 @@ export class AuthMiddleware implements NestMiddleware {
           impersonate
         );
 
-        if (loadImpersonate) {
+        if (loadImpersonate && !loadImpersonate.disabled) {
           user = loadImpersonate.user;
           user.isSuperAdmin = true;
           delete user.password;
@@ -85,13 +86,12 @@ export class AuthMiddleware implements NestMiddleware {
       }
 
       delete user.password;
-      const organization = (
-        await this._organizationService.getOrgsByUserId(user.id)
-      ).filter((f) => !f.users[0].disabled);
-      const setOrg =
-        organization.find((org) => org.id === orgHeader) || organization[0];
+      const organization = await this._organizationService.getOrgsByUserId(
+        user.id
+      );
+      const setOrg = selectActiveOrganization(organization, orgHeader);
 
-      if (!organization) {
+      if (!setOrg) {
         throw new HttpForbiddenException();
       }
 

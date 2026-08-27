@@ -35,6 +35,10 @@ import {
   AuthorizationActions,
   Sections,
 } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import {
+  filterActiveOrganizations,
+  selectActiveOrganization,
+} from '@gitroom/backend/services/auth/organization.selection';
 
 @ApiTags('User')
 @Controller('/user')
@@ -299,17 +303,27 @@ export class UsersController {
 
   @Get('/organizations')
   async getOrgs(@GetUserFromRequest() user: User) {
-    return (await this._orgService.getOrgsByUserId(user.id)).filter(
-      (f) => !f.users[0].disabled
+    return filterActiveOrganizations(
+      await this._orgService.getOrgsByUserId(user.id)
     );
   }
 
   @Post('/change-org')
-  changeOrg(
+  async changeOrg(
+    @GetUserFromRequest() user: User,
     @Body('id') id: string,
     @Res({ passthrough: true }) response: Response
   ) {
-    response.cookie('showorg', id, {
+    const organization = selectActiveOrganization(
+      await this._orgService.getOrgsByUserId(user.id),
+      id
+    );
+
+    if (!organization) {
+      throw new HttpForbiddenException();
+    }
+
+    response.cookie('showorg', organization.id, {
       domain: getCookieUrlFromDomain(process.env.FRONTEND_URL!),
       ...(!process.env.NOT_SECURED
         ? {
@@ -322,7 +336,7 @@ export class UsersController {
     });
 
     if (process.env.NOT_SECURED) {
-      response.header('showorg', id);
+      response.header('showorg', organization.id);
     }
 
     response.status(200).send();

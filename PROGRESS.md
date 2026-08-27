@@ -2,7 +2,9 @@
 
 Last updated: 27 August 2026
 
-## Current milestone: 3 — design system
+## Current implementation milestone: 4 — authentication and tenancy
+
+Milestone 3 implementation is checkpointed; its automated WCAG and visual gate remains pending on a suitable, explicitly approved host.
 
 ### Verified
 
@@ -99,3 +101,21 @@ No production-readiness claim is made.
 - After a frontend-only responsive-review attempt exhausted host resources, all application listeners and all local containers were stopped. No runtime, browser automation, build, or full-stack check should be run on this workstation without explicit user approval.
 - Lightweight verification after the milestone 3 changes passed: formatting, lint, frontend type-check, Compose configuration validation, and 5 Jest suites / 10 tests. Runtime WCAG and visual evidence remains unverified and is not claimed.
 - Subsequent lightweight-only accessibility and listener-lifecycle fixes passed `git diff --check` and manual source review only; formatting, type-checking and tests were deliberately not rerun after the user prohibited memory-heavy commands.
+
+### Milestone 4 in progress
+
+- Centralised active-organisation selection. Explicit workspace requests now fail closed when the membership is absent, disabled or malformed instead of silently falling back.
+- `/user/change-org` validates the current user's active membership before writing the organisation cookie; organisation listings use the same active-membership predicate.
+- Disabled memberships can no longer be used through the support impersonation path.
+- Separated administrator role checks from subscription entitlements. Disabling Stripe no longer grants ordinary users administrator-only policies, and role denials return 403 rather than a billing error.
+- Replaced raw unauthenticated registration and login exceptions with stable public messages that do not disclose whether an account exists. Activation recovery remains available as an unconditional sign-in link.
+- Made password-reset tokens atomic and single-use without a schema migration: a signed HMAC fingerprint binds each token to the current password hash, and the update includes that hash in its database predicate.
+- Added pure/unit specifications for active-organisation selection, administrator roles, billing-disabled role enforcement, public auth messages and password-reset fingerprints. They are intentionally unexecuted under the current workstation restriction.
+- Current static verification: `git diff --check`, package JSON parsing and manual source review. No compiler, test runner, app process, container or browser was started.
+
+### Milestone 4 next
+
+- Replace stateless team invitation JWTs with persisted, expiring and revocable invitations.
+- Expand membership roles to owner, admin, approver, editor and viewer while retaining a documented legacy-data migration.
+- Introduce separately keyed authenticated encryption for social OAuth access and refresh tokens, with safe key rotation and no plaintext fallback in production.
+- Build the cross-tenant access matrix and account-lifecycle integration tests for execution on a suitable host.

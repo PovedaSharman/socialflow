@@ -23,6 +23,7 @@ import { RealIP } from 'nestjs-real-ip';
 import { UserAgent } from '@gitroom/nestjs-libraries/user/user.agent';
 import { Provider } from '@prisma/client';
 import * as Sentry from '@sentry/nestjs';
+import { publicAuthError } from '@gitroom/backend/services/auth/public.auth.error';
 
 @ApiTags('Auth')
 @Controller('/auth')
@@ -109,7 +110,8 @@ export class AuthController {
         register: true,
       });
     } catch (e: any) {
-      response.status(400).send(e.message);
+      Sentry.captureException(e);
+      response.status(400).send(publicAuthError('register'));
     }
   }
 
@@ -173,7 +175,8 @@ export class AuthController {
         login: true,
       });
     } catch (e: any) {
-      response.status(400).send(e.message);
+      Sentry.captureException(e);
+      response.status(400).send(publicAuthError('login'));
     }
   }
 

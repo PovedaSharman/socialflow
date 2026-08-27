@@ -25,3 +25,9 @@ export class SubscriptionException extends HttpException {
     super(message, HttpStatus.PAYMENT_REQUIRED);
   }
 }
+
+export class AuthorizationException extends HttpException {
+  constructor(message: { section: Sections; action: AuthorizationActions }) {
+    super(message, HttpStatus.FORBIDDEN);
+  }
+}

@@ -90,6 +90,18 @@ export class UsersService {
     return this._usersRepository.updatePassword(id, password);
   }
 
+  updatePasswordIfCurrent(
+    id: string,
+    currentPassword: string,
+    password: string
+  ) {
+    return this._usersRepository.updatePasswordIfCurrent(
+      id,
+      currentPassword,
+      password
+    );
+  }
+
   getPersonal(userId: string) {
     return this._usersRepository.getPersonal(userId);
   }

@@ -10,7 +10,11 @@ import {
 } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { Organization } from '@prisma/client';
 import { Request } from 'express';
-import { SubscriptionException } from './permission.exception.class';
+import {
+  AuthorizationException,
+  Sections,
+  SubscriptionException,
+} from './permission.exception.class';
 
 @Injectable()
 export class PoliciesGuard implements CanActivate {
@@ -54,6 +58,12 @@ export class PoliciesGuard implements CanActivate {
     );
 
     if (item) {
+      if (item[1] === Sections.ADMIN) {
+        throw new AuthorizationException({
+          section: item[1],
+          action: item[0],
+        });
+      }
       throw new SubscriptionException({
         section: item[1],
         action: item[0],

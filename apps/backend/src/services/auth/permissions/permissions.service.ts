@@ -7,6 +7,10 @@ import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/in
 import dayjs from 'dayjs';
 import { WebhooksService } from '@gitroom/nestjs-libraries/database/prisma/webhooks/webhooks.service';
 import { AuthorizationActions, Sections } from './permission.exception.class';
+import {
+  canManageOrganization,
+  OrganizationRole,
+} from './organization.role';
 
 export type AppAbility = Ability<[AuthorizationActions, Sections]>;
 
@@ -39,7 +43,7 @@ export class PermissionsService {
   async check(
     orgId: string,
     created_at: Date,
-    permission: 'USER' | 'ADMIN' | 'SUPERADMIN',
+    permission: OrganizationRole,
     requestedPermission: Array<[AuthorizationActions, Sections]>,
     refreshChannelId?: string
   ) {
@@ -47,12 +51,22 @@ export class PermissionsService {
       Ability<[AuthorizationActions, Sections]>
     >(Ability as AbilityClass<AppAbility>);
 
-    if (
-      requestedPermission.length === 0 ||
-      !process.env.STRIPE_PUBLISHABLE_KEY
-    ) {
+    if (requestedPermission.length === 0) {
+      return build({
+        detectSubjectType: (item) =>
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          item.constructor,
+      });
+    }
+
+    const billingEnabled = !!process.env.STRIPE_PUBLISHABLE_KEY;
+
+    if (!billingEnabled) {
       for (const [action, section] of requestedPermission) {
-        can(action, section);
+        if (section !== Sections.ADMIN || canManageOrganization(permission)) {
+          can(action, section);
+        }
       }
       return build({
         detectSubjectType: (item) =>
@@ -128,7 +142,7 @@ export class PermissionsService {
 
       if (
         section === Sections.ADMIN &&
-        ['ADMIN', 'SUPERADMIN'].includes(permission)
+        canManageOrganization(permission)
       ) {
         can(action, section);
         continue;

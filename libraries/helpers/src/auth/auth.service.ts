@@ -46,6 +46,25 @@ export class AuthService {
     return verify(token, process.env.JWT_SECRET!);
   }
 
+  static fingerprint(value: string) {
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is required');
+    }
+    return crypto
+      .createHmac('sha256', process.env.JWT_SECRET)
+      .update(value)
+      .digest('base64url');
+  }
+
+  static fingerprintsMatch(left: string, right: string) {
+    const leftBuffer = Buffer.from(left);
+    const rightBuffer = Buffer.from(right);
+    return (
+      leftBuffer.length === rightBuffer.length &&
+      crypto.timingSafeEqual(leftBuffer, rightBuffer)
+    );
+  }
+
   static fixedEncryption(value: string) {
     return encrypt_legacy_using_IV(value);
   }
