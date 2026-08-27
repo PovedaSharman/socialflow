@@ -1,4 +1,4 @@
-import { PermissionsService } from './permissions.service';
+import { PermissionsService, roleCanAccess } from './permissions.service';
 import {
   AuthorizationActions,
   Sections,
@@ -47,5 +47,24 @@ describe('permissions without billing', () => {
     );
 
     expect(ability.can(AuthorizationActions.Create, Sections.ADMIN)).toBe(true);
+  });
+
+  it('keeps viewers read-only and channel administration restricted', () => {
+    expect(
+      roleCanAccess('VIEWER', AuthorizationActions.Read, Sections.POSTS_PER_MONTH)
+    ).toBe(true);
+    expect(
+      roleCanAccess(
+        'VIEWER',
+        AuthorizationActions.Create,
+        Sections.POSTS_PER_MONTH
+      )
+    ).toBe(false);
+    expect(
+      roleCanAccess('EDITOR', AuthorizationActions.Create, Sections.CHANNEL)
+    ).toBe(false);
+    expect(
+      roleCanAccess('ADMIN', AuthorizationActions.Create, Sections.CHANNEL)
+    ).toBe(true);
   });
 });

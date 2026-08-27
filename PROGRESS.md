@@ -113,13 +113,17 @@ No production-readiness claim is made.
 - Replaced stateless team-invitation JWTs with opaque, high-entropy tokens whose hashes are persisted with the intended email, role, inviter, expiry, acceptance and revocation state. Acceptance is transactional, single-use, email-bound and re-enables an existing disabled membership safely.
 - Routed registration, existing-account login, provider authentication and authenticated join flows through the same persisted invitation claim. Invalid, expired, revoked, reused and wrong-email tokens fail closed without exposing invitation contents.
 - Added administrator-scoped invitation listing and revocation, required an email for copy-link invitations, escaped invitation-email content, and exposed pending invitations with revocation controls in team settings.
+- Expanded the membership schema and invitation controls to owner, admin, approver, editor and viewer. New workspace creators are owners; legacy `SUPERADMIN` and `USER` rows continue to authorise as owner and editor respectively during migration.
+- Centralised role normalisation, ranking, team management, editing and approval capabilities. Unknown role values fail closed as viewer; at annotated policy gates, role denials are evaluated before subscription limits and viewer/content or editor/channel denials return 403 rather than billing errors.
+- Updated owner-only subscription ownership checks, team-removal hierarchy, public API-key exposure, navigation and team-management UI for the expanded roles. Public API middleware now supplies the direct synthetic owner role expected by the policy guard.
+- Added a phased PostgreSQL enum/data migration runbook with compatibility deployment, legacy-row verification and rollback-window requirements in `docs/ROLE_MIGRATION.md`.
 - Added pure/unit specifications for active-organisation selection, administrator roles, billing-disabled role enforcement, public auth messages and password-reset fingerprints. They are intentionally unexecuted under the current workstation restriction.
 - Added unit specifications for invitation-token entropy/hashing and fail-closed opaque-token resolution. They are intentionally unexecuted under the current workstation restriction.
 - Current static verification: `git diff --check`, package JSON parsing and manual source review. The invitation schema still requires Prisma generation and reviewed migration validation on a suitable host. No compiler, test runner, app process, container or browser was started.
 
 ### Milestone 4 next
 
-- Generate the Prisma client and validate the invitation schema/migration and account flows on a suitable explicitly approved host.
-- Expand membership roles to owner, admin, approver, editor and viewer while retaining a documented legacy-data migration.
+- Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
+- Apply the role matrix to currently unannotated content mutations and add approval-state persistence before claiming complete approver/editor/viewer enforcement.
 - Introduce separately keyed authenticated encryption for social OAuth access and refresh tokens, with safe key rotation and no plaintext fallback in production.
 - Build the cross-tenant access matrix and account-lifecycle integration tests for execution on a suitable host.

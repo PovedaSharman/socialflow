@@ -8,11 +8,33 @@ import dayjs from 'dayjs';
 import { WebhooksService } from '@gitroom/nestjs-libraries/database/prisma/webhooks/webhooks.service';
 import { AuthorizationActions, Sections } from './permission.exception.class';
 import {
+  canEditContent,
   canManageOrganization,
   OrganizationRole,
 } from './organization.role';
 
 export type AppAbility = Ability<[AuthorizationActions, Sections]>;
+
+export function roleCanAccess(
+  role: OrganizationRole,
+  action: AuthorizationActions,
+  section: Sections
+) {
+  if (section === Sections.ADMIN) {
+    return canManageOrganization(role);
+  }
+  if (action === AuthorizationActions.Read) {
+    return true;
+  }
+  if (
+    section === Sections.CHANNEL ||
+    section === Sections.WEBHOOKS ||
+    section === Sections.TEAM_MEMBERS
+  ) {
+    return canManageOrganization(role);
+  }
+  return canEditContent(role);
+}
 
 @Injectable()
 export class PermissionsService {
@@ -64,7 +86,7 @@ export class PermissionsService {
 
     if (!billingEnabled) {
       for (const [action, section] of requestedPermission) {
-        if (section !== Sections.ADMIN || canManageOrganization(permission)) {
+        if (roleCanAccess(permission, action, section)) {
           can(action, section);
         }
       }
@@ -78,6 +100,9 @@ export class PermissionsService {
 
     const { subscription, options } = await this.getPackageOptions(orgId);
     for (const [action, section] of requestedPermission) {
+      if (!roleCanAccess(permission, action, section)) {
+        continue;
+      }
       // check for the amount of channels
       if (section === Sections.CHANNEL) {
         // Refreshing an existing channel doesn't add a new one, so skip the limit check

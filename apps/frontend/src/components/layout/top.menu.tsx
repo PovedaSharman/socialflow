@@ -188,7 +188,14 @@ export const useMenuItem = () => {
         </svg>
       ),
       path: '#',
-      role: ['ADMIN', 'SUPERADMIN', 'USER'],
+      role: [
+        'OWNER',
+        'SUPERADMIN',
+        'ADMIN',
+        'APPROVER',
+        'EDITOR',
+        'USER',
+      ],
       requireBilling: true,
       onClick: handleAgentMediaClick,
     },
@@ -247,7 +254,15 @@ export const useMenuItem = () => {
         </svg>
       ),
       path: 'https://affiliate.postiz.com',
-      role: ['ADMIN', 'SUPERADMIN', 'USER'],
+      role: [
+        'OWNER',
+        'SUPERADMIN',
+        'ADMIN',
+        'APPROVER',
+        'EDITOR',
+        'VIEWER',
+        'USER',
+      ],
       requireBilling: true,
     },
     {
@@ -270,7 +285,7 @@ export const useMenuItem = () => {
         </svg>
       ),
       path: '/billing',
-      role: ['ADMIN', 'SUPERADMIN'],
+      role: ['OWNER', 'SUPERADMIN', 'ADMIN'],
       requireBilling: true,
     },
     {
@@ -300,7 +315,15 @@ export const useMenuItem = () => {
         </svg>
       ),
       path: '/settings',
-      role: ['ADMIN', 'USER', 'SUPERADMIN'],
+      role: [
+        'OWNER',
+        'SUPERADMIN',
+        'ADMIN',
+        'APPROVER',
+        'EDITOR',
+        'VIEWER',
+        'USER',
+      ],
     },
   ] satisfies MenuItemInterface[] as MenuItemInterface[];
 

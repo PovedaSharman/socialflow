@@ -955,8 +955,12 @@ enum Provider {
 }
 
 enum Role {
+  OWNER
   SUPERADMIN
   ADMIN
+  APPROVER
+  EDITOR
+  VIEWER
   USER
 }
 

@@ -38,6 +38,7 @@ import {
   filterActiveOrganizations,
   selectActiveOrganization,
 } from '@gitroom/backend/services/auth/organization.selection';
+import { canManageOrganization } from '@gitroom/backend/services/auth/permissions/organization.role';
 
 @ApiTags('User')
 @Controller('/user')
@@ -132,13 +133,12 @@ export class UsersController {
         : organization?.isTrailing,
       allowTrial: organization?.allowTrial,
       streakSince: organization?.streakSince || null,
-      publicApi:
+      publicApi: canManageOrganization(
         // @ts-ignore
-        organization?.users[0]?.role === 'SUPERADMIN' ||
-        // @ts-ignore
-        organization?.users[0]?.role === 'ADMIN'
-          ? organization?.apiKey
-          : '',
+        organization?.users[0]?.role
+      )
+        ? organization?.apiKey
+        : '',
     };
   }
 

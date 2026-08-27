@@ -12,6 +12,10 @@ import {
   createInvitationToken,
   hashInvitationToken,
 } from '@gitroom/helpers/auth/invitation.token';
+import {
+  canManageTeam,
+  roleRank,
+} from '@gitroom/helpers/auth/organization.role';
 
 const escapeHtml = (value: string) =>
   value.replace(
@@ -57,7 +61,7 @@ export class OrganizationService {
     userId: string,
     id: string,
     orgId: string,
-    role: 'USER' | 'ADMIN'
+    role: Role
   ) {
     return this._organizationRepository.addUserToOrg(userId, id, orgId, role);
   }
@@ -210,7 +214,7 @@ export class OrganizationService {
       user.id,
       makeId(5),
       org.id,
-      body.role as 'USER' | 'ADMIN'
+      body.role as Role
     );
 
     if (!added) {
@@ -233,11 +237,11 @@ export class OrganizationService {
     // @ts-ignore
     const myRole = org.users[0].role;
     const userRole = findOrgToDelete.users[0].role;
-    const myLevel = myRole === 'USER' ? 0 : myRole === 'ADMIN' ? 1 : 2;
-    const userLevel = userRole === 'USER' ? 0 : userRole === 'ADMIN' ? 1 : 2;
-
-    if (myLevel < userLevel) {
-      throw new Error('You do not have permission to delete this user');
+    if (!canManageTeam(myRole) || roleRank(myRole) <= roleRank(userRole)) {
+      throw new HttpException(
+        'You do not have permission to delete this user',
+        403
+      );
     }
 
     return this._organizationRepository.deleteTeamMember(org.id, userId);

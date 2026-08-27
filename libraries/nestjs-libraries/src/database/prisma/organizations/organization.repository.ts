@@ -38,7 +38,7 @@ export class OrganizationRepository {
         },
         users: {
           create: {
-            role: Role.SUPERADMIN,
+            role: Role.OWNER,
             user: {
               create: {
                 activated: true,
@@ -349,7 +349,7 @@ export class OrganizationRepository {
     userId: string,
     id: string,
     orgId: string,
-    role: 'USER' | 'ADMIN'
+    role: Role
   ) {
     const checkIfInviteExists = await this._user.model.user.findFirst({
       where: {
@@ -413,7 +413,7 @@ export class OrganizationRepository {
         isTrailing: true,
         users: {
           create: {
-            role: Role.SUPERADMIN,
+            role: Role.OWNER,
             user: {
               create: {
                 activated: body.provider !== 'LOCAL' || !hasEmail,
@@ -531,7 +531,7 @@ export class OrganizationRepository {
       where: {
         organizationId: orgId,
         role: {
-          not: Role.SUPERADMIN,
+          notIn: [Role.OWNER, Role.SUPERADMIN],
         },
       },
       data: {

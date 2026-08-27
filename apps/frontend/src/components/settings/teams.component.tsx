@@ -4,7 +4,10 @@ import { Button } from '@gitroom/react/form/button';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import useSWR, { mutate as mutateSWR } from 'swr';
 import React, { useCallback, useMemo } from 'react';
-import { useUser } from '@gitroom/frontend/components/layout/user.context';
+import {
+  OrganizationRole,
+  useUser,
+} from '@gitroom/frontend/components/layout/user.context';
 import { capitalize } from 'lodash';
 import { useModals } from '@gitroom/frontend/components/layout/new-modal';
 import { Input } from '@gitroom/react/form/input';
@@ -20,14 +23,33 @@ import { useT } from '@gitroom/react/translation/get.transation.service.client';
 
 const roles = [
   {
-    name: 'User',
-    value: 'USER',
-  },
-  {
     name: 'Admin',
     value: 'ADMIN',
   },
+  {
+    name: 'Approver',
+    value: 'APPROVER',
+  },
+  {
+    name: 'Editor',
+    value: 'EDITOR',
+  },
+  {
+    name: 'Viewer',
+    value: 'VIEWER',
+  },
 ];
+
+const roleLevel = (role?: OrganizationRole) =>
+  role === 'OWNER' || role === 'SUPERADMIN'
+    ? 4
+    : role === 'ADMIN'
+      ? 3
+      : role === 'APPROVER'
+        ? 2
+        : role === 'EDITOR' || role === 'USER'
+          ? 1
+          : 0;
 export const AddMember = () => {
   const modals = useModals();
   const fetch = useFetch();
@@ -110,17 +132,11 @@ export const TeamsComponent = () => {
   const user = useUser();
   const modals = useModals();
   const t = useT();
-  const myLevel =
-    user?.role === 'SUPERADMIN' ? 2 : user?.role === 'ADMIN' ? 1 : 0;
-  const getLevel = useCallback(
-    (role: 'USER' | 'ADMIN' | 'SUPERADMIN') =>
-      role === 'USER' ? 0 : role === 'ADMIN' ? 1 : 2,
-    []
-  );
+  const myLevel = roleLevel(user?.role);
   const loadTeam = useCallback(async () => {
     return (await (await fetch('/settings/team')).json()).users as Array<{
       id: string;
-      role: 'SUPERADMIN' | 'ADMIN' | 'USER';
+      role: OrganizationRole;
       user: {
         email: string;
         id: string;
@@ -131,7 +147,7 @@ export const TeamsComponent = () => {
     return (await (await fetch('/settings/team/invitations')).json()) as Array<{
       id: string;
       email: string;
-      role: 'ADMIN' | 'USER';
+      role: Exclude<OrganizationRole, 'OWNER' | 'SUPERADMIN'>;
       expiresAt: string;
       acceptedAt: string | null;
       revokedAt: string | null;
@@ -148,13 +164,13 @@ export const TeamsComponent = () => {
       children: <AddMember />,
     });
   }, [t]);
-  const { data, mutate } = useSWR('/api/teams', loadTeam, {
+  const { data, mutate } = useSWR(myLevel >= 3 ? '/api/teams' : null, loadTeam, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     revalidateIfStale: false,
   });
   const { data: invitations, mutate: mutateInvitations } = useSWR(
-    myLevel > 0 ? '/api/team-invitations' : null,
+    myLevel >= 3 ? '/api/team-invitations' : null,
     loadInvitations,
     {
       revalidateOnFocus: false,
@@ -226,13 +242,17 @@ export const TeamsComponent = () => {
                 {capitalize(p.user.email.split('@')[0]).split('.')[0]}
               </div>
               <div className="flex-1">
-                {p.role === 'USER'
-                  ? t('user', 'User')
+                {p.role === 'OWNER' || p.role === 'SUPERADMIN'
+                  ? t('owner', 'Owner')
                   : p.role === 'ADMIN'
-                  ? t('admin', 'Admin')
-                  : t('super_admin', 'Super Admin')}
+                    ? t('admin', 'Admin')
+                    : p.role === 'APPROVER'
+                      ? t('approver', 'Approver')
+                      : p.role === 'VIEWER'
+                        ? t('viewer', 'Viewer')
+                        : t('editor', 'Editor')}
               </div>
-              {+myLevel > +getLevel(p.role) ? (
+              {myLevel >= 3 && myLevel > roleLevel(p.role) ? (
                 <div className="flex-1 flex justify-end">
                   <Button
                     className={`!bg-customColor3 !h-[24px] border border-customColor21 rounded-[4px] text-[12px]`}
@@ -264,12 +284,14 @@ export const TeamsComponent = () => {
             </div>
           ))}
         </div>
-        <div>
-          <Button onClick={addMember}>
-            {t('add_another_member', 'Add another member')}
-          </Button>
-        </div>
-        {myLevel > 0 && activeInvitations.length > 0 ? (
+        {myLevel >= 3 ? (
+          <div>
+            <Button onClick={addMember}>
+              {t('add_another_member', 'Add another member')}
+            </Button>
+          </div>
+        ) : null}
+        {myLevel >= 3 && activeInvitations.length > 0 ? (
           <section aria-labelledby="pending-invitations-heading">
             <h4
               id="pending-invitations-heading"
@@ -289,7 +311,11 @@ export const TeamsComponent = () => {
                   <div className="text-customColor18 sm:w-[100px]">
                     {invitation.role === 'ADMIN'
                       ? t('admin', 'Admin')
-                      : t('user', 'User')}
+                      : invitation.role === 'APPROVER'
+                        ? t('approver', 'Approver')
+                        : invitation.role === 'VIEWER'
+                          ? t('viewer', 'Viewer')
+                          : t('editor', 'Editor')}
                   </div>
                   <Button
                     className="!h-[32px] sm:w-auto"

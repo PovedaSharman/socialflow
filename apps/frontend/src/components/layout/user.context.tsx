@@ -6,13 +6,21 @@ import {
   pricing,
   PricingInnerInterface,
 } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+export type OrganizationRole =
+  | 'OWNER'
+  | 'ADMIN'
+  | 'APPROVER'
+  | 'EDITOR'
+  | 'VIEWER'
+  | 'SUPERADMIN'
+  | 'USER';
 export const UserContext = createContext<
   | undefined
   | (User & {
       orgId: string;
       tier: PricingInnerInterface;
       publicApi: string;
-      role: 'USER' | 'ADMIN' | 'SUPERADMIN';
+      role: OrganizationRole;
       totalChannels: number;
       isLifetime?: boolean;
       impersonate: boolean;
@@ -25,7 +33,7 @@ export const ContextWrapper: FC<{
   user: User & {
     orgId: string;
     tier: 'FREE' | 'STANDARD' | 'PRO' | 'ULTIMATE' | 'TEAM';
-    role: 'USER' | 'ADMIN' | 'SUPERADMIN';
+    role: OrganizationRole;
     publicApi: string;
     totalChannels: number;
   };

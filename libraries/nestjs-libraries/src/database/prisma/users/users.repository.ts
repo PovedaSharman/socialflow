@@ -135,7 +135,7 @@ export class UsersRepository {
         id: { not: excludeUserId },
         organizations: {
           some: {
-            role: Role.SUPERADMIN,
+            role: { in: [Role.OWNER, Role.SUPERADMIN] },
             organization: {
               subscription: { is: { deletedAt: null } },
             },

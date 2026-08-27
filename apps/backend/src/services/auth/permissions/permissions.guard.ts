@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core';
 import {
   AppAbility,
   PermissionsService,
+  roleCanAccess,
 } from '@gitroom/backend/services/auth/permissions/permissions.service';
 import {
   AbilityPolicy,
@@ -51,7 +52,24 @@ export class PoliciesGuard implements CanActivate {
     const refreshChannelId = typeof request.query?.refresh === 'string' ? request.query.refresh : undefined;
 
     // @ts-ignore
-    const ability = await this._authorizationService.check(org.id, org.createdAt, org.users[0].role, policyHandlers, refreshChannelId);
+    const role = org.users[0].role;
+    const roleDenied = policyHandlers.find(
+      ([action, section]) => !roleCanAccess(role, action, section)
+    );
+    if (roleDenied) {
+      throw new AuthorizationException({
+        section: roleDenied[1],
+        action: roleDenied[0],
+      });
+    }
+
+    const ability = await this._authorizationService.check(
+      org.id,
+      org.createdAt,
+      role,
+      policyHandlers,
+      refreshChannelId
+    );
 
     const item = policyHandlers.find(
       (handler) => !this.execPolicyHandler(handler, ability)

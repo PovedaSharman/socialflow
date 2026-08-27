@@ -176,7 +176,8 @@ export class StripeService {
       );
       for (const org of organizations) {
         if (
-          org.users?.[0]?.role === 'SUPERADMIN' &&
+          (org.users?.[0]?.role === 'OWNER' ||
+            org.users?.[0]?.role === 'SUPERADMIN') &&
           org.paymentId?.startsWith('cus_') &&
           !emailByCustomer.has(org.paymentId)
         ) {
