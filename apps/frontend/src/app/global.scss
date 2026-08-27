@@ -8,7 +8,9 @@
 @tailwind utilities;
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 body {
@@ -18,7 +20,17 @@ body {
 
 /* Never suppress keyboard focus globally. The outline is deliberately visible
    on every native or ARIA-backed interactive control. */
-:where(a, button, input, select, textarea, summary, [role='button'], [role='link'], [tabindex]):focus-visible {
+:where(
+    a,
+    button,
+    input,
+    select,
+    textarea,
+    summary,
+    [role='button'],
+    [role='link'],
+    [tabindex]
+  ):focus-visible {
   outline: 2px solid var(--new-btn-primary, #4f46e5) !important;
   outline-offset: 2px;
 }

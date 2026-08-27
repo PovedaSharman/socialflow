@@ -1,10 +1,5 @@
-import {
-  BadRequestException,
-  Injectable,
-  PipeTransform,
-} from '@nestjs/common';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { fromBuffer } = require('file-type');
+import { BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
+import { fromBuffer } from 'file-type';
 
 const ALLOWED_MIME_TYPES = new Set<string>([
   'image/jpeg',
@@ -25,7 +20,11 @@ export class CustomFileValidationPipe implements PipeTransform {
     }
 
     // Skip non-file parameters (org, body, query, etc.)
-    if (!('buffer' in value) && !('mimetype' in value) && !('fieldname' in value)) {
+    if (
+      !('buffer' in value) &&
+      !('mimetype' in value) &&
+      !('fieldname' in value)
+    ) {
       return value;
     }
 
@@ -46,15 +45,15 @@ export class CustomFileValidationPipe implements PipeTransform {
     }
 
     value.mimetype = detected.mime;
-    const safeBase = (value.originalname || 'upload')
-      .replace(/\.[^./\\]*$/, '')
-      .replace(/[\\/]/g, '_')
-      .slice(0, 100) || 'upload';
+    const safeBase =
+      (value.originalname || 'upload')
+        .replace(/\.[^./\\]*$/, '')
+        .replace(/[\\/]/g, '_')
+        .slice(0, 100) || 'upload';
     value.originalname = `${safeBase}.${detected.ext}`;
 
     return value;
   }
-
 }
 
 export function getMaxSize(mimeType: string): number {

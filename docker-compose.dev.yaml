@@ -1,147 +1,158 @@
-# This docker-compose file is used for development purposes. It sets up the necessary services for the Postiz application.
-# It is **not** intended for production use. For production, please refer to the official documentation.
+name: socialflow-dev
 
+# Local dependencies only. Application processes run from the checked-out
+# source using Node selected by .nvmrc.
 services:
-  postiz-postgres:
-    # ref: https://hub.docker.com/_/postgres
-    image: postgres:17-alpine # 17.0
-    container_name: postiz-postgres
-    restart: always
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_PASSWORD: postiz-local-pwd
       POSTGRES_USER: postiz-local
+      POSTGRES_PASSWORD: postiz-local-pwd
       POSTGRES_DB: postiz-db-local
-      TEMPORAL_ADDRESS: "temporal:7233"
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
-      - postgres-volume:/var/lib/postgresql/data
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postiz-local -d postiz-db-local']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
     ports:
-      - 5432:5432
-    networks:
-      - postiz-network
-  postiz-redis:
-    # ref: https://hub.docker.com/_/redis
-    image: redis:7-alpine # 7.4.0
-    container_name: postiz-redis
-    restart: always
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  mailpit:
+    image: axllent/mailpit:v1.30.3
+    restart: unless-stopped
     ports:
-      - 6379:6379
-    networks:
-      - postiz-network
-  postiz-pg-admin:
-    # ref: https://hub.docker.com/r/dpage/pgadmin4/tags
-    image: dpage/pgadmin4:latest
-    container_name: postiz-pg-admin
-    restart: always
-    ports:
-      - 8081:80
+      - '${MAILPIT_SMTP_PORT:-1025}:1025'
+      - '${MAILPIT_UI_PORT:-8025}:8025'
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-    networks:
-      - postiz-network
-  postiz-redisinsight:
-    # ref: https://hub.docker.com/r/redis/redisinsight
-    image: redis/redisinsight:latest
-    container_name: postiz-redisinsight
-    links:
-      - postiz-redis
-    ports:
-      - '5540:5540'
+      MP_MAX_MESSAGES: 100
+      MP_DATABASE: /data/mailpit.db
     volumes:
-      - redisinsight:/data
-    networks:
-      - postiz-network
-    restart: always
+      - mailpit-data:/data
+    healthcheck:
+      test: ['CMD', '/mailpit', 'readyz']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  temporal-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+    volumes:
+      - temporal-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U temporal']
+      interval: 5s
+      timeout: 3s
+      retries: 12
 
   temporal-elasticsearch:
-    container_name: temporal-elasticsearch
     image: elasticsearch:7.17.27
+    restart: unless-stopped
     environment:
-      - cluster.routing.allocation.disk.threshold_enabled=true
-      - cluster.routing.allocation.disk.watermark.low=512mb
-      - cluster.routing.allocation.disk.watermark.high=256mb
-      - cluster.routing.allocation.disk.watermark.flood_stage=128mb
-      - discovery.type=single-node
-      - ES_JAVA_OPTS=-Xms256m -Xmx256m
-      - xpack.security.enabled=false
-    networks:
-      - temporal-network
-    expose:
-      - 9200
+      discovery.type: single-node
+      ES_JAVA_OPTS: -Xms256m -Xmx256m
+      xpack.security.enabled: 'false'
+      cluster.routing.allocation.disk.threshold_enabled: 'false'
     volumes:
-      - /var/lib/elasticsearch/data
-
-  temporal-postgresql:
-    container_name: temporal-postgresql
-    image: postgres:16
-    environment:
-      POSTGRES_PASSWORD: temporal
-      POSTGRES_USER: temporal
-    networks:
-      - temporal-network
-    expose:
-      - 5432
-    volumes:
-      - /var/lib/postgresql/data
+      - temporal-elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'curl -fsS http://localhost:9200/_cluster/health >/dev/null',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 18
 
   temporal:
-    container_name: temporal
-    ports:
-      - "7233:7233"
     image: temporalio/auto-setup:1.28.1
+    restart: unless-stopped
     depends_on:
-      - temporal-postgresql
-      - temporal-elasticsearch
+      temporal-postgres:
+        condition: service_healthy
+      temporal-elasticsearch:
+        condition: service_healthy
     environment:
-      - DB=postgres12
-      - DB_PORT=5432
-      - POSTGRES_USER=temporal
-      - POSTGRES_PWD=temporal
-      - POSTGRES_SEEDS=temporal-postgresql
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
-      - ENABLE_ES=true
-      - ES_SEEDS=temporal-elasticsearch
-      - ES_VERSION=v7
-      - TEMPORAL_NAMESPACE=default
-    networks:
-      - temporal-network
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: temporal
+      POSTGRES_PWD: temporal
+      POSTGRES_SEEDS: temporal-postgres
+      ENABLE_ES: 'true'
+      ES_SEEDS: temporal-elasticsearch
+      ES_VERSION: v7
+      DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/development-sql.yaml
+    ports:
+      - '${TEMPORAL_PORT:-7233}:7233'
     volumes:
-      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
-    labels:
-      kompose.volume.type: configMap
-
-  temporal-admin-tools:
-    container_name: temporal-admin-tools
-    image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
-    networks:
-      - temporal-network
-    stdin_open: true
-    depends_on:
-      - temporal
-    tty: true
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig:ro
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'tctl --address "$$(hostname -i):7233" cluster health']
+      interval: 10s
+      timeout: 5s
+      retries: 18
 
   temporal-ui:
-    container_name: temporal-ui
     image: temporalio/ui:2.34.0
+    restart: unless-stopped
+    profiles: ['tools']
+    depends_on:
+      temporal:
+        condition: service_healthy
     environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CORS_ORIGINS=http://127.0.0.1:3000
-    networks:
-      - temporal-network
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_CORS_ORIGINS: http://localhost:4200
     ports:
-      - "8080:8080"
+      - '${TEMPORAL_UI_PORT:-8080}:8080'
+
+  pgadmin:
+    image: dpage/pgadmin4:9
+    restart: unless-stopped
+    profiles: ['tools']
+    environment:
+      PGADMIN_DEFAULT_EMAIL: developer@localhost.invalid
+      PGADMIN_DEFAULT_PASSWORD: local-development-only
+    ports:
+      - '${PGADMIN_PORT:-8081}:80'
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+  redisinsight:
+    image: redis/redisinsight:2.68
+    restart: unless-stopped
+    profiles: ['tools']
+    ports:
+      - '${REDISINSIGHT_PORT:-5540}:5540'
+    volumes:
+      - redisinsight-data:/data
 
 volumes:
-  redisinsight:
-  postgres-volume:
-    external: false
-
-networks:
-  postiz-network:
-    external: false
-  temporal-network:
-    driver: bridge
-    name: temporal-network
+  postgres-data:
+  redis-data:
+  mailpit-data:
+  temporal-postgres-data:
+  temporal-elasticsearch-data:
+  pgadmin-data:
+  redisinsight-data:

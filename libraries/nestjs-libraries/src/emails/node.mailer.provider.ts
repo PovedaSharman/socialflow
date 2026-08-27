@@ -1,25 +1,25 @@
 import nodemailer from 'nodemailer';
 import { EmailInterface } from '@gitroom/nestjs-libraries/emails/email.interface';
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: +process.env.EMAIL_PORT!,
-  secure: process.env.EMAIL_SECURE === 'true',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
+export const buildSmtpOptions = (env: NodeJS.ProcessEnv) => ({
+  host: env.EMAIL_HOST,
+  port: Number(env.EMAIL_PORT),
+  secure: env.EMAIL_SECURE === 'true',
+  ...(env.EMAIL_USER && env.EMAIL_PASS
+    ? {
+        auth: {
+          user: env.EMAIL_USER,
+          pass: env.EMAIL_PASS,
+        },
+      }
+    : {}),
 });
+
+const transporter = nodemailer.createTransport(buildSmtpOptions(process.env));
 
 export class NodeMailerProvider implements EmailInterface {
   name = 'nodemailer';
-  validateEnvKeys = [
-    'EMAIL_HOST',
-    'EMAIL_PORT',
-    'EMAIL_SECURE',
-    'EMAIL_USER',
-    'EMAIL_PASS',
-  ];
+  validateEnvKeys = ['EMAIL_HOST', 'EMAIL_PORT', 'EMAIL_SECURE'];
   async sendEmail(
     to: string,
     subject: string,
