@@ -9,7 +9,7 @@ import {
   CheckoutProvider,
   useCheckout,
 } from '@stripe/react-stripe-js/checkout';
-import { modeEmitter } from '@gitroom/frontend/components/layout/mode.component';
+import { subscribeToMode } from '@gitroom/frontend/components/layout/mode.component';
 import useCookie from 'react-use-cookie';
 import { Button } from '@gitroom/react/form/button';
 import dayjs from 'dayjs';
@@ -27,15 +27,11 @@ export const EmbeddedBilling: FC<{
   const [mode, setMode] = useCookie('mode', 'dark');
 
   useEffect(() => {
-    modeEmitter.on('mode', (value) => {
+    return subscribeToMode((value) => {
       setMode(value);
       setLoading(true);
     });
-
-    return () => {
-      modeEmitter.removeAllListeners();
-    };
-  }, []);
+  }, [setMode]);
 
   useEffect(() => {
     if (loading) {

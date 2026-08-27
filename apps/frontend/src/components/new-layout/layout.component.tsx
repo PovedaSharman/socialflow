@@ -58,8 +58,8 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
   const searchParams = useSearchParams();
   const load = useCallback(async (path: string) => {
     return await (await fetch(path)).json();
-  }, []);
-  const { data: user, mutate } = useSWR('/user/self', load, {
+  }, [fetch]);
+  const { data: user, error, mutate } = useSWR('/user/self', load, {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
     revalidateIfStale: false,
@@ -67,7 +67,45 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
     refreshWhenHidden: false,
   });
 
-  if (!user) return null;
+  if (!user && !error) {
+    return (
+      <main
+        className="flex min-h-screen items-center justify-center bg-canvas p-[24px] text-content"
+        aria-busy="true"
+      >
+        <div role="status" className="w-full max-w-[320px] text-center">
+          <div
+            aria-hidden="true"
+            className="mx-auto mb-[16px] h-[8px] w-full animate-pulse rounded-full bg-muted/20"
+          />
+          <span className="text-[14px] text-muted">Loading your workspace…</span>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-canvas p-[24px] text-content">
+        <div
+          role="alert"
+          className="w-full max-w-[440px] rounded-[12px] border border-danger/35 bg-surface p-[24px] text-center"
+        >
+          <h1 className="text-[20px] font-[700]">Unable to load your workspace</h1>
+          <p className="mt-[8px] text-[14px] text-muted">
+            Check your connection and try again. Your work has not been changed.
+          </p>
+          <button
+            type="button"
+            onClick={() => void mutate()}
+            className="mt-[20px] min-h-[44px] rounded-[8px] bg-brand px-[20px] font-[600] text-onBrand hover:bg-brandHover"
+          >
+            Try again
+          </button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <ContextWrapper user={user}>
@@ -90,7 +128,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
             <ContinueProvider />
             <div
               className={clsx(
-                'flex flex-col min-h-screen min-w-screen text-newTextColor p-[12px]',
+                'flex flex-col min-h-screen min-w-screen text-newTextColor p-[12px] mobile:p-[8px] mobile:pb-[80px]',
                 jakartaSans.className
               )}
             >
@@ -100,28 +138,34 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
               ) : (
                 <>
                   <AnnouncementBanner />
-                  <div className="flex-1 flex gap-[8px]">
+                  <div className="flex-1 flex gap-[8px] mobile:block">
                     <Support />
-                    <div className="flex flex-col bg-newBgColorInner w-[80px] rounded-[12px]">
+                    <nav
+                      aria-label="Primary navigation"
+                      className="flex flex-col bg-newBgColorInner w-[80px] rounded-[12px] mobile:fixed mobile:z-[100] mobile:bottom-[8px] mobile:inset-x-[8px] mobile:w-auto mobile:h-[64px] mobile:shadow-menu"
+                    >
                       <div
                         id="left-menu"
                         className={clsx(
-                          'fixed h-full w-[64px] start-[17px] flex flex-1 top-0',
-                          user?.admin && 'pt-[60px] max-h-[1000px]:w-[500px]'
+                          'fixed h-full w-[64px] start-[17px] flex flex-1 top-0 mobile:static mobile:w-full mobile:h-[64px]',
+                          user?.admin &&
+                            'pt-[60px] max-h-[1000px]:w-[500px] mobile:pt-0 mobile:w-full mobile:max-h-none'
                         )}
                       >
-                        <div className="flex flex-col h-full gap-[32px] flex-1 py-[12px]">
-                          <Logo />
+                        <div className="flex flex-col h-full gap-[32px] flex-1 py-[12px] mobile:flex-row mobile:gap-[4px] mobile:p-[4px] mobile:overflow-x-auto">
+                          <div className="mobile:hidden">
+                            <Logo />
+                          </div>
                           <TopMenu />
                         </div>
                       </div>
-                    </div>
-                    <div className="flex-1 bg-newBgLineColor rounded-[12px] overflow-hidden flex flex-col gap-[1px] blurMe">
-                      <div className="flex bg-newBgColorInner h-[80px] px-[20px] items-center">
-                        <div className="text-[24px] font-[600] flex flex-1">
+                    </nav>
+                    <main className="flex-1 bg-newBgLineColor rounded-[12px] mobile:rounded-[10px] overflow-hidden flex flex-col gap-[1px] blurMe">
+                      <div className="flex bg-newBgColorInner h-[80px] px-[20px] items-center mobile:h-[56px] mobile:px-[12px]">
+                        <div className="text-[24px] font-[600] flex flex-1 mobile:text-[20px]">
                           <Title />
                         </div>
-                        <div className="flex gap-[20px] text-textItemBlur">
+                        <div className="flex gap-[20px] text-textItemBlur mobile:gap-[8px] mobile:max-w-[62vw] mobile:overflow-x-auto">
                           <StreakComponent />
                           <div className="w-[1px] h-[20px] bg-blockSeparator" />
                           <OrganizationSelector />
@@ -137,7 +181,7 @@ export const LayoutComponent = ({ children }: { children: ReactNode }) => {
                         </div>
                       </div>
                       <div className="flex flex-1 gap-[1px]">{children}</div>
-                    </div>
+                    </main>
                   </div>
                 </>
               )}

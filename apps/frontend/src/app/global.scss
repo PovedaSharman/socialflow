@@ -16,6 +16,14 @@
 body {
   background: var(--new-bgColor) !important;
   color: var(--new-btn-text);
+  font-family: 'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  color: var(--sf-on-primary);
+  background: var(--sf-primary);
 }
 
 /* Never suppress keyboard focus globally. The outline is deliberately visible
@@ -31,8 +39,14 @@ body {
     [role='link'],
     [tabindex]
   ):focus-visible {
-  outline: 2px solid var(--new-btn-primary, #4f46e5) !important;
+  outline: 2px solid var(--sf-focus, #4f46e5) !important;
   outline-offset: 2px;
+}
+
+@media (max-width: 1025px) and (pointer: coarse) {
+  :where(button, a, input, select, textarea, summary, [role='button']) {
+    min-height: 44px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

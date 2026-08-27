@@ -6,6 +6,7 @@ const config: Config = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
   testEnvironment: 'node',
   testMatch: ['<rootDir>/{apps,libraries}/**/?(*.)+(spec|test).[jt]s?(x)'],
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   moduleNameMapper: {
     '^@gitroom/backend/(.*)$': '<rootDir>/apps/backend/src/$1',
     '^@gitroom/frontend/(.*)$': '<rootDir>/apps/frontend/src/$1',

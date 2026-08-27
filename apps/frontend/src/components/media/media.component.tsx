@@ -178,12 +178,15 @@ export const ShowMediaBoxModal: FC = () => {
     setCallBack(undefined);
   }, []);
   useEffect(() => {
-    showModalEmitter.on('show-modal', (cCallback) => {
+    const handleShow = (
+      cCallback: (params: { id: string; path: string }[]) => void
+    ) => {
       setShowModal(true);
       setCallBack(() => cCallback);
-    });
+    };
+    showModalEmitter.on('show-modal', handleShow);
     return () => {
-      showModalEmitter.removeAllListeners('show-modal');
+      showModalEmitter.off('show-modal', handleShow);
     };
   }, []);
   if (!showModal) return null;

@@ -105,14 +105,14 @@ export function Login() {
                   label="Password"
                   translationKey="label_password"
                   {...form.register('password')}
-                  autoComplete="off"
+                  autoComplete="current-password"
                   type="password"
                   placeholder={t('label_password', 'Password')}
                 />
               </div>
               {notActivated && (
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-[10px] p-4 mb-4">
-                  <p className="text-amber-400 text-sm mb-2">
+                <div className="mb-4 rounded-[10px] border border-warning/35 bg-warning/10 p-4">
+                  <p className="mb-2 text-sm text-warning">
                     {t(
                       'account_not_activated',
                       'Your account is not activated yet. Please check your email for the activation link.'
@@ -120,7 +120,7 @@ export function Login() {
                   </p>
                   <Link
                     href="/auth/activate"
-                    className="text-amber-400 underline hover:font-bold text-sm"
+                    className="text-sm text-warning underline hover:font-bold"
                   >
                     {t('resend_activation_email', 'Resend Activation Email')}
                   </Link>

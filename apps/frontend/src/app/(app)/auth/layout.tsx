@@ -6,6 +6,7 @@ import loadDynamic from 'next/dynamic';
 import { TestimonialComponent } from '@gitroom/frontend/components/auth/testimonial.component';
 import { LogoTextComponent } from '@gitroom/frontend/components/ui/logo-text.component';
 import { brandConfig } from '@gitroom/helpers/utils/brand';
+import ModeComponent from '@gitroom/frontend/components/layout/mode.component';
 const ReturnUrlComponent = loadDynamic(() => import('./return.url.component'));
 export default async function AuthLayout({
   children,
@@ -16,12 +17,15 @@ export default async function AuthLayout({
   const brand = brandConfig();
 
   return (
-    <div className="bg-[#0E0E0E] flex flex-1 p-[12px] gap-[12px] min-h-screen w-screen text-white">
+    <div className="flex min-h-screen w-screen flex-1 gap-[12px] bg-canvas p-[12px] text-content">
       {/*<style>{`html, body {overflow-x: hidden;}`}</style>*/}
       <ReturnUrlComponent />
-      <div className="flex flex-col py-[40px] px-[20px] flex-1 lg:w-[600px] lg:flex-none rounded-[12px] text-white p-[12px] bg-[#1A1919]">
-        <div className="w-full max-w-[440px] mx-auto justify-center gap-[20px] h-full flex flex-col text-white">
-          <LogoTextComponent />
+      <div className="flex flex-1 flex-col rounded-[12px] border border-subtleBorder bg-surface p-[12px] px-[20px] py-[40px] text-content lg:w-[600px] lg:flex-none">
+        <div className="mx-auto flex h-full w-full max-w-[440px] flex-col justify-center gap-[20px] text-content">
+          <div className="flex items-center justify-between gap-[16px]">
+            <LogoTextComponent />
+            <ModeComponent />
+          </div>
           <div className="flex">{children}</div>
         </div>
       </div>

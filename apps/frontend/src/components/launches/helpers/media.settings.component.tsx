@@ -31,28 +31,26 @@ export const MediaSettingsLayout = () => {
     }) => {},
   } as any);
   useEffect(() => {
-    postUrlEmitter.on(
-      'show',
-      (params: {
-        media: any;
-        callback: (url: {
-          id: string;
-          name: string;
-          path: string;
-          thumbnail: string;
-          alt: string;
-        }) => void;
-      }) => {
-        setCallback(params);
-        setMedia(params.media);
-        setShowPostSelector(true);
-      }
-    );
+    const handleShow = (params: {
+      media: any;
+      callback: (url: {
+        id: string;
+        name: string;
+        path: string;
+        thumbnail: string;
+        alt: string;
+      }) => void;
+    }) => {
+      setCallback(params);
+      setMedia(params.media);
+      setShowPostSelector(true);
+    };
+    postUrlEmitter.on('show', handleShow);
     return () => {
       setShowPostSelector(false);
       setCallback(null);
       setMedia(undefined);
-      postUrlEmitter.removeAllListeners();
+      postUrlEmitter.off('show', handleShow);
     };
   }, []);
   const close = useCallback(() => {

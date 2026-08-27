@@ -6,6 +6,7 @@ import {
   InputHTMLAttributes,
   ReactNode,
   useEffect,
+  useId,
   useMemo,
 } from 'react';
 import { clsx } from 'clsx';
@@ -38,6 +39,9 @@ export const Input: FC<
     ...rest
   } = props;
   const form = useFormContext();
+  const generatedId = useId();
+  const inputId = props.id || `${props.name}-${generatedId}`;
+  const errorId = `${inputId}-error`;
   const err = useMemo(() => {
     if (error) return error;
     if (!form || !form.formState.errors[props?.name!]) return;
@@ -52,32 +56,43 @@ export const Input: FC<
   return (
     <div className="flex flex-col gap-[6px]">
       {!!label && (
-        <div className={`text-[14px]`}>
+        <label
+          htmlFor={inputId}
+          className="text-[14px] font-[500] text-content"
+        >
           <TranslatedLabel
             label={label}
             translationKey={translationKey}
             translationParams={translationParams}
           />
-        </div>
+        </label>
       )}
       <div
         className={clsx(
-          'bg-newBgColorInner h-[42px] border-newTableBorder border rounded-[8px] text-textColor placeholder-textColor flex items-center justify-center',
+          'bg-surface min-h-[44px] border-subtleBorder border rounded-[8px] text-content placeholder-muted flex items-center justify-center transition-colors focus-within:border-brand',
+          err && 'border-danger',
           className
         )}
       >
         {icon && <div className="ps-[16px]">{icon}</div>}
         <input
+          {...(disableForm ? {} : form?.register(props.name))}
+          {...rest}
+          id={inputId}
+          aria-invalid={!!err || undefined}
+          aria-describedby={
+            err && !removeError ? errorId : rest['aria-describedby']
+          }
           className={clsx(
-            'h-full bg-transparent outline-none flex-1 text-[14px] text-textColor',
+            'min-w-0 h-full bg-transparent outline-none flex-1 text-[14px] text-content placeholder:text-muted',
             icon ? 'pl-[8px] pe-[16px]' : 'px-[16px]'
           )}
-          {...(disableForm ? {} : form.register(props.name))}
-          {...rest}
         />
       </div>
-      {!removeError && (
-        <div className="text-red-400 text-[12px]">{err || <>&nbsp;</>}</div>
+      {!removeError && err && (
+        <div id={errorId} role="alert" className="text-danger text-[12px]">
+          {err}
+        </div>
       )}
     </div>
   );

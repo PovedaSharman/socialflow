@@ -47,11 +47,11 @@ Last updated: 27 August 2026
 | Type checking                | Passed: frontend, backend and orchestrator `tsc --noEmit`                            |
 | Local dependencies           | Passed: all six default Compose services report healthy                              |
 | Runtime smoke                | Passed: frontend, backend, mail capture, activation, login and authenticated session |
-| Unit tests                   | Passed: 4 suites, 9 tests                                                            |
+| Unit tests                   | Passed before the latest static fixes: 5 suites, 10 tests                            |
 | Production builds            | Passed: frontend, backend and orchestrator                                           |
 | Formatting                   | Passed for the complete SocialFlow delta from the pinned upstream tag                |
 | Lint                         | Passed: root flat ESLint configuration with actual hook correctness checks retained  |
-| Accessibility automation     | Missing upstream gate; focus suppression repaired, full checks pending milestone 3   |
+| Accessibility automation     | WCAG 2.2 A/AA specification added; post-change execution remains pending              |
 
 ### Milestone 1 repairs
 
@@ -76,6 +76,26 @@ No production-readiness claim is made.
 
 ### Milestone 3 next
 
-- Inventory and consolidate inherited visual tokens, primitives and layout breakpoints.
-- Add automated accessibility coverage and a component showcase route.
-- Verify responsive auth and application shells at 360, 768, 1024 and 1440 pixels in both themes.
+- Run the bounded WCAG and responsive gate on CI or another explicitly approved suitable host.
+- Review the recorded 360, 768, 1024 and 1440 pixel renders in both themes before closing the milestone.
+- Keep calendar cells and chart treatments with their content and analytics milestones.
+
+### Milestone 3 implementation completed, verification pending
+
+- Added semantic light/dark colour tokens, Tailwind aliases, typography, selection, focus, reduced-motion and touch-target rules.
+- Added accessible button, input, badge, alert, skeleton and empty-state primitives plus a protected `/design-system` reference route.
+- Made the application shell responsive with labelled primary navigation, a mobile bottom navigation treatment, compact top bar and semantic landmarks.
+- Added labelled theme controls, server-rendered theme selection, language attributes on every HTML root, branded sign-in metadata and password-manager-compatible sign-in fields.
+- Replaced blank application loading with an announced loading state and added a recoverable, understandable workspace-load error.
+- Added a bounded, single-worker Playwright/Axe specification for WCAG 2.0–2.2 A/AA and the four required widths in both themes. It has not been executed after the latest changes.
+- Repaired frontend EventEmitter lifecycle management: subscriptions now remove their exact callback, the support cleanup uses the correct event name, and no frontend component calls `removeAllListeners()`.
+- Added unit specifications for status tone treatment, exact navigation matching and isolated theme listener cleanup. The two newest specifications remain unexecuted under the workstation safety restriction.
+
+### Workstation resource safety
+
+- The combined development launcher is disabled; application watchers must be started individually and the browser-extension watcher is opt-in.
+- Node quality and application scripts have explicit V8 heap caps, Jest is single-worker, and workspace builds remain serial.
+- Every local Compose service has a memory ceiling. These ceilings protect containers, while the documentation correctly notes that a V8 heap cap is not a hard whole-process limit.
+- After a frontend-only responsive-review attempt exhausted host resources, all application listeners and all local containers were stopped. No runtime, browser automation, build, or full-stack check should be run on this workstation without explicit user approval.
+- Lightweight verification after the milestone 3 changes passed: formatting, lint, frontend type-check, Compose configuration validation, and 5 Jest suites / 10 tests. Runtime WCAG and visual evidence remains unverified and is not claimed.
+- Subsequent lightweight-only accessibility and listener-lifecycle fixes passed `git diff --check` and manual source review only; formatting, type-checking and tests were deliberately not rerun after the user prohibited memory-heavy commands.

@@ -38,10 +38,12 @@ Typography uses Plus Jakarta Sans where loaded and a system sans-serif fallback.
 
 ## Responsive shell
 
-- Mobile: compact top bar, primary create action and labelled bottom/drawer navigation; calendar has an agenda view.
-- Tablet: collapsible labelled navigation and flexible two-pane composer.
+- Mobile (`≤1025px`): compact top bar, labelled fixed bottom navigation and touch targets of at least 44px; the calendar still requires an agenda view in the content-workflow milestone.
+- Tablet (`1026–1300px`): compact navigation and flexible content panels.
 - Desktop: persistent navigation with text labels, page toolbar and optional contextual inspector.
 
 ## Component showcase
 
-Storybook is not yet established in the upstream stack. The implementation milestone will choose Storybook if it builds cleanly with Next.js 16; otherwise a protected `/design-system` route will showcase tokens, buttons, inputs, badges, alerts, skeletons, empty states, calendar cells and chart treatments. The chosen surface must be covered by automated accessibility checks.
+The authenticated `/design-system` route is the component reference surface. It currently showcases semantic colours, buttons, inputs, badges, alerts, skeletons and empty states in both themes. Calendar cells and chart treatments remain tied to their product milestones rather than being represented by disconnected mock components.
+
+The Playwright specification covers the authentication shell and design-system route at 360, 768, 1024 and 1440 CSS pixels in dark and light modes. It runs Axe rules tagged for WCAG 2.0, 2.1 and 2.2 at levels A and AA, checks horizontal overflow, and checks the mobile navigation position. The specification exists but its post-change runtime result is not yet verified on the resource-constrained development machine; documentation must not describe it as passing until CI or a suitable host records the result.

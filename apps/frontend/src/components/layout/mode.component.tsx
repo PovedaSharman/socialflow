@@ -6,6 +6,11 @@ import EventEmitter from 'events';
 
 export const modeEmitter = new EventEmitter();
 
+export const subscribeToMode = (listener: (mode: string) => void) => {
+  modeEmitter.on('mode', listener);
+  return () => modeEmitter.off('mode', listener);
+};
+
 const ModeComponent = () => {
   const [mode, setMode] = useCookie('mode', 'dark');
 
@@ -19,9 +24,15 @@ const ModeComponent = () => {
     document.body.classList.add(mode);
   }, [mode]);
   return (
-    <div onClick={changeMode} className="select-none cursor-pointer">
+    <button
+      type="button"
+      onClick={changeMode}
+      aria-label={`Switch to ${mode === 'dark' ? 'light' : 'dark'} theme`}
+      className="select-none cursor-pointer rounded-[8px] min-w-[44px] min-h-[44px] inline-flex items-center justify-center hover:bg-elevated transition-colors"
+    >
       {mode === 'dark' ? (
         <svg
+          aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"
           width="22"
           height="22"
@@ -38,6 +49,7 @@ const ModeComponent = () => {
         </svg>
       ) : (
         <svg
+          aria-hidden="true"
           xmlns="http://www.w3.org/2000/svg"
           width="24"
           height="24"
@@ -53,7 +65,7 @@ const ModeComponent = () => {
           />
         </svg>
       )}
-    </div>
+    </button>
   );
 };
 export default ModeComponent;

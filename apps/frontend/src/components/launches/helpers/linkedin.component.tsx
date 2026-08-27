@@ -20,19 +20,20 @@ export const ShowLinkedinCompany = () => {
     callback: (tag: string) => {},
   } as any);
   useEffect(() => {
-    postUrlEmitter.on(
-      'show',
-      (params: { id: string; callback: (url: string) => void }) => {
-        setCallback(params);
-        setId(params.id);
-        setShowPostSelector(true);
-      }
-    );
+    const handleShow = (params: {
+      id: string;
+      callback: (url: string) => void;
+    }) => {
+      setCallback(params);
+      setId(params.id);
+      setShowPostSelector(true);
+    };
+    postUrlEmitter.on('show', handleShow);
     return () => {
       setShowPostSelector(false);
       setCallback(null);
       setId('');
-      postUrlEmitter.removeAllListeners();
+      postUrlEmitter.off('show', handleShow);
     };
   }, []);
   const close = useCallback(() => {
@@ -171,4 +172,3 @@ export const LinkedinCompany: FC<{
     </div>
   );
 };
-

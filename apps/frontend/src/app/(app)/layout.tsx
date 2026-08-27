@@ -36,11 +36,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const brand = brandConfig();
   const cookieStore = await cookies();
   const language = cookieStore.get(cookieName)?.value || fallbackLng;
+  const mode = cookieStore.get('mode')?.value === 'light' ? 'light' : 'dark';
   const Plausible = !!process.env.STRIPE_PUBLISHABLE_KEY
     ? PlausibleProvider
     : Fragment;
   return (
-    <html>
+    <html lang={language}>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         {!!process.env.DATAFAST_WEBSITE_ID && (
@@ -54,7 +55,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </head>
       <ChangeDirClient />
       <body
-        className={clsx(jakartaSans.className, 'dark text-primary !bg-primary')}
+        className={clsx(
+          jakartaSans.className,
+          mode,
+          'text-primary !bg-primary'
+        )}
       >
         <VariableContextComponent
           brandName={brand.name}

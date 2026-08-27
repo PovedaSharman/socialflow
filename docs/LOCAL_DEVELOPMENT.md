@@ -15,10 +15,18 @@ pnpm install --frozen-lockfile
 cp .env.example .env
 pnpm dev:services
 pnpm prisma-db-push
-pnpm dev
+pnpm dev:frontend
 ```
 
-The app is served at `http://localhost:4200`, the API at `http://localhost:3000`, PostgreSQL at port 5432, Redis at 6379, Temporal at 7233 and the Mailpit inbox at `http://localhost:8025`. The default Compose project is `socialflow-dev`; data is kept in project-scoped named volumes.
+The frontend is served at `http://localhost:4200`. Start `pnpm dev:backend` or `pnpm dev:orchestrator` in a separate terminal only when the current task needs it. The API uses port 3000, PostgreSQL 5432, Redis 6379, Temporal 7233 and the Mailpit inbox `http://localhost:8025`. The default Compose project is `socialflow-dev`; data is kept in project-scoped named volumes.
+
+The combined `pnpm dev` launcher is deliberately disabled so one command cannot create a tree of frontend, backend, worker and extension watchers. Application scripts set V8 heap caps and Compose applies per-service memory ceilings. V8 caps are a best-effort guard, not a hard process-memory limit: compilers may use native memory or child processes. Monitor the host and run one application service at a time on a memory-constrained machine. Run the extension separately only when working on it:
+
+```sh
+pnpm dev:extension
+```
+
+Quality commands run serially; Jest is fixed to one worker and the production workspace build has concurrency one. Even so, builds and browser automation can be memory-intensive and should not run alongside app services. Do not launch a second copy of a watcher that is already listening on its port.
 
 `prisma-db-push` is for disposable local development only. Production uses reviewed migrations and must never use `--accept-data-loss`.
 
@@ -62,7 +70,7 @@ Leave `EMAIL_USER` and `EMAIL_PASS` unset because local Mailpit does not require
 ```sh
 pnpm format:check
 pnpm typecheck
-pnpm test --runInBand
+pnpm test
 pnpm build
 ```
 

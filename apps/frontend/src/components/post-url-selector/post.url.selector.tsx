@@ -22,22 +22,20 @@ export const ShowPostSelector = () => {
   } as any);
   const [date, setDate] = useState(newDayjs());
   useEffect(() => {
-    postUrlEmitter.on(
-      'show',
-      (params: {
-        date: dayjs.Dayjs;
-        callback: (url: string | undefined) => void;
-      }) => {
-        setCallback(params);
-        setDate(params.date);
-        setShowPostSelector(true);
-      }
-    );
+    const handleShow = (params: {
+      date: dayjs.Dayjs;
+      callback: (url: string | undefined) => void;
+    }) => {
+      setCallback(params);
+      setDate(params.date);
+      setShowPostSelector(true);
+    };
+    postUrlEmitter.on('show', handleShow);
     return () => {
       setShowPostSelector(false);
       setCallback(null);
       setDate(newDayjs());
-      postUrlEmitter.removeAllListeners();
+      postUrlEmitter.off('show', handleShow);
     };
   }, []);
   const close = useCallback(() => {

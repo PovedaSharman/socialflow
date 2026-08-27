@@ -320,14 +320,15 @@ export const ModalManagerEmitter: FC = () => {
   );
 
   useEffect(() => {
-    emitter.on('show', (params: OpenModalInterface) => {
+    const handleShow = (params: OpenModalInterface) => {
       showModal(params);
-    });
+    };
+    emitter.on('show', handleShow);
 
     return () => {
-      emitter.removeAllListeners('show');
+      emitter.off('show', handleShow);
     };
-  }, []);
+  }, [showModal]);
   return null;
 };
 
@@ -389,7 +390,10 @@ export const DecisionEverywhere: FC = () => {
   const decision = useDecisionModal();
   useEffect(() => {
     decisionModalEmitter.on('open', decision.open);
-  }, []);
+    return () => {
+      decisionModalEmitter.off('open', decision.open);
+    };
+  }, [decision.open]);
   return null;
 };
 
