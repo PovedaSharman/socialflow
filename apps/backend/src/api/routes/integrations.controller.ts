@@ -64,6 +64,7 @@ export class IntegrationsController {
   }
 
   @Put('/:id/group')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CHANNEL])
   async updateIntegrationGroup(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
@@ -77,6 +78,7 @@ export class IntegrationsController {
   }
 
   @Put('/:id/customer-name')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CHANNEL])
   async updateOnCustomerName(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
@@ -124,6 +126,7 @@ export class IntegrationsController {
   }
 
   @Post('/:id/settings')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CHANNEL])
   async updateProviderSettings(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
@@ -136,6 +139,7 @@ export class IntegrationsController {
     await this._integrationService.updateProviderSettings(org.id, id, body);
   }
   @Post('/:id/nickname')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CHANNEL])
   async setNickname(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
@@ -254,6 +258,7 @@ export class IntegrationsController {
   }
 
   @Post('/:id/time')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CHANNEL])
   async setTime(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
@@ -263,6 +268,7 @@ export class IntegrationsController {
   }
 
   @Post('/mentions')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async mentions(
     @GetOrgFromRequest() org: Organization,
     @Body() body: IntegrationFunctionDto
@@ -319,9 +325,11 @@ export class IntegrationsController {
   }
 
   @Post('/function')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async functionIntegration(
     @GetOrgFromRequest() org: Organization,
-    @Body() body: IntegrationFunctionDto
+    @Body() body: IntegrationFunctionDto,
+    refreshAttempt = 0
   ): Promise<any> {
     const getIntegration = await this._integrationService.getIntegrationById(
       org.id,
@@ -352,6 +360,9 @@ export class IntegrationsController {
         return load;
       } catch (err) {
         if (err instanceof RefreshToken) {
+          if (refreshAttempt >= 1) {
+            return false;
+          }
           const data = await this._refreshIntegrationService.refresh(
             getIntegration
           );
@@ -366,7 +377,7 @@ export class IntegrationsController {
             if (integrationProvider.refreshWait) {
               await timer(10000);
             }
-            return this.functionIntegration(org, body);
+            return this.functionIntegration(org, body, refreshAttempt + 1);
           }
 
           return false;
@@ -379,6 +390,7 @@ export class IntegrationsController {
   }
 
   @Post('/disable')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CHANNEL])
   disableChannel(
     @GetOrgFromRequest() org: Organization,
     @Body('id') id: string
@@ -387,6 +399,7 @@ export class IntegrationsController {
   }
 
   @Post('/enable')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CHANNEL])
   enableChannel(
     @GetOrgFromRequest() org: Organization,
     @Body('id') id: string
@@ -400,6 +413,7 @@ export class IntegrationsController {
   }
 
   @Delete('/')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.CHANNEL])
   async deleteChannel(
     @GetOrgFromRequest() org: Organization,
     @Body('id') id: string
@@ -431,6 +445,7 @@ export class IntegrationsController {
   }
 
   @Post('/:id/plugs')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CHANNEL])
   async postPlugsByIntegrationId(
     @Param('id') id: string,
     @GetOrgFromRequest() org: Organization,
@@ -440,6 +455,7 @@ export class IntegrationsController {
   }
 
   @Put('/plugs/:id/activate')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CHANNEL])
   async changePlugActivation(
     @Param('id') id: string,
     @GetOrgFromRequest() org: Organization,
@@ -454,6 +470,7 @@ export class IntegrationsController {
   }
 
   @Post('/moltbook/register')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CHANNEL])
   async moltbookRegister(@Body() body: { name: string; description: string }) {
     try {
       const provider = new MoltbookProvider();

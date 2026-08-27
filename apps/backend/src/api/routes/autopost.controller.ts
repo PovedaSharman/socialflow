@@ -14,7 +14,10 @@ import { ApiTags } from '@nestjs/swagger';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import { AutopostService } from '@gitroom/nestjs-libraries/database/prisma/autopost/autopost.service';
 import { AutopostDto } from '@gitroom/nestjs-libraries/dtos/autopost/autopost.dto';
-import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import {
+  AuthorizationActions,
+  Sections,
+} from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 import { OnlyURL } from '@gitroom/nestjs-libraries/dtos/webhooks/webhooks.dto';
 
 @ApiTags('Autopost')
@@ -37,6 +40,7 @@ export class AutopostController {
   }
 
   @Put('/:id')
+  @CheckPolicies([AuthorizationActions.Update, Sections.WEBHOOKS])
   async updateAutopost(
     @GetOrgFromRequest() org: Organization,
     @Body() body: AutopostDto,
@@ -46,6 +50,7 @@ export class AutopostController {
   }
 
   @Delete('/:id')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.WEBHOOKS])
   async deleteAutopost(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string
@@ -54,6 +59,7 @@ export class AutopostController {
   }
 
   @Post('/:id/active')
+  @CheckPolicies([AuthorizationActions.Update, Sections.WEBHOOKS])
   async changeActive(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
@@ -63,6 +69,7 @@ export class AutopostController {
   }
 
   @Post('/send')
+  @CheckPolicies([AuthorizationActions.Create, Sections.WEBHOOKS])
   async sendWebhook(@Query() query: OnlyURL) {
     return this._autopostsService.loadXML(query.url);
   }

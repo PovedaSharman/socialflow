@@ -56,6 +56,7 @@ export class PostsController {
   }
 
   @Put('/:id/release-id')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CONTENT])
   async updateReleaseId(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
@@ -70,6 +71,7 @@ export class PostsController {
   }
 
   @Post('/:id/comments')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async createComment(
     @GetOrgFromRequest() org: Organization,
     @GetUserFromRequest() user: User,
@@ -85,6 +87,7 @@ export class PostsController {
   }
 
   @Post('/tags')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async createTag(
     @GetOrgFromRequest() org: Organization,
     @Body() body: CreateTagDto
@@ -93,6 +96,7 @@ export class PostsController {
   }
 
   @Put('/tags/:id')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CONTENT])
   async editTag(
     @GetOrgFromRequest() org: Organization,
     @Body() body: CreateTagDto,
@@ -102,6 +106,7 @@ export class PostsController {
   }
 
   @Delete('/tags/:id')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.CONTENT])
   async deleteTag(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string
@@ -159,7 +164,10 @@ export class PostsController {
   }
 
   @Get('/group/:group')
-  getPostsByGroup(@GetOrgFromRequest() org: Organization, @Param('group') group: string) {
+  getPostsByGroup(
+    @GetOrgFromRequest() org: Organization,
+    @Param('group') group: string
+  ) {
     return this._postsService.getPostsByGroup(org.id, group);
   }
 
@@ -261,6 +269,7 @@ export class PostsController {
   }
 
   @Delete('/:group')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.CONTENT])
   deletePost(
     @GetOrgFromRequest() org: Organization,
     @Param('group') group: string
@@ -269,6 +278,7 @@ export class PostsController {
   }
 
   @Put('/:id/date')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CONTENT])
   changeDate(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string,
@@ -279,6 +289,7 @@ export class PostsController {
   }
 
   @Post('/separate-posts')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async separatePosts(
     @GetOrgFromRequest() org: Organization,
     @Body() body: { content: string; len: number }

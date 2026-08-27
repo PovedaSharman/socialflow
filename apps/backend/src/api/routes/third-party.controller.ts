@@ -15,6 +15,11 @@ import { AuthService } from '@gitroom/helpers/auth/auth.service';
 import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
 import { MediaService } from '@gitroom/nestjs-libraries/database/prisma/media/media.service';
 import { ImportMediaDto } from '@gitroom/nestjs-libraries/dtos/third-party/import-media.dto';
+import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
+import {
+  AuthorizationActions,
+  Sections,
+} from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 
 @ApiTags('Third Party')
 @Controller('/third-party')
@@ -23,7 +28,7 @@ export class ThirdPartyController {
 
   constructor(
     private _thirdPartyManager: ThirdPartyManager,
-    private _mediaService: MediaService,
+    private _mediaService: MediaService
   ) {}
 
   @Get('/list')
@@ -53,6 +58,7 @@ export class ThirdPartyController {
   }
 
   @Delete('/:id')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.CHANNEL])
   deleteById(
     @GetOrgFromRequest() organization: Organization,
     @Param('id') id: string
@@ -61,6 +67,7 @@ export class ThirdPartyController {
   }
 
   @Post('/:id/submit')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async generate(
     @GetOrgFromRequest() organization: Organization,
     @Param('id') id: string,
@@ -89,10 +96,15 @@ export class ThirdPartyController {
     );
 
     const file = await this.storage.uploadSimple(loadedData);
-    return this._mediaService.saveFile(organization.id, file.split('/').pop(), file);
+    return this._mediaService.saveFile(
+      organization.id,
+      file.split('/').pop(),
+      file
+    );
   }
 
   @Post('/function/:id/:functionName')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async callFunction(
     @GetOrgFromRequest() organization: Organization,
     @Param('id') id: string,
@@ -123,6 +135,7 @@ export class ThirdPartyController {
   }
 
   @Post('/:id/import')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async importMedia(
     @GetOrgFromRequest() organization: Organization,
     @Param('id') id: string,
@@ -169,6 +182,7 @@ export class ThirdPartyController {
   }
 
   @Post('/:identifier')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CHANNEL])
   async addApiKey(
     @GetOrgFromRequest() organization: Organization,
     @Param('identifier') identifier: string,

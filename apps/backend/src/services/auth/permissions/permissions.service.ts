@@ -8,7 +8,9 @@ import dayjs from 'dayjs';
 import { WebhooksService } from '@gitroom/nestjs-libraries/database/prisma/webhooks/webhooks.service';
 import { AuthorizationActions, Sections } from './permission.exception.class';
 import {
+  canApproveContent,
   canEditContent,
+  canManageBilling,
   canManageOrganization,
   OrganizationRole,
 } from './organization.role';
@@ -23,6 +25,9 @@ export function roleCanAccess(
   if (section === Sections.ADMIN) {
     return canManageOrganization(role);
   }
+  if (section === Sections.BILLING) {
+    return canManageBilling(role);
+  }
   if (action === AuthorizationActions.Read) {
     return true;
   }
@@ -32,6 +37,9 @@ export function roleCanAccess(
     section === Sections.TEAM_MEMBERS
   ) {
     return canManageOrganization(role);
+  }
+  if (section === Sections.APPROVAL) {
+    return canApproveContent(role);
   }
   return canEditContent(role);
 }
@@ -103,6 +111,14 @@ export class PermissionsService {
       if (!roleCanAccess(permission, action, section)) {
         continue;
       }
+      if (
+        section === Sections.CONTENT ||
+        section === Sections.APPROVAL ||
+        section === Sections.BILLING
+      ) {
+        can(action, section);
+        continue;
+      }
       // check for the amount of channels
       if (section === Sections.CHANNEL) {
         // Refreshing an existing channel doesn't add a new one, so skip the limit check
@@ -165,10 +181,7 @@ export class PermissionsService {
         continue;
       }
 
-      if (
-        section === Sections.ADMIN &&
-        canManageOrganization(permission)
-      ) {
+      if (section === Sections.ADMIN && canManageOrganization(permission)) {
         can(action, section);
         continue;
       }

@@ -15,6 +15,11 @@ import {
   UpdateSetsDto,
   SetsDto,
 } from '@gitroom/nestjs-libraries/dtos/sets/sets.dto';
+import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
+import {
+  AuthorizationActions,
+  Sections,
+} from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 
 @ApiTags('Sets')
 @Controller('/sets')
@@ -27,6 +32,7 @@ export class SetsController {
   }
 
   @Post('/')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async createASet(
     @GetOrgFromRequest() org: Organization,
     @Body() body: SetsDto
@@ -35,6 +41,7 @@ export class SetsController {
   }
 
   @Put('/')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CONTENT])
   async updateSet(
     @GetOrgFromRequest() org: Organization,
     @Body() body: UpdateSetsDto
@@ -43,10 +50,11 @@ export class SetsController {
   }
 
   @Delete('/:id')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.CONTENT])
   async deleteSet(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string
   ) {
     return this._setsService.deleteSet(org.id, id);
   }
-} 
+}

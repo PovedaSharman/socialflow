@@ -188,14 +188,7 @@ export const useMenuItem = () => {
         </svg>
       ),
       path: '#',
-      role: [
-        'OWNER',
-        'SUPERADMIN',
-        'ADMIN',
-        'APPROVER',
-        'EDITOR',
-        'USER',
-      ],
+      role: ['OWNER', 'SUPERADMIN', 'ADMIN', 'APPROVER', 'EDITOR', 'USER'],
       requireBilling: true,
       onClick: handleAgentMediaClick,
     },
@@ -285,7 +278,7 @@ export const useMenuItem = () => {
         </svg>
       ),
       path: '/billing',
-      role: ['OWNER', 'SUPERADMIN', 'ADMIN'],
+      role: ['OWNER', 'SUPERADMIN'],
       requireBilling: true,
     },
     {

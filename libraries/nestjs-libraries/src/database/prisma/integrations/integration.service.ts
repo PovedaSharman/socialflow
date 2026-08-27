@@ -398,7 +398,7 @@ export class IntegrationService {
         );
         return loadAnalytics;
       } catch (e) {
-        if (e instanceof RefreshToken) {
+        if (e instanceof RefreshToken && !forceRefresh) {
           return this.checkAnalytics(org, integration, date, true);
         }
       }

@@ -1,4 +1,12 @@
-import { Body, Controller, Get, HttpException, Param, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  Param,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { StripeService } from '@gitroom/nestjs-libraries/services/stripe.service';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
@@ -11,6 +19,11 @@ import { NotificationService } from '@gitroom/nestjs-libraries/database/prisma/n
 import { Request } from 'express';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
 import { UsersService } from '@gitroom/nestjs-libraries/database/prisma/users/users.service';
+import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
+import {
+  AuthorizationActions,
+  Sections,
+} from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 
 @ApiTags('Billing')
 @Controller('/billing')
@@ -31,6 +44,7 @@ export class BillingController {
   }
 
   @Get('/check/:id')
+  @CheckPolicies([AuthorizationActions.Read, Sections.BILLING])
   async checkId(
     @GetOrgFromRequest() org: Organization,
     @Param('id') body: string
@@ -41,6 +55,7 @@ export class BillingController {
   }
 
   @Get('/check-discount')
+  @CheckPolicies([AuthorizationActions.Read, Sections.BILLING])
   async checkDiscount(@GetOrgFromRequest() org: Organization) {
     return {
       offerCoupon: !(await this._stripeService.checkDiscount(org.paymentId))
@@ -50,11 +65,13 @@ export class BillingController {
   }
 
   @Post('/apply-discount')
+  @CheckPolicies([AuthorizationActions.Update, Sections.BILLING])
   async applyDiscount(@GetOrgFromRequest() org: Organization) {
     await this._stripeService.applyDiscount(org.paymentId);
   }
 
   @Post('/finish-trial')
+  @CheckPolicies([AuthorizationActions.Update, Sections.BILLING])
   async finishTrial(@GetOrgFromRequest() org: Organization) {
     try {
       await this._stripeService.finishTrial(org.paymentId);
@@ -65,6 +82,7 @@ export class BillingController {
   }
 
   @Get('/is-trial-finished')
+  @CheckPolicies([AuthorizationActions.Read, Sections.BILLING])
   async isTrialFinished(@GetOrgFromRequest() org: Organization) {
     return {
       finished: !org.isTrailing,
@@ -72,6 +90,7 @@ export class BillingController {
   }
 
   @Post('/embedded')
+  @CheckPolicies([AuthorizationActions.Create, Sections.BILLING])
   async embedded(
     @GetOrgFromRequest() org: Organization,
     @GetUserFromRequest() user: User,
@@ -93,6 +112,7 @@ export class BillingController {
   }
 
   @Post('/subscribe')
+  @CheckPolicies([AuthorizationActions.Create, Sections.BILLING])
   async subscribe(
     @GetOrgFromRequest() org: Organization,
     @GetUserFromRequest() user: User,
@@ -114,6 +134,7 @@ export class BillingController {
   }
 
   @Get('/portal')
+  @CheckPolicies([AuthorizationActions.Read, Sections.BILLING])
   async modifyPayment(@GetOrgFromRequest() org: Organization) {
     const customer = await this._stripeService.getCustomerByOrganizationId(
       org.id
@@ -125,11 +146,13 @@ export class BillingController {
   }
 
   @Get('/')
+  @CheckPolicies([AuthorizationActions.Read, Sections.BILLING])
   getCurrentBilling(@GetOrgFromRequest() org: Organization) {
     return this._subscriptionService.getSubscriptionByOrganizationId(org.id);
   }
 
   @Post('/cancel')
+  @CheckPolicies([AuthorizationActions.Update, Sections.BILLING])
   async cancel(
     @GetOrgFromRequest() org: Organization,
     @GetUserFromRequest() user: User,
@@ -146,6 +169,7 @@ export class BillingController {
   }
 
   @Post('/prorate')
+  @CheckPolicies([AuthorizationActions.Update, Sections.BILLING])
   prorate(
     @GetOrgFromRequest() org: Organization,
     @Body() body: BillingSubscribeDto
@@ -154,6 +178,7 @@ export class BillingController {
   }
 
   @Get('/charges')
+  @CheckPolicies([AuthorizationActions.Read, Sections.BILLING])
   async getCharges(
     @GetUserFromRequest() user: User,
     @GetOrgFromRequest() org: Organization
@@ -166,6 +191,7 @@ export class BillingController {
   }
 
   @Post('/refund-charges')
+  @CheckPolicies([AuthorizationActions.Update, Sections.BILLING])
   async refundCharges(
     @GetUserFromRequest() user: User,
     @GetOrgFromRequest() org: Organization,
@@ -179,6 +205,7 @@ export class BillingController {
   }
 
   @Post('/cancel-subscription')
+  @CheckPolicies([AuthorizationActions.Update, Sections.BILLING])
   async cancelSubscription(
     @GetUserFromRequest() user: User,
     @GetOrgFromRequest() org: Organization
@@ -191,6 +218,7 @@ export class BillingController {
   }
 
   @Get('/coupon-info')
+  @CheckPolicies([AuthorizationActions.Read, Sections.BILLING])
   async couponInfo(
     @GetUserFromRequest() user: User,
     @GetOrgFromRequest() org: Organization
@@ -203,6 +231,7 @@ export class BillingController {
   }
 
   @Post('/apply-coupon')
+  @CheckPolicies([AuthorizationActions.Update, Sections.BILLING])
   async applyCoupon(
     @GetUserFromRequest() user: User,
     @GetOrgFromRequest() org: Organization,
@@ -216,6 +245,7 @@ export class BillingController {
   }
 
   @Post('/cancel-coupon')
+  @CheckPolicies([AuthorizationActions.Update, Sections.BILLING])
   async cancelCoupon(
     @GetUserFromRequest() user: User,
     @GetOrgFromRequest() org: Organization
@@ -228,11 +258,13 @@ export class BillingController {
   }
 
   @Get('/chatbase-refund/preview')
+  @CheckPolicies([AuthorizationActions.Read, Sections.BILLING])
   chatbaseRefundPreview(@GetOrgFromRequest() org: Organization) {
     return this._stripeService.chatbaseRefundPreview(org.id);
   }
 
   @Post('/chatbase-refund')
+  @CheckPolicies([AuthorizationActions.Update, Sections.BILLING])
   async chatbaseRefund(
     @GetUserFromRequest() user: User,
     @GetOrgFromRequest() org: Organization
@@ -252,6 +284,7 @@ export class BillingController {
   }
 
   @Post('/add-subscription')
+  @CheckPolicies([AuthorizationActions.Create, Sections.BILLING])
   async addSubscription(
     @Body() body: { subscription: string },
     @GetUserFromRequest() user: User,
@@ -267,5 +300,4 @@ export class BillingController {
       body.subscription
     );
   }
-
 }

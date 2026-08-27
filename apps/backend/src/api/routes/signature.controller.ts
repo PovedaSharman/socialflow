@@ -1,9 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
 import { Organization } from '@prisma/client';
 import { ApiTags } from '@nestjs/swagger';
 import { SignatureService } from '@gitroom/nestjs-libraries/database/prisma/signatures/signature.service';
 import { SignatureDto } from '@gitroom/nestjs-libraries/dtos/signature/signature.dto';
+import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
+import {
+  AuthorizationActions,
+  Sections,
+} from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 
 @ApiTags('Signatures')
 @Controller('/signatures')
@@ -21,6 +34,7 @@ export class SignatureController {
   }
 
   @Post('/')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async createSignature(
     @GetOrgFromRequest() org: Organization,
     @Body() body: SignatureDto
@@ -29,6 +43,7 @@ export class SignatureController {
   }
 
   @Delete('/:id')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.CONTENT])
   async deleteSignature(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string
@@ -37,6 +52,7 @@ export class SignatureController {
   }
 
   @Put('/:id')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CONTENT])
   async updateSignature(
     @Param('id') id: string,
     @GetOrgFromRequest() org: Organization,

@@ -53,7 +53,7 @@ Milestone 3 implementation is checkpointed; its automated WCAG and visual gate r
 | Production builds            | Passed: frontend, backend and orchestrator                                           |
 | Formatting                   | Passed for the complete SocialFlow delta from the pinned upstream tag                |
 | Lint                         | Passed: root flat ESLint configuration with actual hook correctness checks retained  |
-| Accessibility automation     | WCAG 2.2 A/AA specification added; post-change execution remains pending              |
+| Accessibility automation     | WCAG 2.2 A/AA specification added; post-change execution remains pending             |
 
 ### Milestone 1 repairs
 
@@ -119,11 +119,18 @@ No production-readiness claim is made.
 - Added a phased PostgreSQL enum/data migration runbook with compatibility deployment, legacy-row verification and rollback-window requirements in `docs/ROLE_MIGRATION.md`.
 - Added pure/unit specifications for active-organisation selection, administrator roles, billing-disabled role enforcement, public auth messages and password-reset fingerprints. They are intentionally unexecuted under the current workstation restriction.
 - Added unit specifications for invitation-token entropy/hashing and fail-closed opaque-token resolution. They are intentionally unexecuted under the current workstation restriction.
-- Current static verification: `git diff --check`, package JSON parsing and manual source review. The invitation schema still requires Prisma generation and reviewed migration validation on a suitable host. No compiler, test runner, app process, container or browser was started.
+- Applied explicit role policies to tenant mutations in posts, media, sets, signatures, integrations, third-party connectors, autoposts, webhooks, billing and Copilot. Viewer writes now fail with 403, channel/webhook administration is owner/admin-only, billing is owner-only, and content approval has a distinct policy section.
+- Added `scripts/check-tenant-policies.mjs` and a matching Jest regression specification. The bounded 64 MB audit passed across 12 tenant controllers, and `package.json` parsing plus `git diff --check` passed.
+- Replaced three potentially unbounded credential-refresh recursions with one-retry guards, bounded integration-function refresh to one retry, and replaced recursive publishing-slot search with an iterative 366-day horizon and understandable errors.
+- Added a 64 MB `check:resource-safety` audit covering nine invariants: non-launching root development, serial tests/builds, bounded refresh retries and bounded slot search. Both resource and tenant-policy audits pass.
+- Files changed for this slice: the permission enums/service/tests, 12 audited tenant controllers, post and integration services, the billing navigation role filter, the root scripts manifest, and the two bounded audit scripts.
+- Targeted Prettier formatting completed under a 256 MB ceiling; `git diff --check` passes.
+- A targeted, single-process Jest attempt was deliberately capped at 256 MB and terminated at that heap ceiling before completing. The cap prevented host-level memory growth; the test result is not claimed as passing and the ceiling was not raised.
+- The invitation/role schema still requires Prisma generation and reviewed migration validation on a suitable host. No compiler, app process, container, browser, watcher or parallel test worker was started.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
-- Apply the role matrix to currently unannotated content mutations and add approval-state persistence before claiming complete approver/editor/viewer enforcement.
+- Add approval-state persistence and guarded request/approve/reject transitions before claiming complete approver/editor/viewer enforcement.
 - Introduce separately keyed authenticated encryption for social OAuth access and refresh tokens, with safe key rotation and no plaintext fallback in production.
 - Build the cross-tenant access matrix and account-lifecycle integration tests for execution on a suitable host.

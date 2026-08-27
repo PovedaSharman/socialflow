@@ -14,9 +14,14 @@ import { ApiTags } from '@nestjs/swagger';
 import { WebhooksService } from '@gitroom/nestjs-libraries/database/prisma/webhooks/webhooks.service';
 import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
 import {
-  OnlyURL, UpdateDto, WebhooksDto
+  OnlyURL,
+  UpdateDto,
+  WebhooksDto,
 } from '@gitroom/nestjs-libraries/dtos/webhooks/webhooks.dto';
-import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import {
+  AuthorizationActions,
+  Sections,
+} from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 
 @ApiTags('Webhooks')
 @Controller('/webhooks')
@@ -38,6 +43,7 @@ export class WebhookController {
   }
 
   @Put('/')
+  @CheckPolicies([AuthorizationActions.Update, Sections.WEBHOOKS])
   async updateWebhook(
     @GetOrgFromRequest() org: Organization,
     @Body() body: UpdateDto
@@ -46,6 +52,7 @@ export class WebhookController {
   }
 
   @Delete('/:id')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.WEBHOOKS])
   async deleteWebhook(
     @GetOrgFromRequest() org: Organization,
     @Param('id') id: string
@@ -54,6 +61,7 @@ export class WebhookController {
   }
 
   @Post('/send')
+  @CheckPolicies([AuthorizationActions.Create, Sections.WEBHOOKS])
   async sendWebhook(@Body() body: any, @Query() query: OnlyURL) {
     try {
       await fetch(query.url, {

@@ -59,6 +59,8 @@ type PostWithConditionals = Post & {
   childrenPost: Post[];
 };
 
+const MAX_SCHEDULING_HORIZON_DAYS = 366;
+
 @Injectable()
 export class PostsService {
   private storage = UploadFactory.createStorage();
@@ -133,7 +135,7 @@ export class PostsService {
       );
     } catch (e) {
       console.log(e);
-      if (e instanceof RefreshToken) {
+      if (e instanceof RefreshToken && !forceRefresh) {
         return this.getMissingContent(orgId, postId, true);
       }
     }
@@ -224,7 +226,7 @@ export class PostsService {
       return loadAnalytics;
     } catch (e) {
       console.log(e);
-      if (e instanceof RefreshToken) {
+      if (e instanceof RefreshToken && !forceRefresh) {
         return this.checkPostAnalytics(orgId, postId, date, true);
       }
     }
@@ -1102,7 +1104,12 @@ export class PostsService {
       orgId,
       integrationId
     );
-    return this.findFreeDateTimeRecursive(
+    if (findTimes.length === 0) {
+      throw new BadRequestException(
+        'Configure at least one publishing time before finding a free slot.'
+      );
+    }
+    return this.findFreeDateTimeWithinHorizon(
       orgId,
       findTimes,
       dayjs.utc().startOf('day')
@@ -1118,29 +1125,36 @@ export class PostsService {
     return this._postRepository.createPopularPosts(post);
   }
 
-  private async findFreeDateTimeRecursive(
+  private async findFreeDateTimeWithinHorizon(
     orgId: string,
     times: number[],
     date: dayjs.Dayjs
   ): Promise<string> {
-    const list = await this._postRepository.getPostsCountsByDates(
-      orgId,
-      times,
-      date
-    );
+    for (
+      let dayOffset = 0;
+      dayOffset < MAX_SCHEDULING_HORIZON_DAYS;
+      dayOffset++
+    ) {
+      const candidateDate = date.add(dayOffset, 'day');
+      const list = await this._postRepository.getPostsCountsByDates(
+        orgId,
+        times,
+        candidateDate
+      );
+      if (list.length === 0) {
+        continue;
+      }
 
-    if (!list.length) {
-      return this.findFreeDateTimeRecursive(orgId, times, date.add(1, 'day'));
+      const minute = Math.min(...list);
+      return candidateDate
+        .clone()
+        .add(minute, 'minutes')
+        .format('YYYY-MM-DDTHH:mm:00');
     }
 
-    const num = list.reduce<null | number>((prev, curr) => {
-      if (prev === null || prev > curr) {
-        return curr;
-      }
-      return prev;
-    }, null) as number;
-
-    return date.clone().add(num, 'minutes').format('YYYY-MM-DDTHH:mm:00');
+    throw new BadRequestException(
+      `No publishing slot is available in the next ${MAX_SCHEDULING_HORIZON_DAYS} days.`
+    );
   }
 
   getComments(postId: string) {

@@ -25,6 +25,11 @@ import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
 import { SaveMediaInformationDto } from '@gitroom/nestjs-libraries/dtos/media/save.media.information.dto';
 import { VideoDto } from '@gitroom/nestjs-libraries/dtos/videos/video.dto';
 import { VideoFunctionDto } from '@gitroom/nestjs-libraries/dtos/videos/video.function.dto';
+import { CheckPolicies } from '@gitroom/backend/services/auth/permissions/permissions.ability';
+import {
+  AuthorizationActions,
+  Sections,
+} from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 
 @ApiTags('Media')
 @Controller('/media')
@@ -36,11 +41,13 @@ export class MediaController {
   ) {}
 
   @Delete('/:id')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.CONTENT])
   deleteMedia(@GetOrgFromRequest() org: Organization, @Param('id') id: string) {
     return this._mediaService.deleteMedia(org.id, id);
   }
 
   @Post('/generate-video')
+  @CheckPolicies([AuthorizationActions.Create, Sections.AI])
   generateVideo(
     @GetOrgFromRequest() org: Organization,
     @Body() body: VideoDto
@@ -50,6 +57,7 @@ export class MediaController {
   }
 
   @Post('/generate-image')
+  @CheckPolicies([AuthorizationActions.Create, Sections.AI])
   async generateImage(
     @GetOrgFromRequest() org: Organization,
     @Req() req: Request,
@@ -69,6 +77,7 @@ export class MediaController {
   }
 
   @Post('/generate-image-with-prompt')
+  @CheckPolicies([AuthorizationActions.Create, Sections.AI])
   async generateImageFromText(
     @GetOrgFromRequest() org: Organization,
     @Req() req: Request,
@@ -85,6 +94,7 @@ export class MediaController {
   }
 
   @Post('/upload-server')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   @UseInterceptors(FileInterceptor('file'))
   @UsePipes(new CustomFileValidationPipe())
   async uploadServer(
@@ -102,6 +112,7 @@ export class MediaController {
   }
 
   @Post('/save-media')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async saveMedia(
     @GetOrgFromRequest() org: Organization,
     @Req() req: Request,
@@ -120,6 +131,7 @@ export class MediaController {
   }
 
   @Post('/information')
+  @CheckPolicies([AuthorizationActions.Update, Sections.CONTENT])
   saveMediaInformation(
     @GetOrgFromRequest() org: Organization,
     @Body() body: SaveMediaInformationDto
@@ -128,6 +140,7 @@ export class MediaController {
   }
 
   @Post('/upload-simple')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   @UseInterceptors(FileInterceptor('file'))
   @UsePipes(new CustomFileValidationPipe())
   async uploadSimple(
@@ -152,6 +165,7 @@ export class MediaController {
   }
 
   @Post('/:endpoint')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
   async uploadFile(
     @GetOrgFromRequest() org: Organization,
     @Req() req: Request,
@@ -193,10 +207,13 @@ export class MediaController {
   }
 
   @Post('/video/function')
-  videoFunction(
-    @Body() body: VideoFunctionDto
-  ) {
-    return this._mediaService.videoFunction(body.identifier, body.functionName, body.params);
+  @CheckPolicies([AuthorizationActions.Create, Sections.AI])
+  videoFunction(@Body() body: VideoFunctionDto) {
+    return this._mediaService.videoFunction(
+      body.identifier,
+      body.functionName,
+      body.params
+    );
   }
 
   @Get('/generate-video/:type/allowed')

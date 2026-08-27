@@ -38,12 +38,12 @@ export function roleRank(role: OrganizationRole) {
   return normalized === 'OWNER'
     ? 4
     : normalized === 'ADMIN'
-      ? 3
-      : normalized === 'APPROVER'
-        ? 2
-        : normalized === 'EDITOR'
-          ? 1
-          : 0;
+    ? 3
+    : normalized === 'APPROVER'
+    ? 2
+    : normalized === 'EDITOR'
+    ? 1
+    : 0;
 }
 
 export function canManageOrganization(role: OrganizationRole) {
@@ -53,6 +53,10 @@ export function canManageOrganization(role: OrganizationRole) {
 
 export function canManageTeam(role: OrganizationRole) {
   return canManageOrganization(role);
+}
+
+export function canManageBilling(role: OrganizationRole) {
+  return normalizeOrganizationRole(role) === 'OWNER';
 }
 
 export function canEditContent(role: OrganizationRole) {

@@ -51,6 +51,8 @@
     "docker-create": "./var/docker/docker-create.sh",
     "postinstall": "pnpm run prisma-generate",
     "test": "cross-env NODE_OPTIONS=--max-old-space-size=1536 jest --runInBand --coverage --detectOpenHandles --reporters=default",
+    "check:tenant-policies": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-tenant-policies.mjs",
+    "check:resource-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-resource-safety.mjs",
     "test:a11y": "cross-env NODE_OPTIONS=--max-old-space-size=1024 playwright test --config ./playwright.config.ts"
   },
   "dependencies": {
