@@ -14,7 +14,11 @@ import { Integration } from '@prisma/client';
 import { capitalize, sortBy } from 'lodash';
 import { PostResponse } from '@gitroom/nestjs-libraries/integrations/social/social.integrations.interface';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
-import { TimeoutFailure, TypedSearchAttributes } from '@temporalio/common';
+import {
+  type Duration,
+  TimeoutFailure,
+  TypedSearchAttributes,
+} from '@temporalio/common';
 import { postId as postIdSearchParam } from '@gitroom/nestjs-libraries/temporal/temporal.search.attribute';
 
 const proxyTaskQueue = (taskQueue: string) => {
@@ -47,9 +51,12 @@ const proxyCheckTaskQueue = (taskQueue: string) => {
 // automatic retries - a retried activity whose previous (timed-out) attempt
 // still completed in the background would publish twice. The workflow retries
 // deliberately, and treats timeouts as "outcome unknown".
-const proxyMutationTaskQueue = (taskQueue: string) => {
+const proxyMutationTaskQueue = (
+  taskQueue: string,
+  startToCloseTimeout: Duration = '10 minute'
+) => {
   return proxyActivities<PostActivity>({
-    startToCloseTimeout: '10 minute',
+    startToCloseTimeout,
     taskQueue,
     retry: {
       maximumAttempts: 1,
@@ -90,11 +97,13 @@ export async function postWorkflowV106({
   postId,
   organizationId,
   postNow = false,
+  mutationStartToCloseTimeout,
 }: {
   taskQueue: string;
   postId: string;
   organizationId: string;
   postNow?: boolean;
+  mutationStartToCloseTimeout?: Duration;
 }) {
   // Dynamic task queue, for concurrency
   const {
@@ -111,7 +120,10 @@ export async function postWorkflowV106({
 
   const { checkPostStatus } = proxyCheckTaskQueue(taskQueue);
 
-  const { postSocialPending, finalizePost } = proxyMutationTaskQueue(taskQueue);
+  const { postSocialPending, finalizePost } = proxyMutationTaskQueue(
+    taskQueue,
+    mutationStartToCloseTimeout
+  );
 
   let poked = false;
   setHandler(poke, () => {

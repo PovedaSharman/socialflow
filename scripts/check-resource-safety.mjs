@@ -32,6 +32,7 @@ const subscriptionCycleSpec = read(
 );
 const accountTenantRunner = read('scripts/run-account-tenant-gate.mjs');
 const accountTenantWorkflow = read('.github/workflows/account-tenant-gate.yml');
+const publishWorkflowRunner = read('scripts/run-publish-workflow-gate.mjs');
 
 const requirements = [
   [
@@ -129,6 +130,18 @@ const requirements = [
       accountTenantWorkflow.includes('cancel-in-progress: true') &&
       accountTenantWorkflow.includes('timeout-minutes: 20'),
     'The release-host tenant gate must remain single-process, memory-capped and time-bounded.',
+  ],
+  [
+    publishWorkflowRunner.includes("'--runInBand'") &&
+      publishWorkflowRunner.includes('timeout: 90_000') &&
+      publishWorkflowRunner.includes('shell: false') &&
+      publishWorkflowRunner.includes(
+        "NODE_OPTIONS: '--max-old-space-size=1024'"
+      ) &&
+      packageJson.scripts['test:publish-workflow:release'].includes(
+        '--max-old-space-size=128'
+      ),
+    'The release-host publish gate must remain single-process, memory-capped and time-bounded.',
   ],
 ];
 

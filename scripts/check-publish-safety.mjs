@@ -23,6 +23,11 @@ const postWorkflow = read(
 const postsRepository = read(
   'libraries/nestjs-libraries/src/database/prisma/posts/posts.repository.ts'
 );
+const workflowIntegrationSpec = read(
+  'apps/orchestrator/src/workflows/post-workflows/post.workflow.v1.0.6.integration.spec.ts'
+);
+const workflowGateRunner = read('scripts/run-publish-workflow-gate.mjs');
+const gitignore = read('.gitignore');
 
 const requirements = [
   [
@@ -77,6 +82,25 @@ const requirements = [
       postsRepository
     ),
     'The missing-post recovery sweep must remain ordered and batch-bounded.',
+  ],
+  [
+    workflowIntegrationSpec.includes("runScenario('refresh')") &&
+      workflowIntegrationSpec.includes("runScenario('unknown')") &&
+      workflowIntegrationSpec.includes(
+        "runScenario('timeout', '500 milliseconds')"
+      ) &&
+      workflowIntegrationSpec.includes('expect(acceptedMutations).toBe(1)') &&
+      workflowIntegrationSpec.includes('fetchHistory()'),
+    'The release-host workflow suite must cover refresh, unknown and timeout outcomes with retained histories.',
+  ],
+  [
+    workflowGateRunner.includes('ALLOW_TEMPORAL_TEST_HISTORY') &&
+      workflowGateRunner.includes('TEMPORAL_NAMESPACE') &&
+      workflowGateRunner.includes('timeout: 90_000') &&
+      workflowGateRunner.includes('shell: false') &&
+      workflowGateRunner.includes("'--runInBand'") &&
+      gitignore.includes('/artifacts/temporal-post-safety/'),
+    'The release-host workflow runner must fail closed and remain single-process and time-bounded.',
   ],
 ];
 

@@ -209,7 +209,12 @@ No production-readiness claim is made.
 - Enabled the capability for the local SocialFlow test provider and asserted it alongside the same-key/same-result behaviour. No external provider is enabled without adapter-specific evidence.
 - Files changed for this retry-contract slice: the provider interface, local test provider/specification, posting activity/workflow, publishing retry guide, bounded publish audit and this progress record.
 - Verification for this retry-contract slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB publish-safety and resource-safety audits passed with 8 and 18 invariants respectively; `git diff --check` passed. Jest, TypeScript, Temporal and provider runtime checks were not run and are not claimed.
+- Added an opt-in real-Temporal workflow suite that runs one worker and three sequential scenarios: a safe credential refresh, an unknown failure after simulated provider acceptance, and a 500 ms mutation timeout. Each scenario asserts one accepted mutation and exports its Temporal history.
+- Added a fail-closed release-host runner requiring explicit test/history flags, a Temporal namespace containing `test` and an in-repository artifact path. It starts one non-shell Jest child with a 1 GB heap and a hard 90-second process timeout; generated histories are Git-ignored.
+- Made the mutation start-to-close timeout an optional workflow argument with the unchanged ten-minute default, allowing fast timeout evidence in new test histories without changing existing workflow behaviour.
+- Files changed for the Temporal evidence slice: the current post workflow, opt-in workflow integration suite, guarded release runner/package script, publishing retry guide, Git ignore rules, publish/resource audits and this progress record.
+- Verification for the Temporal evidence slice: targeted Prettier completed under a 128 MB heap cap; the runner's fail-closed guard was exercised under 64 MB and exited before Jest or Temporal; `package.json` parsed under 64 MB; the 64 MB publish-safety and resource-safety audits passed with 10 and 19 invariants respectively; `git diff --check` passed. The Temporal worker, scenarios and exported histories were not executed and are not claimed.
 
 ### Milestone 5 next
 
-- Prepare a bounded release-host test-provider workflow gate that injects safe refresh, timeout and unknown-outcome scenarios, retains Temporal history and proves the provider mutation call count remains one.
+- Execute the guarded Temporal workflow gate on the approved host, retain its three histories, repair any failures and then audit connection-health/reconnect recovery for the test provider and real adapters.

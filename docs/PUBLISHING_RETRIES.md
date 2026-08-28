@@ -46,3 +46,24 @@ inject a timeout and an unknown post-mutation failure; both must stop with the
 unconfirmed recovery message and must not call the provider again. Retain the
 Temporal history and test output. These scenarios have not been executed on
 this workstation and are not claimed as passing.
+
+The prepared gate connects to an existing non-production Temporal service; it
+does not start one. Create or select a namespace whose name contains `test`,
+then run on the approved release host:
+
+```bash
+NODE_ENV=test \
+RUN_TEMPORAL_INTEGRATION_TESTS=true \
+ALLOW_TEMPORAL_TEST_HISTORY=true \
+TEMPORAL_ADDRESS='127.0.0.1:7233' \
+TEMPORAL_NAMESPACE='socialflow-test' \
+TEMPORAL_TEST_ARTIFACT_DIR='artifacts/temporal-post-safety' \
+pnpm test:publish-workflow:release
+```
+
+The runner refuses non-test namespaces and artifact paths outside the
+repository. It starts one Jest process and one Temporal worker, caps the Jest
+heap at 1 GB and terminates the command after 90 seconds. The integration suite
+runs refresh, unknown-outcome and 500 ms timeout scenarios sequentially and
+writes one JSON history for each scenario. Preserve those histories with the
+command output as the milestone evidence.
