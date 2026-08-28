@@ -35,6 +35,15 @@ const postsService = read(
   'libraries/nestjs-libraries/src/database/prisma/posts/posts.service.ts'
 );
 const postActivity = read('apps/orchestrator/src/activities/post.activity.ts');
+const webhooksRepository = read(
+  'libraries/nestjs-libraries/src/database/prisma/webhooks/webhooks.repository.ts'
+);
+const webhooksDto = read(
+  'libraries/nestjs-libraries/src/dtos/webhooks/webhooks.dto.ts'
+);
+const webhooksTenantSpec = read(
+  'libraries/nestjs-libraries/src/database/prisma/webhooks/webhooks.repository.tenant.integration.spec.ts'
+);
 
 const requirements = [
   [
@@ -124,6 +133,23 @@ const requirements = [
       mediaTenantSpec.includes('deleteMedia(organizationA, mediaB)') &&
       mediaTenantSpec.includes('does not resolve soft-deleted media'),
     'The opt-in database suite must cover cross-tenant media reads, edits, deletion and active-state checks.',
+  ],
+  [
+    webhooksRepository.includes('this._transaction.model.$transaction') &&
+      webhooksRepository.includes('organizationId: orgId') &&
+      webhooksRepository.includes(
+        'ownedIntegrations !== integrationIds.length'
+      ) &&
+      webhooksRepository.includes('deletedAt: null') &&
+      webhooksDto.match(/@ArrayMaxSize\(100\)/g)?.length === 2,
+    'Webhook writes must atomically validate a bounded list of active tenant-owned channels.',
+  ],
+  [
+    webhooksTenantSpec.includes("RUN_DATABASE_INTEGRATION_TESTS === 'true'") &&
+      webhooksTenantSpec.includes('integrations: [{ id: integrationB }]') &&
+      webhooksTenantSpec.includes('deleteWebhook(organizationA, webhookB)') &&
+      webhooksTenantSpec.includes('only de-duplicated relationships'),
+    'The opt-in database suite must cover webhook/channel ownership, mutation denial and relationship de-duplication.',
   ],
 ];
 

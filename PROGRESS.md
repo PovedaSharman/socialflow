@@ -162,9 +162,14 @@ No production-readiness claim is made.
 - Added an opt-in two-tenant media repository suite covering isolated lists, cross-tenant ID lookup, metadata edits and deletion, plus denial of soft-deleted attachment resolution. The account/tenant matrix and bounded audit now cover media ownership.
 - Files changed for the media isolation slice: the media repository/service, post service, publishing activity, opt-in media repository suite, account/tenant matrix guide, bounded coverage audit and this progress record.
 - Verification for the media isolation slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB account/tenant and resource-safety audits passed with 12 and 15 invariants respectively; `git diff --check` passed. Jest, PostgreSQL, Prisma generation, compiler, application runtime and browser checks were not run and are not claimed.
+- Closed a cross-tenant webhook association gap: create/update now de-duplicates channel IDs, validates every channel is active and owned by the selected organisation, and replaces relationships in the same database transaction as the webhook write.
+- Bounded webhook channel submissions to 100 entries and enabled nested DTO validation, preventing an unbounded relationship fan-out from reaching repository work.
+- Added an opt-in two-tenant webhook suite covering foreign-channel rejection without partial writes, cross-tenant webhook update/delete denial and de-duplicated owned relationships. The account/tenant matrix and bounded audit now cover webhook ownership.
+- Files changed for the webhook isolation slice: the webhook repository/DTO, opt-in webhook repository suite, account/tenant matrix guide, bounded coverage audit and this progress record.
+- Verification for the webhook isolation slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB account/tenant and resource-safety audits passed with 14 and 15 invariants respectively; `git diff --check` passed. Jest, PostgreSQL, Prisma generation, compiler, application runtime and browser checks were not run and are not claimed.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
 - Run the credential dry-run, bounded encryption migration and Temporal legacy-history drain/retention procedure on a suitable explicitly approved host, then exercise test-provider reconnect, refresh and publish paths.
-- Extend the opt-in two-tenant database/request matrix to webhooks, sets, signatures, invitations and billing, then execute the complete account lifecycle gate on a suitable host.
+- Extend the opt-in two-tenant database/request matrix to sets, signatures, invitations and billing, then execute the complete account lifecycle gate on a suitable host.

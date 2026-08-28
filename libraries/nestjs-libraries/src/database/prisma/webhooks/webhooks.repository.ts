@@ -1,11 +1,17 @@
-import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import {
+  PrismaRepository,
+  PrismaTransaction,
+} from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { WebhooksDto } from '@gitroom/nestjs-libraries/dtos/webhooks/webhooks.dto';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class WebhooksRepository {
-  constructor(private _webhooks: PrismaRepository<'webhooks'>) {}
+  constructor(
+    private _webhooks: PrismaRepository<'webhooks'>,
+    private _transaction: PrismaTransaction
+  ) {}
 
   getTotal(orgId: string) {
     return this._webhooks.model.webhooks.count({
@@ -51,37 +57,54 @@ export class WebhooksRepository {
   }
 
   async createWebhook(orgId: string, body: WebhooksDto) {
-    const { id } = await this._webhooks.model.webhooks.upsert({
-      where: {
-        id: body.id || uuidv4(),
-        organizationId: orgId,
-      },
-      create: {
-        organizationId: orgId,
-        url: body.url,
-        name: body.name,
-      },
-      update: {
-        url: body.url,
-        name: body.name,
-      },
-    });
+    const integrationIds = [
+      ...new Set(body.integrations.map((integration) => integration.id)),
+    ];
 
-    await this._webhooks.model.webhooks.update({
-      where: {
-        id,
-        organizationId: orgId,
-      },
-      data: {
-        integrations: {
-          deleteMany: {},
-          create: body.integrations.map((integration) => ({
-            integrationId: integration.id,
-          })),
+    return this._transaction.model.$transaction(async (transaction) => {
+      const ownedIntegrations = await transaction.integration.count({
+        where: {
+          id: { in: integrationIds },
+          organizationId: orgId,
+          deletedAt: null,
         },
-      },
-    });
+      });
+      if (ownedIntegrations !== integrationIds.length) {
+        throw new BadRequestException(
+          'One or more selected channels are unavailable.'
+        );
+      }
 
-    return { id };
+      const { id } = await transaction.webhooks.upsert({
+        where: {
+          id: body.id || uuidv4(),
+          organizationId: orgId,
+        },
+        create: {
+          organizationId: orgId,
+          url: body.url,
+          name: body.name,
+        },
+        update: {
+          url: body.url,
+          name: body.name,
+        },
+      });
+
+      await transaction.webhooks.update({
+        where: {
+          id,
+          organizationId: orgId,
+        },
+        data: {
+          integrations: {
+            deleteMany: {},
+            create: integrationIds.map((integrationId) => ({ integrationId })),
+          },
+        },
+      });
+
+      return { id };
+    });
   }
 }

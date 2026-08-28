@@ -1,4 +1,11 @@
-import { IsDefined, IsOptional, IsString, IsUrl } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsDefined,
+  IsString,
+  IsUrl,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsSafeWebhookUrl } from '@gitroom/nestjs-libraries/dtos/webhooks/webhook.url.validator';
 
@@ -25,6 +32,9 @@ export class WebhooksDto {
   url: string;
 
   @Type(() => WebhooksIntegrationDto)
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
   @IsDefined()
   integrations: WebhooksIntegrationDto[];
 }
@@ -59,6 +69,9 @@ export class UpdateDto {
   url: string;
 
   @Type(() => WebhooksIntegrationDto)
+  @IsArray()
+  @ArrayMaxSize(100)
+  @ValidateNested({ each: true })
   @IsDefined()
   integrations: WebhooksIntegrationDto[];
 }
