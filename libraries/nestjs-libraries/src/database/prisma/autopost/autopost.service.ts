@@ -21,7 +21,10 @@ const parser = new Parser();
 
 interface WorkflowChannelsState {
   messages: BaseMessage[];
-  integrations: Integration[];
+  integrations: Pick<
+    Integration,
+    'id' | 'organizationId' | 'providerIdentifier'
+  >[];
   body: AutoPost;
   description: string;
   image: string;

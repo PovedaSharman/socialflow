@@ -1,15 +1,24 @@
-import { proxyActivities, sleep } from '@temporalio/workflow';
+import {
+  continueAsNew,
+  patched,
+  proxyActivities,
+  sleep,
+} from '@temporalio/workflow';
 import { IntegrationsActivity } from '@gitroom/orchestrator/activities/integrations.activity';
 
-const { getIntegrationsById, refreshToken } =
-  proxyActivities<IntegrationsActivity>({
-    startToCloseTimeout: '10 minute',
-    retry: {
-      maximumAttempts: 3,
-      backoffCoefficient: 1,
-      initialInterval: '2 minutes',
-    },
-  });
+const {
+  getIntegrationsById,
+  getIntegrationMetadataById,
+  refreshToken,
+  refreshTokenById,
+} = proxyActivities<IntegrationsActivity>({
+  startToCloseTimeout: '10 minute',
+  retry: {
+    maximumAttempts: 3,
+    backoffCoefficient: 1,
+    initialInterval: '2 minutes',
+  },
+});
 
 export async function refreshTokenWorkflow({
   organizationId,
@@ -18,6 +27,48 @@ export async function refreshTokenWorkflow({
   integrationId: string;
   organizationId: string;
 }) {
+  if (patched('social-credential-refresh-history-boundary-v1')) {
+    let integration = await getIntegrationMetadataById(
+      organizationId,
+      integrationId
+    );
+    if (
+      !integration ||
+      integration.deletedAt ||
+      integration.inBetweenSteps ||
+      integration.refreshNeeded
+    ) {
+      return false;
+    }
+
+    const wait = Math.max(
+      0,
+      new Date(integration.tokenExpiration).getTime() - new Date().getTime()
+    );
+    if (!wait) {
+      return false;
+    }
+    await sleep(wait);
+
+    integration = await getIntegrationMetadataById(
+      organizationId,
+      integrationId
+    );
+    if (
+      !integration ||
+      integration.deletedAt ||
+      integration.inBetweenSteps ||
+      integration.refreshNeeded
+    ) {
+      return false;
+    }
+
+    if (!(await refreshTokenById(organizationId, integrationId))) {
+      return false;
+    }
+    return await continueAsNew({ organizationId, integrationId });
+  }
+
   while (true) {
     let integration = await getIntegrationsById(integrationId, organizationId);
     if (

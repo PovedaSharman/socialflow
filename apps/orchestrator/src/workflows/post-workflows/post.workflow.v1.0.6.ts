@@ -7,6 +7,7 @@ import {
   sleep,
   defineSignal,
   setHandler,
+  patched,
 } from '@temporalio/workflow';
 import dayjs from 'dayjs';
 import { Integration } from '@prisma/client';
@@ -59,6 +60,8 @@ const proxyMutationTaskQueue = (taskQueue: string) => {
 const {
   getPostsList,
   getPost,
+  getPostsListForWorkflow,
+  getPostForWorkflow,
   inAppNotification,
   changeState,
   updatePost,
@@ -98,6 +101,7 @@ export async function postWorkflowV106({
     postComment,
     getIntegrationById,
     refreshTokenWithCause,
+    refreshCredentialWithCause,
     internalPlugs,
     globalPlugs,
     processInternalPlug,
@@ -113,9 +117,15 @@ export async function postWorkflowV106({
     poked = true;
   });
 
+  const credentialsOutOfHistory = patched(
+    'social-credential-history-boundary-v1'
+  );
+
   const startTime = new Date();
   // get all the posts and comments to post
-  const firstPost = await getPost(organizationId, postId);
+  const firstPost = credentialsOutOfHistory
+    ? await getPostForWorkflow(organizationId, postId)
+    : await getPost(organizationId, postId);
 
   // in case doesn't exists for some reason, fail it
   if (!firstPost) {
@@ -137,7 +147,9 @@ export async function postWorkflowV106({
     );
   }
 
-  const postsListBefore = await getPostsList(organizationId, postId);
+  const postsListBefore = credentialsOutOfHistory
+    ? await getPostsListForWorkflow(organizationId, postId)
+    : await getPostsList(organizationId, postId);
   const [post] = postsListBefore;
 
   if (!post) {
@@ -206,15 +218,12 @@ export async function postWorkflowV106({
   // 'unknown' - anything else (transient errors)
   const handleActivityError = async (
     err: unknown,
-    getIntegration?: () => Promise<any>
+    getIntegrationId?: () => string
   ): Promise<{
     type: 'retry' | 'stop' | 'bad-body' | 'timeout' | 'unknown';
     message: string;
   }> => {
-    if (
-      err instanceof ActivityFailure &&
-      err.cause instanceof TimeoutFailure
-    ) {
+    if (err instanceof ActivityFailure && err.cause instanceof TimeoutFailure) {
       return { type: 'timeout', message: '' };
     }
 
@@ -224,16 +233,29 @@ export async function postWorkflowV106({
         : undefined;
 
     if (cause?.type === 'refresh_token') {
-      const refresh = await refreshTokenWithCause(
-        getIntegration ? await getIntegration() : post.integration,
-        cause.message || ''
-      );
-      if (!refresh || !refresh.accessToken) {
-        return { type: 'stop', message: cause.message || '' };
-      }
-
-      if (!getIntegration) {
-        post.integration.token = refresh.accessToken;
+      if (credentialsOutOfHistory) {
+        const refreshed = await refreshCredentialWithCause(
+          organizationId,
+          getIntegrationId ? getIntegrationId() : post.integration.id,
+          cause.message || ''
+        );
+        if (!refreshed) {
+          return { type: 'stop', message: cause.message || '' };
+        }
+      } else {
+        const integration = getIntegrationId
+          ? await getIntegrationById(organizationId, getIntegrationId())
+          : post.integration;
+        const refresh = await refreshTokenWithCause(
+          integration,
+          cause.message || ''
+        );
+        if (!refresh || !refresh.accessToken) {
+          return { type: 'stop', message: cause.message || '' };
+        }
+        if (!getIntegrationId) {
+          post.integration.token = refresh.accessToken;
+        }
       }
 
       return { type: 'retry', message: cause.message || '' };
@@ -574,9 +596,7 @@ export async function postWorkflowV106({
         try {
           await processInternalPlug({ ...todo, post: postsResults[0].postId });
         } catch (err) {
-          const handle = await handleActivityError(err, () =>
-            getIntegrationById(organizationId, todo.integration)
-          );
+          const handle = await handleActivityError(err, () => todo.integration);
 
           if (handle.type === 'stop' || handle.type === 'bad-body') {
             break;

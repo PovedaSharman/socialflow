@@ -17,7 +17,24 @@ export class IntegrationsActivity {
     return this._integrationService.getIntegrationById(orgId, id);
   }
 
+  @ActivityMethod()
+  async getIntegrationMetadataById(orgId: string, id: string) {
+    return this._integrationService.getIntegrationMetadataById(orgId, id);
+  }
+
   async refreshToken(integration: Integration) {
     return this._refreshIntegrationService.refresh(integration);
+  }
+
+  @ActivityMethod()
+  async refreshTokenById(orgId: string, id: string) {
+    const integration = await this._integrationService.getIntegrationById(
+      orgId,
+      id
+    );
+    if (!integration) {
+      return false;
+    }
+    return !!(await this._refreshIntegrationService.refresh(integration));
   }
 }

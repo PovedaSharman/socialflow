@@ -17,7 +17,8 @@ const createRepository = (
         $transaction: (callback: (client: typeof transaction) => unknown) =>
           callback(transaction),
       },
-    } as never
+    } as never,
+    { decryptFields: (value: unknown) => value } as never
   );
 
 describe('post approval persistence', () => {

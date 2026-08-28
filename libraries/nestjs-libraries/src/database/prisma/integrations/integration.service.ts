@@ -168,6 +168,10 @@ export class IntegrationService {
     return this._integrationRepository.getIntegrationById(org, id);
   }
 
+  getIntegrationMetadataById(org: string, id: string) {
+    return this._integrationRepository.getIntegrationMetadataById(org, id);
+  }
+
   async refreshToken(provider: SocialProvider, refresh: string) {
     try {
       const { refreshToken, accessToken, expiresIn } =

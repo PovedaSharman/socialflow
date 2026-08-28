@@ -32,7 +32,9 @@ Milestone 3 implementation is checkpointed; its automated WCAG and visual gate r
 ### Gaps discovered
 
 - The host login shell still defaults to Node 20.19.2; commands must run after `nvm use`, and all recorded milestone gates run on Node 22.23.2.
-- Social OAuth tokens and legacy API keys are stored in plaintext fields.
+- Existing social credential rows and pre-boundary Temporal histories may
+  contain plaintext tokens until the documented bounded maintenance migration
+  and history-retention procedure are executed and verified.
 - MCP retains URL-embedded API-key routes and renders legacy URL instructions.
 - MCP scopes are coarse and do not default-deny immediate publishing or media generation.
 - No purpose-built immutable audit, scoped credential, consent or general usage-ledger models exist.
@@ -136,9 +138,18 @@ No production-readiness claim is made.
 - Files changed for the approval slice: the Prisma schema, posts repository/service/controller, permission service/specification, approval DTOs/repository specification, composer and launches UI, approval guide, root scripts manifest, and bounded safety audits.
 - Verification for the approval slice: targeted Prettier completed under a 256 MB heap cap; Prisma `format` validated and formatted the schema under 256 MB; the 64 MB approval, resource and tenant-policy audits passed with 7, 10 and 12-controller coverage respectively; `git diff --check` passed.
 - Jest, TypeScript, Prisma client generation, database migration execution, application runtime, browser accessibility and production builds were not run after this slice because they exceed the workstation-safe envelope. No result is claimed for those gates.
+- Added separately keyed AES-256-GCM envelopes for social access and refresh credentials with random 96-bit IVs, authenticated key IDs, 128-bit tags, multi-key reads and active-key rotation. Missing/malformed keys and plaintext credential reads fail closed in production.
+- Integration create, reconnect, page-selection and refresh writes encrypt before persistence. Provider and publishing reads authenticate and decrypt only inside internal services/activities; channel lists, calendar/composer queries and mutation responses now use explicit non-secret projections.
+- Tightened the page-selection replacement path so retiring an integration and its posts is organisation-scoped. Removed full integration rows from ordinary list responses and reduced integration mutation responses to IDs.
+- Added Temporal patch markers for deterministic compatibility: new post histories use credential-free activity payloads, seal capability-bearing provider pending state, and fetch secrets only inside provider activities; new refresh histories use metadata-only reads, refresh by tenant-scoped ID and continue as new after every cycle. Legacy branches remain only for replay and their retained histories are not claimed clean.
+- Added a cursor-based credential migration/rotation utility that captures a finite initial row count, scans at most 100 rows per batch, updates sequentially, verifies with a second scan and logs counts without credential values. Production rollout and key retirement are documented in `docs/SOCIAL_CREDENTIAL_ENCRYPTION.md`.
+- Replaced unbounded public-API and MCP integration-trigger refresh loops with a single retry, made public channel post deletion sequential, and expanded the low-memory resource audit to cover these boundaries plus the finite migration and refresh-workflow history.
+- Added pure specifications for random authenticated encryption, tamper rejection, old-key rotation and production fail-closed behaviour. They are intentionally unexecuted under the workstation restriction.
+- Files changed for the credential slice: the encryption service/specification, database module, integration/post repositories and services, autopost state type, public API and MCP trigger paths, orchestrator activities/current workflows, bounded migration and audit scripts, environment template, deployment/security documentation and the credential runbook.
+- Verification for the credential slice: targeted Prettier completed under a 256 MB heap cap; `package.json` parsed under 64 MB; the 64 MB social-credential, resource, approval and tenant-policy audits passed with 10, 15, 7 and 12-controller invariants respectively; `git diff --check` passed. Jest, TypeScript, application/runtime, migration execution and Temporal-history inspection were not run and are not claimed.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
-- Introduce separately keyed authenticated encryption for social OAuth access and refresh tokens, with safe key rotation and no plaintext fallback in production.
+- Run the credential dry-run, bounded encryption migration and Temporal legacy-history drain/retention procedure on a suitable explicitly approved host, then exercise test-provider reconnect, refresh and publish paths.
 - Build the cross-tenant access matrix and account-lifecycle integration tests for execution on a suitable host.

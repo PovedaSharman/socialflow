@@ -6,6 +6,7 @@ import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import { IntegrationTimeDto } from '@gitroom/nestjs-libraries/dtos/integrations/integration.time.dto';
 import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
 import { PlugDto } from '@gitroom/nestjs-libraries/dtos/plugs/plug.dto';
+import { SocialCredentialEncryptionService } from '@gitroom/nestjs-libraries/security/social-credential-encryption.service';
 
 @Injectable()
 export class IntegrationRepository {
@@ -16,7 +17,8 @@ export class IntegrationRepository {
     private _plugs: PrismaRepository<'plugs'>,
     private _exisingPlugData: PrismaRepository<'exisingPlugData'>,
     private _customers: PrismaRepository<'customer'>,
-    private _mentions: PrismaRepository<'mentions'>
+    private _mentions: PrismaRepository<'mentions'>,
+    private _credentialEncryption: SocialCredentialEncryptionService
   ) {}
 
   getMentions(platform: string, q: string) {
@@ -113,8 +115,8 @@ export class IntegrationRepository {
     });
   }
 
-  getPlug(plugId: string) {
-    return this._plugs.model.plugs.findFirst({
+  async getPlug(plugId: string) {
+    const plug = await this._plugs.model.plugs.findFirst({
       where: {
         id: plugId,
       },
@@ -122,6 +124,14 @@ export class IntegrationRepository {
         integration: true,
       },
     });
+    return plug?.integration
+      ? {
+          ...plug,
+          integration: this._credentialEncryption.decryptFields(
+            plug.integration
+          ),
+        }
+      : plug;
   }
 
   async getPlugs(orgId: string, integrationId: string) {
@@ -164,6 +174,7 @@ export class IntegrationRepository {
       await this._posts.model.post.updateMany({
         where: {
           integrationId: id,
+          organizationId: params.organizationId!,
         },
         data: {
           deletedAt: new Date(),
@@ -173,6 +184,7 @@ export class IntegrationRepository {
       await this._integration.model.integration.update({
         where: {
           id,
+          organizationId: params.organizationId!,
         },
         data: {
           internalId: `deleted_${params.internalId}_${makeId(10)}`,
@@ -181,20 +193,36 @@ export class IntegrationRepository {
       });
     }
 
-    return this._integration.model.integration.update({
+    const encryptedParams = {
+      ...params,
+      ...(typeof params.token === 'string'
+        ? { token: this._credentialEncryption.encrypt(params.token) }
+        : {}),
+      ...(typeof params.refreshToken === 'string'
+        ? {
+            refreshToken: this._credentialEncryption.encrypt(
+              params.refreshToken
+            ),
+          }
+        : {}),
+    };
+    const updated = await this._integration.model.integration.update({
       where: {
-        ...(existing ? { id: existing.id } : { id }),
+        id: existing ? existing.id : id,
+        organizationId: params.organizationId!,
       },
       data: {
-        ...params,
+        ...encryptedParams,
         disabled: false,
         deletedAt: null,
       },
     });
+    return this._credentialEncryption.decryptFields(updated);
   }
 
   disconnectChannel(org: string, id: string) {
     return this._integration.model.integration.update({
+      select: { id: true },
       where: {
         id,
         organizationId: org,
@@ -231,6 +259,9 @@ export class IntegrationRepository {
     timezone?: number,
     customInstanceDetails?: string
   ) {
+    const encryptedToken = this._credentialEncryption.encrypt(token);
+    const encryptedRefreshToken =
+      this._credentialEncryption.encrypt(refreshToken);
     const postTimes = timezone
       ? {
           postingTimes: JSON.stringify([
@@ -251,11 +282,11 @@ export class IntegrationRepository {
         type: type as any,
         name,
         providerIdentifier: provider,
-        token,
+        token: encryptedToken,
         profile: username,
         ...(picture ? { picture } : {}),
         inBetweenSteps: isBetweenSteps,
-        refreshToken,
+        refreshToken: encryptedRefreshToken,
         ...(expiresIn
           ? { tokenExpiration: new Date(Date.now() + expiresIn * 1000) }
           : {}),
@@ -283,8 +314,8 @@ export class IntegrationRepository {
         ...(picture ? { picture } : {}),
         profile: username,
         providerIdentifier: provider,
-        token,
-        refreshToken,
+        token: encryptedToken,
+        refreshToken: encryptedRefreshToken,
         ...(expiresIn
           ? { tokenExpiration: new Date(Date.now() + expiresIn * 1000) }
           : {}),
@@ -314,8 +345,8 @@ export class IntegrationRepository {
           rootInternalId: rootId,
         },
         data: {
-          token,
-          refreshToken,
+          token: encryptedToken,
+          refreshToken: encryptedRefreshToken,
           refreshNeeded: false,
           ...(expiresIn
             ? { tokenExpiration: new Date(Date.now() + expiresIn * 1000) }
@@ -324,11 +355,11 @@ export class IntegrationRepository {
       });
     }
 
-    return upsert;
+    return this._credentialEncryption.decryptFields(upsert);
   }
 
-  needsToBeRefreshed() {
-    return this._integration.model.integration.findMany({
+  async needsToBeRefreshed() {
+    const integrations = await this._integration.model.integration.findMany({
       where: {
         tokenExpiration: {
           lte: dayjs().add(1, 'day').toDate(),
@@ -338,10 +369,14 @@ export class IntegrationRepository {
         refreshNeeded: false,
       },
     });
+    return integrations.map((integration) =>
+      this._credentialEncryption.decryptFields(integration)
+    );
   }
 
   async setBetweenRefreshSteps(id: string) {
     return this._integration.model.integration.update({
+      select: { id: true },
       where: {
         id,
       },
@@ -352,6 +387,7 @@ export class IntegrationRepository {
   }
   refreshNeeded(org: string, id: string) {
     return this._integration.model.integration.update({
+      select: { id: true },
       where: {
         id,
         organizationId: org,
@@ -364,6 +400,7 @@ export class IntegrationRepository {
 
   updateNameAndUrl(id: string, name: string, url: string) {
     return this._integration.model.integration.update({
+      select: { id: true },
       where: {
         id,
       },
@@ -374,11 +411,32 @@ export class IntegrationRepository {
     });
   }
 
-  getIntegrationById(org: string, id: string) {
+  async getIntegrationById(org: string, id: string) {
+    const integration = await this._integration.model.integration.findFirst({
+      where: {
+        organizationId: org,
+        id,
+      },
+    });
+    return integration
+      ? this._credentialEncryption.decryptFields(integration)
+      : null;
+  }
+
+  getIntegrationMetadataById(org: string, id: string) {
     return this._integration.model.integration.findFirst({
       where: {
         organizationId: org,
         id,
+      },
+      select: {
+        id: true,
+        organizationId: true,
+        providerIdentifier: true,
+        tokenExpiration: true,
+        deletedAt: true,
+        inBetweenSteps: true,
+        refreshNeeded: true,
       },
     });
   }
@@ -436,6 +494,7 @@ export class IntegrationRepository {
         }));
 
     return this._integration.model.integration.update({
+      select: { id: true },
       where: {
         id,
         organizationId: org,
@@ -454,6 +513,7 @@ export class IntegrationRepository {
 
   updateIntegrationGroup(org: string, id: string, group: string) {
     return this._integration.model.integration.update({
+      select: { id: true },
       where: {
         id,
         organizationId: org,
@@ -489,7 +549,20 @@ export class IntegrationRepository {
         organizationId: org,
         deletedAt: null,
       },
-      include: {
+      select: {
+        id: true,
+        internalId: true,
+        organizationId: true,
+        name: true,
+        picture: true,
+        providerIdentifier: true,
+        type: true,
+        disabled: true,
+        profile: true,
+        inBetweenSteps: true,
+        refreshNeeded: true,
+        postingTimes: true,
+        additionalSettings: true,
         customer: true,
       },
     });
@@ -497,6 +570,7 @@ export class IntegrationRepository {
 
   async disableChannel(org: string, id: string) {
     await this._integration.model.integration.update({
+      select: { id: true },
       where: {
         id,
         organizationId: org,
@@ -509,6 +583,7 @@ export class IntegrationRepository {
 
   async enableChannel(org: string, id: string) {
     await this._integration.model.integration.update({
+      select: { id: true },
       where: {
         id,
         organizationId: org,
@@ -532,6 +607,7 @@ export class IntegrationRepository {
 
   deleteChannel(org: string, id: string) {
     return this._integration.model.integration.update({
+      select: { id: true },
       where: {
         id,
         organizationId: org,

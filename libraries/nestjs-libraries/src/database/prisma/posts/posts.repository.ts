@@ -19,6 +19,7 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
 import { CreateTagDto } from '@gitroom/nestjs-libraries/dtos/posts/create.tag.dto';
+import { SocialCredentialEncryptionService } from '@gitroom/nestjs-libraries/security/social-credential-encryption.service';
 
 dayjs.extend(isoWeek);
 dayjs.extend(weekOfYear);
@@ -35,7 +36,8 @@ export class PostsRepository {
     private _tagsPosts: PrismaRepository<'tagsPosts'>,
     private _errors: PrismaRepository<'errors'>,
     private _postApproval: PrismaRepository<'postApprovalRequest'>,
-    private _transaction: PrismaTransaction
+    private _transaction: PrismaTransaction,
+    private _credentialEncryption: SocialCredentialEncryptionService
   ) {}
 
   async requestPostApproval(
@@ -578,7 +580,14 @@ export class PostsRepository {
         deletedAt: null,
       },
       include: {
-        integration: true,
+        integration: {
+          select: {
+            id: true,
+            name: true,
+            picture: true,
+            providerIdentifier: true,
+          },
+        },
         tags: {
           select: {
             tag: true,
@@ -588,13 +597,13 @@ export class PostsRepository {
     });
   }
 
-  getPost(
+  async getPost(
     id: string,
     includeIntegration = false,
     orgId?: string,
     isFirst?: boolean
   ) {
-    return this._post.model.post.findUnique({
+    const post = await this._post.model.post.findUnique({
       where: {
         id,
         ...(orgId ? { organizationId: orgId } : {}),
@@ -614,6 +623,14 @@ export class PostsRepository {
         childrenPost: true,
       },
     });
+    return includeIntegration && post?.integration
+      ? {
+          ...post,
+          integration: this._credentialEncryption.decryptFields(
+            post.integration
+          ),
+        }
+      : post;
   }
 
   updatePost(id: string, postId: string, releaseURL: string) {
@@ -930,8 +947,8 @@ export class PostsRepository {
     });
   }
 
-  getPostById(id: string, org?: string) {
-    return this._post.model.post.findUnique({
+  async getPostById(id: string, org?: string) {
+    const post = await this._post.model.post.findUnique({
       where: {
         id,
         ...(org ? { organizationId: org } : {}),
@@ -956,6 +973,14 @@ export class PostsRepository {
         },
       },
     });
+    return post?.integration
+      ? {
+          ...post,
+          integration: this._credentialEncryption.decryptFields(
+            post.integration
+          ),
+        }
+      : post;
   }
 
   findAllExistingCategories() {

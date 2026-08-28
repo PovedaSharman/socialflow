@@ -62,6 +62,13 @@ type PostWithConditionals = Post & {
   childrenPost: Post[];
 };
 
+const withoutIntegrationCredentials = (integration: Integration) => {
+  const safeIntegration: Partial<Integration> = { ...integration };
+  delete safeIntegration.token;
+  delete safeIntegration.refreshToken;
+  return safeIntegration;
+};
+
 const MAX_SCHEDULING_HORIZON_DAYS = 366;
 
 @Injectable()
@@ -538,14 +545,21 @@ export class PostsService {
     const list = {
       group: posts?.[0]?.group,
       posts: await Promise.all(
-        (posts || []).map(async (post) => ({
-          ...post,
-          image: await this.updateMedia(
-            post.id,
-            JSON.parse(post.image || '[]'),
-            convertToJPEG
-          ),
-        }))
+        (posts || []).map(async (post) => {
+          return {
+            ...post,
+            ...(post.integration
+              ? {
+                  integration: withoutIntegrationCredentials(post.integration),
+                }
+              : {}),
+            image: await this.updateMedia(
+              post.id,
+              JSON.parse(post.image || '[]'),
+              convertToJPEG
+            ),
+          };
+        })
       ),
       integrationPicture: posts[0]?.integration?.picture,
       integration: posts[0].integrationId,

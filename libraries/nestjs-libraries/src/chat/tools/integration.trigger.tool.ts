@@ -54,7 +54,6 @@ export class IntegrationTriggerTool implements AgentToolInterface {
       }),
       execute: async (inputData, context) => {
         checkAuth(inputData, context);
-        console.log('triggerTool', inputData);
         const organizationId = JSON.parse(
           (context?.requestContext as any)?.get('organization') as string
         ).id;
@@ -93,13 +92,16 @@ export class IntegrationTriggerTool implements AgentToolInterface {
           return { output: 'tool not found' };
         }
 
-        while (true) {
+        for (let refreshAttempt = 0; refreshAttempt <= 1; refreshAttempt++) {
           try {
             // @ts-ignore
             const load = await integrationProvider[inputData.methodName](
               getIntegration.token,
               inputData.dataSchema.reduce(
-                (all: Record<string, string>, current: { key: string; value: string }) => ({
+                (
+                  all: Record<string, string>,
+                  current: { key: string; value: string }
+                ) => ({
                   ...all,
                   [current.key]: current.value,
                 }),
@@ -112,6 +114,16 @@ export class IntegrationTriggerTool implements AgentToolInterface {
             return { output: load };
           } catch (err) {
             if (err instanceof RefreshToken) {
+              if (refreshAttempt >= 1) {
+                await this._integrationService.disconnectChannel(
+                  organizationId,
+                  getIntegration
+                );
+                return {
+                  output:
+                    'We had to disconnect the channel as the token expired',
+                };
+              }
               const data = await this._refreshIntegrationService.refresh(
                 getIntegration
               );
@@ -137,12 +149,12 @@ export class IntegrationTriggerTool implements AgentToolInterface {
                 }
 
                 continue;
-              } else {
               }
             }
             return { output: 'Unexpected error' };
           }
         }
+        return { output: 'Unexpected error' };
       },
     });
   }

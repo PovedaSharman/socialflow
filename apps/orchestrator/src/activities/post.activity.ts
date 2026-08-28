@@ -24,6 +24,7 @@ import {
   postId as postIdSearchParam,
 } from '@gitroom/nestjs-libraries/temporal/temporal.search.attribute';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
+import { SocialCredentialEncryptionService } from '@gitroom/nestjs-libraries/security/social-credential-encryption.service';
 
 // Drops fields the workflow and downstream activities never read — biggest wins are `error` (grows per retry) and `childrenPost` (Prisma side-loads it on every recursive row).
 function slimPost(post: any) {
@@ -52,6 +53,17 @@ function slimPost(post: any) {
   return rest;
 }
 
+function stripIntegrationCredentials(post: any) {
+  const stripped = slimPost(post);
+  if (!stripped?.integration) {
+    return stripped;
+  }
+  const integration = { ...stripped.integration } as Partial<Integration>;
+  delete integration.token;
+  delete integration.refreshToken;
+  return { ...stripped, integration };
+}
+
 @Injectable()
 @Activity()
 export class PostActivity {
@@ -63,7 +75,8 @@ export class PostActivity {
     private _refreshIntegrationService: RefreshIntegrationService,
     private _webhookService: WebhooksService,
     private _temporalService: TemporalService,
-    private _subscriptionService: SubscriptionService
+    private _subscriptionService: SubscriptionService,
+    private _credentialEncryption: SocialCredentialEncryptionService
   ) {}
 
   @ActivityMethod()
@@ -130,6 +143,12 @@ export class PostActivity {
   }
 
   @ActivityMethod()
+  async getPostForWorkflow(orgId: string, postId: string) {
+    const post = await this.getPost(orgId, postId);
+    return post ? stripIntegrationCredentials(post) : post;
+  }
+
+  @ActivityMethod()
   async getPostsList(orgId: string, postId: string) {
     if (process.env.STRIPE_SECRET_KEY) {
       const subscription = await this._subscriptionService.getSubscription(
@@ -153,6 +172,12 @@ export class PostActivity {
   }
 
   @ActivityMethod()
+  async getPostsListForWorkflow(orgId: string, postId: string) {
+    const posts = await this.getPostsList(orgId, postId);
+    return posts.map(stripIntegrationCredentials);
+  }
+
+  @ActivityMethod()
   async isCommentable(integration: Integration) {
     const getIntegration = this._integrationManager.getSocialIntegration(
       integration.providerIdentifier
@@ -168,6 +193,7 @@ export class PostActivity {
     integration: Integration,
     posts: Post[]
   ) {
+    integration = await this.requireIntegration(integration);
     const getIntegration = this._integrationManager.getSocialIntegration(
       integration.providerIdentifier
     );
@@ -224,6 +250,7 @@ export class PostActivity {
     posts: Post[],
     allowPending: boolean
   ) {
+    integration = await this.requireIntegration(integration);
     if (process.env.STRIPE_SECRET_KEY) {
       const subscription = await this._subscriptionService.getSubscription(
         integration.organizationId
@@ -299,33 +326,37 @@ export class PostActivity {
       /**empty**/
     }
 
-    return postNow;
+    return postNow.map((result) => this.sealPendingResponse(result));
   }
 
   @ActivityMethod()
   async checkPostStatus(integration: Integration, pendingData: any) {
+    integration = await this.requireIntegration(integration);
     const getIntegration = this._integrationManager.getSocialIntegration(
       integration.providerIdentifier
     );
 
-    return getIntegration.checkPostStatus(
+    const result = await getIntegration.checkPostStatus(
       integration.token,
-      pendingData,
+      this.openPendingData(pendingData),
       integration
     );
+    return this.sealPendingResponse(result);
   }
 
   @ActivityMethod()
   async finalizePost(integration: Integration, pendingData: any) {
+    integration = await this.requireIntegration(integration);
     const getIntegration = this._integrationManager.getSocialIntegration(
       integration.providerIdentifier
     );
 
-    return getIntegration.finalizePost(
+    const result = await getIntegration.finalizePost(
       integration.token,
-      pendingData,
+      this.openPendingData(pendingData),
       integration
     );
+    return this.sealPendingResponse(result);
   }
 
   @ActivityMethod()
@@ -492,5 +523,62 @@ export class PostActivity {
       await this._refreshIntegrationService.setBetweenSteps(integration, cause);
       return false;
     }
+  }
+
+  @ActivityMethod()
+  async refreshCredentialWithCause(
+    orgId: string,
+    integrationId: string,
+    cause: string
+  ): Promise<boolean> {
+    const integration = await this._integrationService.getIntegrationById(
+      orgId,
+      integrationId
+    );
+    if (!integration) {
+      return false;
+    }
+    return !!(await this.refreshTokenWithCause(integration, cause));
+  }
+
+  private async requireIntegration(
+    integration: Pick<Integration, 'id' | 'organizationId'>
+  ) {
+    const stored = await this._integrationService.getIntegrationById(
+      integration.organizationId,
+      integration.id
+    );
+    if (!stored) {
+      throw new Error('Integration not found.');
+    }
+    return stored;
+  }
+
+  private sealPendingResponse<T extends { pendingData?: unknown }>(result: T) {
+    if (result?.pendingData === undefined) {
+      return result;
+    }
+    return {
+      ...result,
+      pendingData: {
+        socialFlowEncrypted: this._credentialEncryption.encrypt(
+          JSON.stringify(result.pendingData)
+        ),
+      },
+    };
+  }
+
+  private openPendingData(pendingData: unknown) {
+    if (
+      pendingData &&
+      typeof pendingData === 'object' &&
+      'socialFlowEncrypted' in pendingData &&
+      typeof pendingData.socialFlowEncrypted === 'string'
+    ) {
+      return JSON.parse(
+        this._credentialEncryption.decrypt(pendingData.socialFlowEncrypted)
+      );
+    }
+    return pendingData;
   }
 }

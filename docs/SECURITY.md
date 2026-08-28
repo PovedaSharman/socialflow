@@ -8,7 +8,9 @@ Customer browsers, public API/MCP clients, social providers, Stripe and email pr
 
 - Argon2id or an approved adaptive password hash; short-lived signed sessions; rotation and revocation for security changes.
 - CSRF protection for cookie-authenticated mutations; strict origin/CORS policy; secure, HTTP-only, same-site cookies.
-- OAuth state, nonce and PKCE where supported; exact redirect URIs; encrypted provider tokens.
+- OAuth state, nonce and PKCE where supported; exact redirect URIs; provider
+  tokens protected by the separately managed authenticated key ring documented
+  in [SOCIAL_CREDENTIAL_ENCRYPTION.md](SOCIAL_CREDENTIAL_ENCRYPTION.md).
 - Hashed API/MCP secrets, scope checks per handler, rate limiting and one-time secret display.
 - Validated Stripe signatures, event idempotency and account/mode checks before mutation.
 - MIME/content inspection, size and quota checks, random object names and malware scanning hook for uploads.

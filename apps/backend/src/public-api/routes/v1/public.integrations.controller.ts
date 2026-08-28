@@ -410,7 +410,7 @@ export class PublicIntegrationsController {
     );
     if (isTherePosts.length) {
       for (const post of isTherePosts) {
-        this._postsService.deletePost(org.id, post.group).catch(() => {});
+        await this._postsService.deletePost(org.id, post.group).catch(() => {});
       }
     }
 
@@ -549,7 +549,7 @@ export class PublicIntegrationsController {
       throw new HttpException({ msg: 'Tool not found' }, 404);
     }
 
-    while (true) {
+    for (let refreshAttempt = 0; refreshAttempt <= 1; refreshAttempt++) {
       try {
         // @ts-ignore
         const result = await integrationProvider[body.methodName](
@@ -562,6 +562,16 @@ export class PublicIntegrationsController {
         return { output: result };
       } catch (err) {
         if (err instanceof RefreshToken) {
+          if (refreshAttempt >= 1) {
+            await this._integrationService.disconnectChannel(
+              org.id,
+              getIntegration
+            );
+            throw new HttpException(
+              { msg: 'Channel disconnected due to expired token' },
+              401
+            );
+          }
           const data = await this._refreshIntegrationService.refresh(
             getIntegration
           );
@@ -592,5 +602,7 @@ export class PublicIntegrationsController {
         throw new HttpException({ msg: 'Unexpected error' }, 500);
       }
     }
+
+    throw new HttpException({ msg: 'Unexpected error' }, 500);
   }
 }

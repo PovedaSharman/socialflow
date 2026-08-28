@@ -14,6 +14,16 @@ const postsService = read(
 const postsRepository = read(
   'libraries/nestjs-libraries/src/database/prisma/posts/posts.repository.ts'
 );
+const credentialMigration = read('scripts/migrate-social-credentials.ts');
+const refreshTokenWorkflow = read(
+  'apps/orchestrator/src/workflows/refresh.token.workflow.ts'
+);
+const publicIntegrationsController = read(
+  'apps/backend/src/public-api/routes/v1/public.integrations.controller.ts'
+);
+const integrationTriggerTool = read(
+  'libraries/nestjs-libraries/src/chat/tools/integration.trigger.tool.ts'
+);
 
 const requirements = [
   [
@@ -56,6 +66,34 @@ const requirements = [
   [
     postsRepository.includes('take: 50'),
     'The pending approval queue must retain a finite result limit.',
+  ],
+  [
+    credentialMigration.includes('const BATCH_SIZE = 100') &&
+      credentialMigration.includes('processed < initialTotal'),
+    'Social credential migration must remain batch- and iteration-bounded.',
+  ],
+  [
+    refreshTokenWorkflow.includes('continueAsNew') &&
+      refreshTokenWorkflow.includes(
+        'social-credential-refresh-history-boundary-v1'
+      ),
+    'New credential-refresh workflow histories must continue as new.',
+  ],
+  [
+    !publicIntegrationsController.includes('while (true)') &&
+      publicIntegrationsController.includes('refreshAttempt <= 1'),
+    'Public integration credential refresh must remain bounded to one retry.',
+  ],
+  [
+    publicIntegrationsController.includes(
+      'await this._postsService.deletePost(org.id, post.group)'
+    ),
+    'Public channel deletion must process post groups sequentially.',
+  ],
+  [
+    !integrationTriggerTool.includes('while (true)') &&
+      integrationTriggerTool.includes('refreshAttempt <= 1'),
+    'MCP integration credential refresh must remain bounded to one retry.',
   ],
 ];
 
