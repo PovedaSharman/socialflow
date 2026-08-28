@@ -25,10 +25,17 @@ import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.req
 import { ShortLinkService } from '@gitroom/nestjs-libraries/short-linking/short.link.service';
 import { CreateTagDto } from '@gitroom/nestjs-libraries/dtos/posts/create.tag.dto';
 import {
+  AuthorizationException,
   AuthorizationActions,
   Sections,
 } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 import { PostValidationException } from '@gitroom/backend/api/routes/posts.validation.exception';
+import { RequestPostApprovalDto } from '@gitroom/nestjs-libraries/dtos/posts/request.post.approval.dto';
+import { DecidePostApprovalDto } from '@gitroom/nestjs-libraries/dtos/posts/decide.post.approval.dto';
+import {
+  canApproveContent,
+  OrganizationRole,
+} from '@gitroom/helpers/auth/organization.role';
 
 @ApiTags('Posts')
 @Controller('/posts')
@@ -38,6 +45,18 @@ export class PostsController {
     private _agentGraphService: AgentGraphService,
     private _shortLinkService: ShortLinkService
   ) {}
+
+  private assertCanSchedule(org: Organization) {
+    // The auth middleware attaches the active membership to the organisation.
+    // @ts-ignore
+    const role = org.users?.[0]?.role as OrganizationRole;
+    if (!canApproveContent(role)) {
+      throw new AuthorizationException({
+        section: Sections.APPROVAL,
+        action: AuthorizationActions.Update,
+      });
+    }
+  }
 
   @Get('/:id/statistics')
   async getStatistics(
@@ -171,6 +190,20 @@ export class PostsController {
     return this._postsService.getPostsByGroup(org.id, group);
   }
 
+  @Get('/approvals/pending')
+  @CheckPolicies([AuthorizationActions.Read, Sections.APPROVAL])
+  getPendingApprovals(@GetOrgFromRequest() org: Organization) {
+    return this._postsService.getPendingPostApprovals(org.id);
+  }
+
+  @Get('/group/:group/approval')
+  getPostApproval(
+    @GetOrgFromRequest() org: Organization,
+    @Param('group') group: string
+  ) {
+    return this._postsService.getLatestPostApproval(org.id, group);
+  }
+
   @Get('/:id')
   getPost(@GetOrgFromRequest() org: Organization, @Param('id') id: string) {
     return this._postsService.getPost(org.id, id);
@@ -190,6 +223,9 @@ export class PostsController {
     @GetOrgFromRequest() org: Organization,
     @Body() rawBody: any
   ) {
+    if (rawBody?.type !== 'draft') {
+      this.assertCanSchedule(org);
+    }
     // Server-side validation — never trust the client to have validated.
     const validation = await this._postsService.validatePosts(
       org.id,
@@ -229,6 +265,38 @@ export class PostsController {
 
     const body = await this._postsService.mapTypeToPost(rawBody, org.id);
     return this._postsService.createPost(org.id, body, 'WEB');
+  }
+
+  @Post('/:group/approval')
+  @CheckPolicies([AuthorizationActions.Create, Sections.CONTENT])
+  requestApproval(
+    @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
+    @Param('group') group: string,
+    @Body() body: RequestPostApprovalDto
+  ) {
+    return this._postsService.requestPostApproval(org.id, group, user.id, body);
+  }
+
+  @Post('/approvals/:id/decision')
+  @CheckPolicies([AuthorizationActions.Update, Sections.APPROVAL])
+  decideApproval(
+    @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
+    @Param('id') id: string,
+    @Body() body: DecidePostApprovalDto
+  ) {
+    return this._postsService.decidePostApproval(org.id, id, user.id, body);
+  }
+
+  @Delete('/approvals/:id')
+  @CheckPolicies([AuthorizationActions.Delete, Sections.CONTENT])
+  cancelApproval(
+    @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
+    @Param('id') id: string
+  ) {
+    return this._postsService.cancelPostApproval(org.id, id, user.id);
   }
 
   @Post('/generator/draft')
@@ -285,6 +353,9 @@ export class PostsController {
     @Body('date') date: string,
     @Body('action') action: 'schedule' | 'update' = 'schedule'
   ) {
+    if (action === 'schedule') {
+      this.assertCanSchedule(org);
+    }
     return this._postsService.changeDate(org.id, id, date, action);
   }
 

@@ -28,6 +28,9 @@ export function roleCanAccess(
   if (section === Sections.BILLING) {
     return canManageBilling(role);
   }
+  if (section === Sections.APPROVAL) {
+    return canApproveContent(role);
+  }
   if (action === AuthorizationActions.Read) {
     return true;
   }
@@ -37,9 +40,6 @@ export function roleCanAccess(
     section === Sections.TEAM_MEMBERS
   ) {
     return canManageOrganization(role);
-  }
-  if (section === Sections.APPROVAL) {
-    return canApproveContent(role);
   }
   return canEditContent(role);
 }

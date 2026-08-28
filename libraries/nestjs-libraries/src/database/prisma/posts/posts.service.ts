@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   ValidationPipe,
 } from '@nestjs/common';
 import { PostsRepository } from '@gitroom/nestjs-libraries/database/prisma/posts/posts.repository';
@@ -53,6 +54,8 @@ import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { stripHtmlValidation } from '@gitroom/helpers/utils/strip.html.validation';
 import { weightedLength } from '@gitroom/helpers/utils/count.length';
+import { RequestPostApprovalDto } from '@gitroom/nestjs-libraries/dtos/posts/request.post.approval.dto';
+import { DecidePostApprovalDto } from '@gitroom/nestjs-libraries/dtos/posts/decide.post.approval.dto';
 
 type PostWithConditionals = Post & {
   integration?: Integration;
@@ -928,6 +931,7 @@ export class PostsService {
       Sentry.metrics.count('post_created', 1);
       postList.push({
         postId: posts[0].id,
+        group: posts[0].group,
         integration: post.integration.id,
       });
     }
@@ -1159,6 +1163,76 @@ export class PostsService {
 
   getComments(postId: string) {
     return this._postRepository.getComments(postId);
+  }
+
+  async requestPostApproval(
+    organizationId: string,
+    postGroup: string,
+    requestedByUserId: string,
+    body: RequestPostApprovalDto
+  ) {
+    const approval = await this._postRepository.requestPostApproval(
+      organizationId,
+      postGroup,
+      requestedByUserId,
+      body.note?.trim() || undefined
+    );
+    if (!approval) {
+      throw new BadRequestException(
+        'Only an existing draft post can be submitted for approval.'
+      );
+    }
+    return approval;
+  }
+
+  getLatestPostApproval(organizationId: string, postGroup: string) {
+    return this._postRepository.getLatestPostApproval(
+      organizationId,
+      postGroup
+    );
+  }
+
+  getPendingPostApprovals(organizationId: string) {
+    return this._postRepository.getPendingPostApprovals(organizationId);
+  }
+
+  async decidePostApproval(
+    organizationId: string,
+    approvalId: string,
+    decidedByUserId: string,
+    body: DecidePostApprovalDto
+  ) {
+    const approval = await this._postRepository.decidePostApproval(
+      organizationId,
+      approvalId,
+      decidedByUserId,
+      body.decision,
+      body.note?.trim() || undefined
+    );
+    if (!approval) {
+      throw new NotFoundException(
+        'Approval request not found or no longer pending.'
+      );
+    }
+    return approval;
+  }
+
+  async cancelPostApproval(
+    organizationId: string,
+    approvalId: string,
+    requestedByUserId: string
+  ) {
+    const result = await this._postRepository.cancelPostApproval(
+      organizationId,
+      approvalId,
+      requestedByUserId
+    );
+    if (result.count !== 1) {
+      throw new NotFoundException(
+        'Approval request not found or cannot be cancelled.'
+      );
+    }
+    return { cancelled: true };
   }
 
   getTags(orgId: string) {

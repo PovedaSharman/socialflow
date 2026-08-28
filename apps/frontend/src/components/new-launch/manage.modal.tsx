@@ -43,6 +43,10 @@ import { useHasScroll } from '@gitroom/frontend/components/ui/is.scroll.hook';
 import { useShortlinkPreference } from '@gitroom/frontend/components/settings/shortlink-preference.component';
 import dayjs from 'dayjs';
 import { Button } from '@gitroom/react/form/button';
+import useSWR, { mutate as mutateSWR } from 'swr';
+import { useUser } from '@gitroom/frontend/components/layout/user.context';
+
+type ScheduleAction = 'draft' | 'now' | 'schedule' | 'update' | 'approval';
 
 export const ManageModal: FC<AddEditModalProps> = (props) => {
   const t = useT();
@@ -52,8 +56,39 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
   const [loading, setLoading] = useState(false);
   const toaster = useToaster();
   const modal = useModals();
+  const user = useUser();
   const [showSettings, setShowSettings] = useState(false);
   const { data: shortlinkPreferenceData } = useShortlinkPreference();
+  const role =
+    user?.role === 'SUPERADMIN'
+      ? 'OWNER'
+      : user?.role === 'USER'
+      ? 'EDITOR'
+      : user?.role;
+  const canEditContent = !!role && role !== 'VIEWER';
+  const canApproveContent =
+    role === 'OWNER' || role === 'ADMIN' || role === 'APPROVER';
+  const approvalGroup = existingData?.group as string | undefined;
+  const {
+    data: approval,
+    error: approvalError,
+    mutate: mutateApproval,
+  } = useSWR(
+    approvalGroup ? `/api/post-approval/${approvalGroup}` : null,
+    async () => {
+      const response = await fetch(`/posts/group/${approvalGroup}/approval`);
+      if (!response.ok) {
+        throw new Error('Could not load approval status');
+      }
+      return response.json() as Promise<{
+        id: string;
+        status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+        isCurrent: boolean;
+        requestedBy: { id: string } | null;
+      } | null>;
+    },
+    { revalidateOnFocus: false, revalidateOnReconnect: false }
+  );
 
   const { addEditSets, mutate, customClose, dummy } = props;
 
@@ -191,7 +226,11 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
   }, [existingData, mutate, modal]);
 
   const schedule = useCallback(
-    (type: 'draft' | 'now' | 'schedule' | 'update') => async () => {
+    (requestedType: ScheduleAction) => async () => {
+      const requestingApproval = requestedType === 'approval';
+      let type: Exclude<ScheduleAction, 'approval'> = requestingApproval
+        ? 'draft'
+        : requestedType;
       if (
         (type === 'now' || type === 'schedule') &&
         (existingData?.posts?.[0]?.state === 'PUBLISHED' ||
@@ -409,17 +448,70 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
       }
 
       if (!dummy) {
-        addEditSets
-          ? addEditSets(data)
+        const saveResponse = addEditSets
+          ? (addEditSets(data), undefined)
           : await fetch('/posts', {
               method: 'POST',
               body: JSON.stringify(data),
             });
 
+        if (saveResponse && !saveResponse.ok) {
+          const error = await saveResponse.json().catch(() => ({}));
+          toaster.show(
+            error.message ||
+              t('could_not_save_post', 'The post could not be saved.'),
+            'warning'
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (requestingApproval && !addEditSets) {
+          const savedPosts = (await saveResponse!.json()) as Array<{
+            group: string;
+          }>;
+          const groups = [...new Set(savedPosts.map((post) => post.group))];
+          if (groups.length === 0) {
+            toaster.show(
+              t(
+                'could_not_request_approval',
+                'The approval request could not be created.'
+              ),
+              'warning'
+            );
+            setLoading(false);
+            return;
+          }
+          for (const savedGroup of groups) {
+            const approvalResponse = await fetch(
+              `/posts/${savedGroup}/approval`,
+              {
+                method: 'POST',
+                body: JSON.stringify({}),
+              }
+            );
+            if (!approvalResponse.ok) {
+              const error = await approvalResponse.json().catch(() => ({}));
+              toaster.show(
+                error.message ||
+                  t(
+                    'could_not_request_approval',
+                    'The approval request could not be created.'
+                  ),
+                'warning'
+              );
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
         if (!addEditSets) {
           mutate();
           toaster.show(
-            !existingData.integration
+            requestingApproval
+              ? t('approval_requested', 'Approval requested')
+              : !existingData.integration
               ? t('added_successfully', 'Added successfully')
               : t('updated_successfully', 'Updated successfully')
           );
@@ -437,6 +529,88 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
     },
     [ref, repeater, tags, date, addEditSets, dummy, shortlinkPreferenceData]
   );
+
+  const decideApproval = useCallback(
+    async (decision: 'APPROVED' | 'REJECTED') => {
+      if (!approval?.id) {
+        return;
+      }
+      setLoading(true);
+      try {
+        const response = await fetch(
+          `/posts/approvals/${approval.id}/decision`,
+          {
+            method: 'POST',
+            body: JSON.stringify({ decision }),
+          }
+        );
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          toaster.show(
+            error.message ||
+              t(
+                'could_not_decide_approval',
+                'The approval could not be updated.'
+              ),
+            'warning'
+          );
+          return;
+        }
+        await mutateApproval();
+        await mutateSWR('/api/pending-post-approvals');
+        toaster.show(
+          decision === 'APPROVED'
+            ? t('post_approved', 'Post approved')
+            : t('changes_requested', 'Changes requested')
+        );
+      } catch {
+        toaster.show(
+          t('could_not_decide_approval', 'The approval could not be updated.'),
+          'warning'
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [approval?.id, fetch, mutateApproval, t, toaster]
+  );
+
+  const cancelApproval = useCallback(async () => {
+    if (!approval?.id) {
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await fetch(`/posts/approvals/${approval.id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        toaster.show(
+          error.message ||
+            t(
+              'could_not_cancel_approval',
+              'The approval request could not be cancelled.'
+            ),
+          'warning'
+        );
+        return;
+      }
+      await mutateApproval();
+      await mutateSWR('/api/pending-post-approvals');
+      toaster.show(t('approval_cancelled', 'Approval cancelled'));
+    } catch {
+      toaster.show(
+        t(
+          'could_not_cancel_approval',
+          'The approval request could not be cancelled.'
+        ),
+        'warning'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [approval?.id, fetch, mutateApproval, t, toaster]);
 
   return (
     <div className="w-full h-full flex-1 p-[40px] flex relative">
@@ -549,8 +723,8 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
             </div>
           </div>
         </div>
-        <div className="select-none h-[84px] py-[20px] border-t border-newBorder flex items-center">
-          <div className="flex-1 flex ps-[20px] gap-[8px]">
+        <div className="select-none min-h-[84px] border-t border-newBorder flex flex-col gap-[12px] px-[20px] py-[12px] lg:flex-row lg:items-center">
+          <div className="flex flex-1 flex-wrap gap-[8px]">
             {!dummy && (
               <TagsComponent
                 name="tags"
@@ -566,8 +740,8 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
               <RepeatComponent repeat={repeater} onChange={setRepeater} />
             )}
           </div>
-          <div className="pe-[20px] flex items-center justify-end gap-[8px]">
-            {existingData?.integration && (
+          <div className="flex flex-wrap items-center justify-end gap-[8px]">
+            {existingData?.integration && canEditContent && (
               <button
                 onClick={deletePost}
                 className="cursor-pointer flex text-[#FF3F3F] gap-[8px] items-center text-[15px] font-[600]"
@@ -578,8 +752,75 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                 <div>{t('delete_post', 'Delete Post')}</div>
               </button>
             )}
-            <DatePicker onChange={setDate} date={date} />
-            {!addEditSets && (
+            {approval ? (
+              <div
+                role="status"
+                aria-live="polite"
+                className="rounded-[8px] border border-newBorder px-[12px] py-[8px] text-[13px]"
+              >
+                {!approval.isCurrent
+                  ? t(
+                      'approval_outdated',
+                      'Content changed after this approval request'
+                    )
+                  : approval.status === 'PENDING'
+                  ? t('awaiting_approval', 'Awaiting approval')
+                  : approval.status === 'APPROVED'
+                  ? t('approved', 'Approved')
+                  : approval.status === 'REJECTED'
+                  ? t('changes_requested', 'Changes requested')
+                  : t('approval_cancelled', 'Approval cancelled')}
+              </div>
+            ) : null}
+            {approvalError ? (
+              <div
+                role="alert"
+                className="rounded-[8px] border border-red-500/40 bg-red-500/10 px-[12px] py-[8px] text-[13px]"
+              >
+                {t(
+                  'could_not_load_approval',
+                  'Approval status could not be loaded.'
+                )}
+              </div>
+            ) : null}
+            {approval?.status === 'PENDING' &&
+            approval.isCurrent &&
+            canApproveContent ? (
+              <div className="flex gap-[8px]" aria-label="Approval decision">
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => decideApproval('REJECTED')}
+                  className="h-[44px] rounded-[8px] border border-newBorder px-[14px] font-[600] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {t('request_changes', 'Request changes')}
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => decideApproval('APPROVED')}
+                  className="h-[44px] rounded-[8px] bg-emerald-600 px-[14px] font-[600] text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {t('approve', 'Approve')}
+                </button>
+              </div>
+            ) : null}
+            {approval?.status === 'PENDING' &&
+            approval.requestedBy?.id === user?.id &&
+            !canApproveContent ? (
+              <button
+                type="button"
+                disabled={loading}
+                onClick={cancelApproval}
+                className="min-h-[44px] rounded-[8px] border border-newBorder px-[14px] font-[600] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {t('cancel_approval_request', 'Cancel request')}
+              </button>
+            ) : null}
+            {canEditContent ? (
+              <DatePicker onChange={setDate} date={date} />
+            ) : null}
+            {!addEditSets && canEditContent && (
               <button
                 disabled={
                   selectedIntegrations.length === 0 || loading || locked
@@ -597,7 +838,7 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                 </div>
               </button>
             )}
-            {addEditSets && (
+            {addEditSets && canEditContent && (
               <button
                 className="text-white text-[15px] font-[600] min-w-[180px] btnSub disabled:cursor-not-allowed disabled:opacity-80 outline-none gap-[8px] flex justify-center items-center h-[44px] rounded-[8px] bg-[#612BD3] ps-[20px] pe-[16px]"
                 disabled={
@@ -608,13 +849,15 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                 Save Set
               </button>
             )}
-            {!addEditSets && (
+            {!addEditSets && canEditContent && (
               <div className="group cursor-pointer relative">
                 <button
                   disabled={
                     selectedIntegrations.length === 0 || loading || locked
                   }
-                  onClick={schedule('schedule')}
+                  onClick={schedule(
+                    canApproveContent ? 'schedule' : 'approval'
+                  )}
                   className="text-white relative min-w-[180px] btnSub disabled:cursor-not-allowed disabled:opacity-80 outline-none gap-[8px] flex justify-center items-center h-[44px] rounded-[8px] bg-[#612BD3] ps-[20px] pe-[16px]"
                 >
                   {loading && (
@@ -628,7 +871,9 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                       loading && 'invisible'
                     )}
                   >
-                    {selectedIntegrations.length === 0
+                    {!canApproveContent
+                      ? t('request_approval', 'Request approval')
+                      : selectedIntegrations.length === 0
                       ? t('check_circles_above', 'Check the circles above')
                       : dummy
                       ? t('create_output', 'Create output')
@@ -638,14 +883,14 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
                       ? t('schedule', 'Schedule')
                       : t('update', 'Update')}
                   </div>
-                  {!dummy && (
+                  {!dummy && canApproveContent && (
                     <div className="flex justify-center items-center h-[20px] w-[20px] pt-[4px] arrow-change">
                       <DropdownArrowSmallIcon className="group-hover:rotate-180 text-white" />
                     </div>
                   )}
                 </button>
 
-                {!dummy && (
+                {!dummy && canApproveContent && (
                   <button
                     onClick={schedule('now')}
                     disabled={

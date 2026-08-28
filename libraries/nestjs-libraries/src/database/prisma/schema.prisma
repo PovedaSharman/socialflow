@@ -9,41 +9,42 @@ datasource db {
 }
 
 model Organization {
-  id                  String               @id @default(uuid())
-  name                String
-  description         String?
-  apiKey              String?
-  paymentId           String?
-  streakSince         DateTime?
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-  allowTrial          Boolean              @default(false)
-  isTrailing          Boolean              @default(false)
-  shortlink           ShortLinkPreference  @default(ASK)
-  autoPost            AutoPost[]
-  Comments            Comments[]
-  credits             Credits[]
-  customers           Customer[]
-  errors              Errors[]
-  github              GitHub[]
-  Integration         Integration[]
-  media               Media[]
-  buyerOrganization   MessagesGroup[]
-  notifications       Notifications[]
-  plugs               Plugs[]
-  post                Post[]               @relation("organization")
-  submittedPost       Post[]               @relation("submittedForOrg")
-  sets                Sets[]
-  signatures          Signatures[]
-  subscription        Subscription?
-  tags                Tags[]
-  thirdParty          ThirdParty[]
-  usedCodes           UsedCodes[]
-  users               UserOrganization[]
-  webhooks            Webhooks[]
-  oauthApp            OAuthApp[]
-  oauthAuthorizations OAuthAuthorization[]
-  teamInvitations     TeamInvitation[]
+  id                   String                @id @default(uuid())
+  name                 String
+  description          String?
+  apiKey               String?
+  paymentId            String?
+  streakSince          DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  allowTrial           Boolean               @default(false)
+  isTrailing           Boolean               @default(false)
+  shortlink            ShortLinkPreference   @default(ASK)
+  autoPost             AutoPost[]
+  Comments             Comments[]
+  credits              Credits[]
+  customers            Customer[]
+  errors               Errors[]
+  github               GitHub[]
+  Integration          Integration[]
+  media                Media[]
+  buyerOrganization    MessagesGroup[]
+  notifications        Notifications[]
+  plugs                Plugs[]
+  post                 Post[]                @relation("organization")
+  submittedPost        Post[]                @relation("submittedForOrg")
+  sets                 Sets[]
+  signatures           Signatures[]
+  subscription         Subscription?
+  tags                 Tags[]
+  thirdParty           ThirdParty[]
+  usedCodes            UsedCodes[]
+  users                UserOrganization[]
+  webhooks             Webhooks[]
+  oauthApp             OAuthApp[]
+  oauthAuthorizations  OAuthAuthorization[]
+  teamInvitations      TeamInvitation[]
+  postApprovalRequests PostApprovalRequest[]
 
   @@index([apiKey])
   @@index([streakSince])
@@ -78,44 +79,46 @@ model TagsPosts {
 }
 
 model User {
-  id                    String               @id @default(uuid())
-  email                 String
-  password              String?
-  providerName          Provider
-  name                  String?
-  lastName              String?
-  isSuperAdmin          Boolean              @default(false)
-  bio                   String?
-  audience              Int                  @default(0)
-  pictureId             String?
-  providerId            String?
-  timezone              Int
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  lastReadNotifications DateTime             @default(now())
-  inviteId              String?
-  activated             Boolean              @default(true)
-  account               String?
-  connectedAccount      Boolean              @default(false)
-  lastOnline            DateTime             @default(now())
-  ip                    String?
-  agent                 String?
-  comments              Comments[]
-  items                 ItemUser[]
-  groupBuyer            MessagesGroup[]      @relation("groupBuyer")
-  groupSeller           MessagesGroup[]      @relation("groupSeller")
-  orderBuyer            Orders[]             @relation("orderBuyer")
-  orderSeller           Orders[]             @relation("orderSeller")
-  payoutProblems        PayoutProblems[]
-  agencies              SocialMediaAgency?
-  picture               Media?               @relation(fields: [pictureId], references: [id])
-  organizations         UserOrganization[]
-  sendSuccessEmails     Boolean              @default(true)
-  sendFailureEmails     Boolean              @default(true)
-  sendStreakEmails      Boolean              @default(true)
-  oauthAuthorizations   OAuthAuthorization[]
-  sentTeamInvitations   TeamInvitation[]      @relation("teamInvitationInviter")
-  acceptedInvitations   TeamInvitation[]      @relation("teamInvitationAcceptor")
+  id                     String                @id @default(uuid())
+  email                  String
+  password               String?
+  providerName           Provider
+  name                   String?
+  lastName               String?
+  isSuperAdmin           Boolean               @default(false)
+  bio                    String?
+  audience               Int                   @default(0)
+  pictureId              String?
+  providerId             String?
+  timezone               Int
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  lastReadNotifications  DateTime              @default(now())
+  inviteId               String?
+  activated              Boolean               @default(true)
+  account                String?
+  connectedAccount       Boolean               @default(false)
+  lastOnline             DateTime              @default(now())
+  ip                     String?
+  agent                  String?
+  comments               Comments[]
+  items                  ItemUser[]
+  groupBuyer             MessagesGroup[]       @relation("groupBuyer")
+  groupSeller            MessagesGroup[]       @relation("groupSeller")
+  orderBuyer             Orders[]              @relation("orderBuyer")
+  orderSeller            Orders[]              @relation("orderSeller")
+  payoutProblems         PayoutProblems[]
+  agencies               SocialMediaAgency?
+  picture                Media?                @relation(fields: [pictureId], references: [id])
+  organizations          UserOrganization[]
+  sendSuccessEmails      Boolean               @default(true)
+  sendFailureEmails      Boolean               @default(true)
+  sendStreakEmails       Boolean               @default(true)
+  oauthAuthorizations    OAuthAuthorization[]
+  sentTeamInvitations    TeamInvitation[]      @relation("teamInvitationInviter")
+  acceptedInvitations    TeamInvitation[]      @relation("teamInvitationAcceptor")
+  requestedPostApprovals PostApprovalRequest[] @relation("postApprovalRequester")
+  decidedPostApprovals   PostApprovalRequest[] @relation("postApprovalDecider")
 
   @@unique([email, providerName])
   @@index([lastReadNotifications])
@@ -172,6 +175,30 @@ model TeamInvitation {
   @@index([expiresAt])
   @@index([acceptedAt])
   @@index([revokedAt])
+}
+
+model PostApprovalRequest {
+  id                String             @id @default(uuid())
+  organizationId    String
+  postGroup         String
+  status            PostApprovalStatus @default(PENDING)
+  activeKey         String?            @unique
+  requestedByUserId String?
+  decidedByUserId   String?
+  requestNote       String?
+  decisionNote      String?
+  requestedAt       DateTime           @default(now())
+  decidedAt         DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requestedBy       User?              @relation("postApprovalRequester", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  decidedBy         User?              @relation("postApprovalDecider", fields: [decidedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, postGroup, createdAt])
+  @@index([organizationId, status, requestedAt])
+  @@index([requestedByUserId])
+  @@index([decidedByUserId])
 }
 
 model GitHub {
@@ -931,6 +958,13 @@ enum State {
   PUBLISHED
   ERROR
   DRAFT
+}
+
+enum PostApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 enum SubscriptionTier {

@@ -73,6 +73,9 @@ describe('permissions without billing', () => {
     expect(
       roleCanAccess('APPROVER', AuthorizationActions.Update, Sections.APPROVAL)
     ).toBe(true);
+    expect(
+      roleCanAccess('VIEWER', AuthorizationActions.Read, Sections.APPROVAL)
+    ).toBe(false);
   });
 
   it('reserves billing authority for owners', () => {

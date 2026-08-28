@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 27 August 2026
+Last updated: 28 August 2026
 
 ## Current implementation milestone: 4 — authentication and tenancy
 
@@ -127,10 +127,18 @@ No production-readiness claim is made.
 - Targeted Prettier formatting completed under a 256 MB ceiling; `git diff --check` passes.
 - A targeted, single-process Jest attempt was deliberately capped at 256 MB and terminated at that heap ceiling before completing. The cap prevented host-level memory growth; the test result is not claimed as passing and the ceiling was not raised.
 - The invitation/role schema still requires Prisma generation and reviewed migration validation on a suitable host. No compiler, app process, container, browser, watcher or parallel test worker was started.
+- Added durable, tenant-scoped post approval requests with one active request per organisation/post group, retained decision history, requester cancellation, and atomic approve/reject claims.
+- Editors can save drafts and request review but cannot schedule or publish; owners, admins and approvers can read the review queue and decide requests; viewers remain read-only. Legacy roles retain their documented compatibility mapping.
+- Approval decisions revalidate that every scoped post still exists as a draft and has not changed since submission. Changed or non-draft content is cancelled instead of approved, and editing or deleting a group cancels its pending request.
+- Added a bounded reviewer queue that returns an accurate total and at most 50 oldest records. The responsive calendar banner shows loading, failure and empty behaviour without relying on email delivery.
+- Added responsive, keyboard-operable composer controls for request, approve, request-changes and requester cancellation, plus visible current/outdated status and understandable network failures.
+- Added `docs/APPROVALS.md`, DTO validation, repository specifications for tenant scoping, stale decisions, atomic claims, requester cancellation and the queue bound, and `scripts/check-approval-safety.mjs` with seven low-memory invariants.
+- Files changed for the approval slice: the Prisma schema, posts repository/service/controller, permission service/specification, approval DTOs/repository specification, composer and launches UI, approval guide, root scripts manifest, and bounded safety audits.
+- Verification for the approval slice: targeted Prettier completed under a 256 MB heap cap; Prisma `format` validated and formatted the schema under 256 MB; the 64 MB approval, resource and tenant-policy audits passed with 7, 10 and 12-controller coverage respectively; `git diff --check` passed.
+- Jest, TypeScript, Prisma client generation, database migration execution, application runtime, browser accessibility and production builds were not run after this slice because they exceed the workstation-safe envelope. No result is claimed for those gates.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
-- Add approval-state persistence and guarded request/approve/reject transitions before claiming complete approver/editor/viewer enforcement.
 - Introduce separately keyed authenticated encryption for social OAuth access and refresh tokens, with safe key rotation and no plaintext fallback in production.
 - Build the cross-tenant access matrix and account-lifecycle integration tests for execution on a suitable host.

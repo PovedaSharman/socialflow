@@ -1,4 +1,7 @@
-import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
+import {
+  PrismaRepository,
+  PrismaTransaction,
+} from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { Post as PostBody } from '@gitroom/nestjs-libraries/dtos/posts/create.post.dto';
 import {
@@ -30,8 +33,218 @@ export class PostsRepository {
     private _comments: PrismaRepository<'comments'>,
     private _tags: PrismaRepository<'tags'>,
     private _tagsPosts: PrismaRepository<'tagsPosts'>,
-    private _errors: PrismaRepository<'errors'>
+    private _errors: PrismaRepository<'errors'>,
+    private _postApproval: PrismaRepository<'postApprovalRequest'>,
+    private _transaction: PrismaTransaction
   ) {}
+
+  async requestPostApproval(
+    organizationId: string,
+    postGroup: string,
+    requestedByUserId: string,
+    requestNote?: string
+  ) {
+    return this._transaction.model.$transaction(async (transaction) => {
+      const posts = await transaction.post.findMany({
+        where: {
+          organizationId,
+          group: postGroup,
+          deletedAt: null,
+        },
+        select: { state: true },
+      });
+      if (posts.length === 0 || posts.some((post) => post.state !== 'DRAFT')) {
+        return null;
+      }
+
+      const activeKey = `${organizationId}:${postGroup}`;
+      return transaction.postApprovalRequest.upsert({
+        where: { activeKey },
+        create: {
+          organizationId,
+          postGroup,
+          activeKey,
+          requestedByUserId,
+          requestNote,
+        },
+        update: {
+          updatedAt: new Date(),
+        },
+        select: {
+          id: true,
+          postGroup: true,
+          status: true,
+          requestNote: true,
+          requestedAt: true,
+        },
+      });
+    });
+  }
+
+  async getLatestPostApproval(organizationId: string, postGroup: string) {
+    const [approval, latestPostUpdate] = await Promise.all([
+      this._postApproval.model.postApprovalRequest.findFirst({
+        where: { organizationId, postGroup },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          postGroup: true,
+          status: true,
+          requestNote: true,
+          decisionNote: true,
+          requestedAt: true,
+          decidedAt: true,
+          requestedBy: { select: { id: true, name: true, email: true } },
+          decidedBy: { select: { id: true, name: true, email: true } },
+        },
+      }),
+      this._post.model.post.aggregate({
+        where: { organizationId, group: postGroup, deletedAt: null },
+        _max: { updatedAt: true },
+      }),
+    ]);
+    if (!approval) {
+      return null;
+    }
+    return {
+      ...approval,
+      isCurrent:
+        !latestPostUpdate._max.updatedAt ||
+        approval.requestedAt >= latestPostUpdate._max.updatedAt,
+    };
+  }
+
+  async getPendingPostApprovals(organizationId: string) {
+    const where = {
+      organizationId,
+      status: 'PENDING' as const,
+      activeKey: { not: null },
+    };
+    const total = await this._postApproval.model.postApprovalRequest.count({
+      where,
+    });
+    const items = await this._postApproval.model.postApprovalRequest.findMany({
+      where,
+      orderBy: { requestedAt: 'asc' },
+      take: 50,
+      select: {
+        id: true,
+        postGroup: true,
+        status: true,
+        requestNote: true,
+        requestedAt: true,
+        requestedBy: { select: { id: true, name: true, email: true } },
+      },
+    });
+    return { items, total };
+  }
+
+  decidePostApproval(
+    organizationId: string,
+    approvalId: string,
+    decidedByUserId: string,
+    status: 'APPROVED' | 'REJECTED',
+    decisionNote?: string,
+    now = new Date()
+  ) {
+    return this._transaction.model.$transaction(async (transaction) => {
+      const pending = await transaction.postApprovalRequest.findFirst({
+        where: {
+          id: approvalId,
+          organizationId,
+          status: 'PENDING',
+          activeKey: { not: null },
+        },
+        select: { postGroup: true, requestedAt: true },
+      });
+      if (!pending) {
+        return null;
+      }
+
+      const posts = await transaction.post.findMany({
+        where: {
+          organizationId,
+          group: pending.postGroup,
+          deletedAt: null,
+        },
+        select: { state: true, updatedAt: true },
+      });
+      const contentIsCurrent =
+        posts.length > 0 &&
+        posts.every(
+          (post) =>
+            post.state === 'DRAFT' && post.updatedAt <= pending.requestedAt
+        );
+      if (!contentIsCurrent) {
+        await transaction.postApprovalRequest.updateMany({
+          where: {
+            id: approvalId,
+            organizationId,
+            status: 'PENDING',
+            activeKey: { not: null },
+          },
+          data: {
+            status: 'CANCELLED',
+            activeKey: null,
+            decidedAt: now,
+          },
+        });
+        return null;
+      }
+
+      const claimed = await transaction.postApprovalRequest.updateMany({
+        where: {
+          id: approvalId,
+          organizationId,
+          status: 'PENDING',
+          activeKey: { not: null },
+        },
+        data: {
+          status,
+          activeKey: null,
+          decidedByUserId,
+          decisionNote,
+          decidedAt: now,
+        },
+      });
+      if (claimed.count !== 1) {
+        return null;
+      }
+
+      return transaction.postApprovalRequest.findUnique({
+        where: { id: approvalId },
+        select: {
+          id: true,
+          postGroup: true,
+          status: true,
+          decisionNote: true,
+          decidedAt: true,
+        },
+      });
+    });
+  }
+
+  cancelPostApproval(
+    organizationId: string,
+    approvalId: string,
+    requestedByUserId: string,
+    now = new Date()
+  ) {
+    return this._postApproval.model.postApprovalRequest.updateMany({
+      where: {
+        id: approvalId,
+        organizationId,
+        requestedByUserId,
+        status: 'PENDING',
+        activeKey: { not: null },
+      },
+      data: {
+        status: 'CANCELLED',
+        activeKey: null,
+        decidedAt: now,
+      },
+    });
+  }
 
   searchForMissingThreeHoursPosts() {
     return this._post.model.post.findMany({
@@ -331,6 +544,20 @@ export class PostsRepository {
       },
     });
 
+    await this._postApproval.model.postApprovalRequest.updateMany({
+      where: {
+        organizationId: orgId,
+        postGroup: group,
+        status: 'PENDING',
+        activeKey: { not: null },
+      },
+      data: {
+        status: 'CANCELLED',
+        activeKey: null,
+        decidedAt: new Date(),
+      },
+    });
+
     return this._post.model.post.findFirst({
       where: {
         organizationId: orgId,
@@ -520,7 +747,22 @@ export class PostsRepository {
     inter?: number
   ) {
     const posts: Post[] = [];
-    const uuid = uuidv4();
+    if (body.group) {
+      await this._postApproval.model.postApprovalRequest.updateMany({
+        where: {
+          organizationId: orgId,
+          postGroup: body.group,
+          status: 'PENDING',
+          activeKey: { not: null },
+        },
+        data: {
+          status: 'CANCELLED',
+          activeKey: null,
+          decidedAt: new Date(),
+        },
+      });
+    }
+    const postGroup = uuidv4();
 
     for (const value of body.value) {
       const updateData = (type: 'create' | 'update') => ({
@@ -548,7 +790,7 @@ export class PostsRepository {
           : {}),
         content: value.content,
         delay: value.delay || 0,
-        group: uuid,
+        group: postGroup,
         intervalInDays: inter ? +inter : null,
         approvedSubmitForOrder: APPROVED_SUBMIT_FOR_ORDER.NO,
         ...(type === 'create' ? { creationMethod } : {}),

@@ -11,6 +11,9 @@ const integrationService = read(
 const postsService = read(
   'libraries/nestjs-libraries/src/database/prisma/posts/posts.service.ts'
 );
+const postsRepository = read(
+  'libraries/nestjs-libraries/src/database/prisma/posts/posts.repository.ts'
+);
 
 const requirements = [
   [
@@ -49,6 +52,10 @@ const requirements = [
   [
     integrationService.includes('e instanceof RefreshToken && !forceRefresh'),
     'Integration analytics refresh retry must remain single-use.',
+  ],
+  [
+    postsRepository.includes('take: 50'),
+    'The pending approval queue must retain a finite result limit.',
   ],
 ];
 
