@@ -35,10 +35,12 @@ export class MediaRepository {
     });
   }
 
-  getMediaById(id: string) {
-    return this._media.model.media.findUnique({
+  getMediaById(org: string, id: string) {
+    return this._media.model.media.findFirst({
       where: {
         id,
+        organizationId: org,
+        deletedAt: null,
       },
     });
   }

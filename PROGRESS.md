@@ -158,9 +158,13 @@ No production-readiness claim is made.
 - Added an opt-in two-tenant integration repository suite covering secret-free channel lists, cross-tenant ID reads and mutations, and same-provider-ID credential rotation isolation. The account/tenant matrix and bounded audit now include this boundary.
 - Files changed for the integration isolation slice: the integrations controller/service/repository, opt-in integration repository suite, account/tenant matrix guide, bounded coverage audit and this progress record.
 - Verification for the integration isolation slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB account/tenant, social-credential, tenant-policy and resource-safety audits passed with 10, 10, 12-controller and 15-invariant coverage respectively; `git diff --check` passed. Jest, PostgreSQL, Prisma generation, compiler, application runtime and browser checks were not run and are not claimed.
+- Closed a cross-tenant media-resolution gap: media lookup now requires the active organisation and excludes soft-deleted rows, and every composer/read/publishing resolution path passes its already authenticated organisation ID.
+- Added an opt-in two-tenant media repository suite covering isolated lists, cross-tenant ID lookup, metadata edits and deletion, plus denial of soft-deleted attachment resolution. The account/tenant matrix and bounded audit now cover media ownership.
+- Files changed for the media isolation slice: the media repository/service, post service, publishing activity, opt-in media repository suite, account/tenant matrix guide, bounded coverage audit and this progress record.
+- Verification for the media isolation slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB account/tenant and resource-safety audits passed with 12 and 15 invariants respectively; `git diff --check` passed. Jest, PostgreSQL, Prisma generation, compiler, application runtime and browser checks were not run and are not claimed.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
 - Run the credential dry-run, bounded encryption migration and Temporal legacy-history drain/retention procedure on a suitable explicitly approved host, then exercise test-provider reconnect, refresh and publish paths.
-- Extend the opt-in two-tenant database/request matrix to media, webhooks, sets, signatures, invitations and billing, then execute the complete account lifecycle gate on a suitable host.
+- Extend the opt-in two-tenant database/request matrix to webhooks, sets, signatures, invitations and billing, then execute the complete account lifecycle gate on a suitable host.

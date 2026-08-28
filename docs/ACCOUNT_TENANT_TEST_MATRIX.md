@@ -16,6 +16,7 @@ this workstation.
 | Invitation creation           | New opaque token supersedes an older active invitation for the same tenant/email     | Raw token persistence or two current invitations                                                 | `invitation.token.spec.ts`, organisation repository transaction                                                                     |
 | Invitation acceptance         | Matching email atomically claims a valid tenant invitation once                      | Expired, revoked, reused, wrong-email, or concurrent claim                                       | `auth.service.spec.ts`, organisation repository transaction                                                                         |
 | Tenant-owned mutations        | Active tenant predicate and role policy both pass                                    | Cross-tenant identifier or insufficient role                                                     | `posts.repository.tenant.integration.spec.ts`, `permissions.route-coverage.spec.ts`, repository specifications, tenant-policy audit |
+| Media ownership               | Active media can be listed, described, attached and deleted by its tenant            | Another tenant's ID or a soft-deleted media row is supplied for attachment                       | `media.repository.tenant.integration.spec.ts`, account/tenant coverage audit                                                        |
 | Social connection ownership   | Channel reads, profile changes and credential rotation stay inside the active tenant | Another tenant reuses the same provider account ID or supplies its channel ID                    | `integration.repository.tenant.integration.spec.ts`, account/tenant coverage audit                                                  |
 | Social credentials            | Tenant-scoped internal read authenticates an encrypted envelope                      | Plaintext production row, unknown key, tampering, public projection or workflow-history exposure | `social-credential-encryption.service.spec.ts`, credential-safety audit                                                             |
 
@@ -34,7 +35,8 @@ cross-tenant post reads, deletion and approval submission fail without changing
 the owning tenant. They also verify channel reads and mutations fail across the
 tenant boundary, public channel projections omit credentials, and reconnecting
 one tenant cannot rotate another tenant's credentials when both use the same
-provider account ID. Extend the request-level matrix to media, webhooks, sets,
-signatures, invitations and billing, recording command output and database
-cleanup. Until that evidence exists, the milestone integration gate remains
-pending.
+provider account ID. Media-library reads and mutations are also isolated, and
+post attachment resolution rejects cross-tenant and soft-deleted media IDs.
+Extend the request-level matrix to webhooks, sets, signatures, invitations and
+billing, recording command output and database cleanup. Until that evidence
+exists, the milestone integration gate remains pending.

@@ -25,6 +25,16 @@ const integrationTenantSpec = read(
 const integrationsController = read(
   'apps/backend/src/api/routes/integrations.controller.ts'
 );
+const mediaRepository = read(
+  'libraries/nestjs-libraries/src/database/prisma/media/media.repository.ts'
+);
+const mediaTenantSpec = read(
+  'libraries/nestjs-libraries/src/database/prisma/media/media.repository.tenant.integration.spec.ts'
+);
+const postsService = read(
+  'libraries/nestjs-libraries/src/database/prisma/posts/posts.service.ts'
+);
+const postActivity = read('apps/orchestrator/src/activities/post.activity.ts');
 
 const requirements = [
   [
@@ -96,6 +106,24 @@ const requirements = [
       ) &&
       integrationTenantSpec.includes("token: 'tenant-b-original-token'"),
     'The opt-in database suite must cover channel reads, mutations and credential-rotation isolation.',
+  ],
+  [
+    /getMediaById\(org: string, id: string\)[\s\S]*?findFirst\(\{[\s\S]*?organizationId: org,[\s\S]*?deletedAt: null/.test(
+      mediaRepository
+    ) &&
+      postsService.includes('getMediaById(orgId, p.id)') &&
+      postActivity.includes(
+        'updateMedia(\n            integration.organizationId,'
+      ),
+    'Post media resolution must require the active organization in API and publishing paths.',
+  ],
+  [
+    mediaTenantSpec.includes("RUN_DATABASE_INTEGRATION_TESTS === 'true'") &&
+      mediaTenantSpec.includes('getMediaById(organizationA, mediaB)') &&
+      mediaTenantSpec.includes('saveMediaInformation(organizationA') &&
+      mediaTenantSpec.includes('deleteMedia(organizationA, mediaB)') &&
+      mediaTenantSpec.includes('does not resolve soft-deleted media'),
+    'The opt-in database suite must cover cross-tenant media reads, edits, deletion and active-state checks.',
   ],
 ];
 
