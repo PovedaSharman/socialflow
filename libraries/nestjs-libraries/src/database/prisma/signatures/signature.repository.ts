@@ -24,6 +24,7 @@ export class SignatureRepository {
     signature: SignatureDto,
     id?: string
   ) {
+    const signatureId = id || uuidv4();
     const values = {
       organizationId: orgId,
       content: signature.content,
@@ -31,9 +32,9 @@ export class SignatureRepository {
     };
 
     const { id: updatedId } = await this._signatures.model.signatures.upsert({
-      where: { id: id || uuidv4(), organizationId: orgId },
+      where: { id: signatureId, organizationId: orgId },
       update: values,
-      create: values,
+      create: { id: signatureId, ...values },
     });
 
     if (values.autoAdd) {

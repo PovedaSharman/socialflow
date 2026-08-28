@@ -51,6 +51,15 @@ const setsDto = read('libraries/nestjs-libraries/src/dtos/sets/sets.dto.ts');
 const setsTenantSpec = read(
   'libraries/nestjs-libraries/src/database/prisma/sets/sets.repository.tenant.integration.spec.ts'
 );
+const signatureRepository = read(
+  'libraries/nestjs-libraries/src/database/prisma/signatures/signature.repository.ts'
+);
+const signatureDto = read(
+  'libraries/nestjs-libraries/src/dtos/signature/signature.dto.ts'
+);
+const signatureTenantSpec = read(
+  'libraries/nestjs-libraries/src/database/prisma/signatures/signature.repository.tenant.integration.spec.ts'
+);
 
 const requirements = [
   [
@@ -173,6 +182,25 @@ const requirements = [
       setsTenantSpec.includes('deleteSet(organizationA, setB)') &&
       setsTenantSpec.includes('organizationId: organizationB'),
     'The opt-in database suite must cover set list/count isolation and cross-tenant update/delete denial.',
+  ],
+  [
+    signatureRepository.includes('const signatureId = id || uuidv4()') &&
+      signatureRepository.includes('create: { id: signatureId, ...values }') &&
+      signatureRepository.includes(
+        'where: { organizationId: orgId, id: { not: updatedId } }'
+      ) &&
+      signatureDto.includes('@MaxLength(10_000)'),
+    'Signature writes must use stable IDs, tenant-scoped default updates and bounded content.',
+  ],
+  [
+    signatureTenantSpec.includes("RUN_DATABASE_INTEGRATION_TESTS === 'true'") &&
+      signatureTenantSpec.includes('getDefaultSignature(organizationA)') &&
+      signatureTenantSpec.includes('signatureB') &&
+      signatureTenantSpec.includes('deleteSignature(organizationA') &&
+      signatureTenantSpec.includes(
+        'changes the default only within the selected organization'
+      ),
+    'The opt-in database suite must cover signature reads, mutations and default isolation.',
   ],
 ];
 

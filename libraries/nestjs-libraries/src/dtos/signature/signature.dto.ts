@@ -1,7 +1,8 @@
-import { IsBoolean, IsDefined, IsString } from 'class-validator';
+import { IsBoolean, IsDefined, IsString, MaxLength } from 'class-validator';
 
 export class SignatureDto {
   @IsString()
+  @MaxLength(10_000)
   @IsDefined()
   content: string;
 
