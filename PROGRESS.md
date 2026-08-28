@@ -175,9 +175,13 @@ No production-readiness claim is made.
 - Stabilised generated signature IDs across upsert selection and creation, and bounded signature content to 10,000 characters before repository work.
 - Files changed for the signature isolation slice: the signature repository/DTO, opt-in signature repository suite, account/tenant matrix guide, bounded coverage audit and this progress record.
 - Verification for the signature isolation slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB account/tenant and resource-safety audits passed with 18 and 15 invariants respectively; `git diff --check` passed. Jest, PostgreSQL, Prisma generation, compiler, application runtime and browser checks were not run and are not claimed.
+- Added an opt-in two-tenant invitation persistence suite covering organisation-scoped listing and revocation, same-email supersession without cross-tenant revocation, wrong-email denial and membership creation only in the invited organisation.
+- The existing hashed-token, expiry and atomic-claim implementation required no behavioural rewrite; the account/tenant matrix now links its source-level invitation checks to database evidence prepared for the release host.
+- Files changed for the invitation isolation slice: the opt-in organisation repository invitation suite, account/tenant matrix guide, bounded coverage audit and this progress record.
+- Verification for the invitation isolation slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB account/tenant and resource-safety audits passed with 19 and 15 invariants respectively; `git diff --check` passed. Jest, PostgreSQL, Prisma generation, compiler, application runtime and browser checks were not run and are not claimed.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
 - Run the credential dry-run, bounded encryption migration and Temporal legacy-history drain/retention procedure on a suitable explicitly approved host, then exercise test-provider reconnect, refresh and publish paths.
-- Extend the opt-in two-tenant database/request matrix to invitations and billing, then execute the complete account lifecycle gate on a suitable host.
+- Extend the opt-in two-tenant database/request matrix to billing, then execute the complete account lifecycle gate on a suitable host.

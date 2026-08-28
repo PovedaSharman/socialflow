@@ -60,6 +60,9 @@ const signatureDto = read(
 const signatureTenantSpec = read(
   'libraries/nestjs-libraries/src/database/prisma/signatures/signature.repository.tenant.integration.spec.ts'
 );
+const invitationTenantSpec = read(
+  'libraries/nestjs-libraries/src/database/prisma/organizations/organization.repository.invitation.tenant.integration.spec.ts'
+);
 
 const requirements = [
   [
@@ -201,6 +204,20 @@ const requirements = [
         'changes the default only within the selected organization'
       ),
     'The opt-in database suite must cover signature reads, mutations and default isolation.',
+  ],
+  [
+    invitationTenantSpec.includes(
+      "RUN_DATABASE_INTEGRATION_TESTS === 'true'"
+    ) &&
+      invitationTenantSpec.includes(
+        'revokeTeamInvitation(organizationA, invitationBId)'
+      ) &&
+      invitationTenantSpec.includes(
+        'supersedes only the matching organization invitation'
+      ) &&
+      invitationTenantSpec.includes('email: wrongEmail') &&
+      invitationTenantSpec.includes('organizationId: organizationB'),
+    'The opt-in database suite must cover invitation list/revoke, supersession, email binding and membership isolation.',
   ],
 ];
 
