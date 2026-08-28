@@ -106,6 +106,7 @@ export async function postWorkflowV106({
     globalPlugs,
     processInternalPlug,
     processPlug,
+    isPublicationRetrySafe,
   } = proxyTaskQueue(taskQueue);
 
   const { checkPostStatus } = proxyCheckTaskQueue(taskQueue);
@@ -218,7 +219,8 @@ export async function postWorkflowV106({
   // 'unknown' - anything else (transient errors)
   const handleActivityError = async (
     err: unknown,
-    getIntegrationId?: () => string
+    getIntegrationId?: () => string,
+    requireSafePublicationRetry = false
   ): Promise<{
     type: 'retry' | 'stop' | 'bad-body' | 'timeout' | 'unknown';
     message: string;
@@ -256,6 +258,13 @@ export async function postWorkflowV106({
         if (!getIntegrationId) {
           post.integration.token = refresh.accessToken;
         }
+      }
+
+      if (
+        requireSafePublicationRetry &&
+        !(await isPublicationRetrySafe(post.integration.providerIdentifier))
+      ) {
+        return { type: 'stop', message: cause.message || '' };
       }
 
       return { type: 'retry', message: cause.message || '' };
@@ -486,7 +495,7 @@ export async function postWorkflowV106({
           break;
         }
 
-        const handle = await handleActivityError(err);
+        const handle = await handleActivityError(err, undefined, true);
 
         // token refreshed, repeat the action
         if (handle.type === 'retry') {

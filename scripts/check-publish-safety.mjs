@@ -41,12 +41,14 @@ const requirements = [
   ],
   [
     providerInterface.includes('idempotencyKey: string') &&
+      providerInterface.includes("publicationRetry?: 'idempotency-key'") &&
       (postActivity.match(/idempotencyKey: publicationIdempotencyKey\(p\)/g)
         ?.length || 0) === 2,
     'Main posts and comments must receive the provider idempotency key.',
   ],
   [
     testProvider.includes('local-${post.idempotencyKey}') &&
+      testProvider.includes("publicationRetry = 'idempotency-key'") &&
       testProviderSpec.includes('expect(retry).toEqual(first)'),
     'The local test provider must return one deterministic publication on retry.',
   ],
@@ -60,6 +62,15 @@ const requirements = [
       postWorkflow
     ),
     'Unknown provider mutation outcomes must stop without re-publishing.',
+  ],
+  [
+    postActivity.includes('isPublicationRetrySafe(providerIdentifier') &&
+      postWorkflow.includes('requireSafePublicationRetry') &&
+      postWorkflow.includes('handleActivityError(err, undefined, true)') &&
+      postWorkflow.includes(
+        'await isPublicationRetrySafe(post.integration.providerIdentifier)'
+      ),
+    'Credential-refresh publication retries must require an explicit idempotent provider capability.',
   ],
   [
     /searchForMissingThreeHoursPosts\(\)[\s\S]*?orderBy: \{ publishDate: 'asc' \},[\s\S]*?take: 100/.test(

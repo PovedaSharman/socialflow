@@ -5,6 +5,7 @@ describe('SocialFlowTestProvider', () => {
   it('connects and publishes without network access', async () => {
     const fetchSpy = jest.spyOn(global, 'fetch');
     const provider = new SocialFlowTestProvider();
+    expect(provider.publicationRetry).toBe('idempotency-key');
     const code = Buffer.from(
       JSON.stringify({ displayName: 'Development account' })
     ).toString('base64');

@@ -204,7 +204,12 @@ No production-readiness claim is made.
 - Added `docs/PUBLISHING_RETRIES.md`, pure publication-key specifications and a 64 MB `check:publish-safety` audit covering seven key, provider, workflow and recovery invariants.
 - Files changed for this slice: publication-key helper/specification, social provider contract, posting activity and workflow, local test provider/specification, posts repository, publishing retry guide, root scripts manifest, publish/resource audits, implementation plan and this progress record.
 - Verification for this slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB publish-safety and resource-safety audits passed with 7 and 18 invariants respectively; `git diff --check` passed. Jest, TypeScript, Temporal, database, provider runtime and the end-to-end test-provider journey were not run and are not claimed.
+- Made automatic publication retry an explicit provider capability. Only adapters declaring `publicationRetry = 'idempotency-key'` after applying the supplied key may retry an irreversible publish following credential refresh; unaudited providers refresh for future use but stop the current attempt.
+- Added a posting activity capability check and applied it only to the main/comment mutation retry path. Read-only pending-status checks and downstream plug handling retain their separate retry rules.
+- Enabled the capability for the local SocialFlow test provider and asserted it alongside the same-key/same-result behaviour. No external provider is enabled without adapter-specific evidence.
+- Files changed for this retry-contract slice: the provider interface, local test provider/specification, posting activity/workflow, publishing retry guide, bounded publish audit and this progress record.
+- Verification for this retry-contract slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB publish-safety and resource-safety audits passed with 8 and 18 invariants respectively; `git diff --check` passed. Jest, TypeScript, Temporal and provider runtime checks were not run and are not claimed.
 
 ### Milestone 5 next
 
-- Add provider-contract coverage proving `refresh_token` is emitted only before publication, then prepare a bounded release-host test-provider workflow gate that injects safe refresh, timeout and unknown-outcome scenarios.
+- Prepare a bounded release-host test-provider workflow gate that injects safe refresh, timeout and unknown-outcome scenarios, retains Temporal history and proves the provider mutation call count remains one.

@@ -20,6 +20,7 @@ export class SocialFlowTestProvider
 {
   identifier = 'socialflow-test';
   name = 'SocialFlow Test (local only)';
+  publicationRetry = 'idempotency-key' as const;
   editor = 'normal' as const;
   isBetweenSteps = false;
   scopes: string[] = [];

@@ -12,6 +12,12 @@ client-reference field should send this value unchanged. The local SocialFlow
 test provider uses it as its simulated platform post ID, so repeating the same
 attempt returns the same publication rather than creating another one.
 
+Automatic publication retry is opt-in. A provider must declare
+`publicationRetry = 'idempotency-key'` after its adapter has been verified to
+apply the key to the platform mutation. The local test provider is currently the
+only enabled adapter. An unaudited provider may still refresh its credential,
+but the workflow stops the current attempt rather than risking a duplicate.
+
 ## Unknown outcomes
 
 Irreversible publish and finalisation activities have one Temporal attempt. The

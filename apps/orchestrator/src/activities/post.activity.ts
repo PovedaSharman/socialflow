@@ -188,6 +188,14 @@ export class PostActivity {
   }
 
   @ActivityMethod()
+  async isPublicationRetrySafe(providerIdentifier: string) {
+    return (
+      this._integrationManager.getSocialIntegration(providerIdentifier)
+        .publicationRetry === 'idempotency-key'
+    );
+  }
+
+  @ActivityMethod()
   async postComment(
     postId: string,
     lastPostId: string | undefined,
