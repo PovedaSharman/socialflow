@@ -153,9 +153,14 @@ No production-readiness claim is made.
 - Added `docs/ACCOUNT_TENANT_TEST_MATRIX.md` and a 64 MB `check:account-tenant-coverage` audit spanning session, membership, impersonation, password-reset, invitation and database isolation evidence.
 - Files changed for this matrix slice: the auth middleware/service specifications, opt-in post repository integration specification, account/tenant matrix guide, root scripts manifest and bounded coverage audit.
 - Verification for this matrix slice: targeted Prettier completed under a 256 MB heap cap; the 64 MB account/tenant coverage audit passed eight invariants; `git diff --check` passed. Jest, PostgreSQL setup, Prisma generation, compiler and request-level application tests were not run and are not claimed.
+- Closed a cross-tenant social-credential rotation defect: one-time provider token propagation now includes the active organisation predicate, so tenants sharing the same provider account identifier cannot overwrite each other's access or refresh tokens.
+- Made channel nickname/profile persistence defence-in-depth tenant-scoped through the controller, service and repository instead of relying only on the preceding scoped lookup.
+- Added an opt-in two-tenant integration repository suite covering secret-free channel lists, cross-tenant ID reads and mutations, and same-provider-ID credential rotation isolation. The account/tenant matrix and bounded audit now include this boundary.
+- Files changed for the integration isolation slice: the integrations controller/service/repository, opt-in integration repository suite, account/tenant matrix guide, bounded coverage audit and this progress record.
+- Verification for the integration isolation slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB account/tenant, social-credential, tenant-policy and resource-safety audits passed with 10, 10, 12-controller and 15-invariant coverage respectively; `git diff --check` passed. Jest, PostgreSQL, Prisma generation, compiler, application runtime and browser checks were not run and are not claimed.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
 - Run the credential dry-run, bounded encryption migration and Temporal legacy-history drain/retention procedure on a suitable explicitly approved host, then exercise test-provider reconnect, refresh and publish paths.
-- Extend the opt-in two-tenant database/request matrix to media, integrations, webhooks, sets, signatures, invitations and billing, then execute the complete account lifecycle gate on a suitable host.
+- Extend the opt-in two-tenant database/request matrix to media, webhooks, sets, signatures, invitations and billing, then execute the complete account lifecycle gate on a suitable host.

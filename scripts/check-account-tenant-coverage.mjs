@@ -16,6 +16,15 @@ const invitationSpec = read(
 const databaseTenantSpec = read(
   'libraries/nestjs-libraries/src/database/prisma/posts/posts.repository.tenant.integration.spec.ts'
 );
+const integrationRepository = read(
+  'libraries/nestjs-libraries/src/database/prisma/integrations/integration.repository.ts'
+);
+const integrationTenantSpec = read(
+  'libraries/nestjs-libraries/src/database/prisma/integrations/integration.repository.tenant.integration.spec.ts'
+);
+const integrationsController = read(
+  'apps/backend/src/api/routes/integrations.controller.ts'
+);
 
 const requirements = [
   [
@@ -62,6 +71,31 @@ const requirements = [
       databaseTenantSpec.includes('deletePost(organizationA, groupB)') &&
       databaseTenantSpec.includes('requestPostApproval('),
     'The opt-in database suite must cover cross-tenant read, delete and approval denial.',
+  ],
+  [
+    /updateMany\(\{\s*where:\s*\{\s*organizationId: org,\s*id:\s*\{\s*not: upsert\.id/.test(
+      integrationRepository
+    ) &&
+      /updateNameAndUrl\(org: string, id: string, name: string, url: string\)[\s\S]*?where:\s*\{\s*id,\s*organizationId: org/.test(
+        integrationRepository
+      ) &&
+      integrationsController.includes(
+        'updateNameAndUrl(org.id, id, name, url)'
+      ),
+    'Credential rotation and channel profile updates must remain scoped to the active organization.',
+  ],
+  [
+    integrationTenantSpec.includes(
+      "RUN_DATABASE_INTEGRATION_TESTS === 'true'"
+    ) &&
+      integrationTenantSpec.includes(
+        'getIntegrationById(organizationA, integrationB)'
+      ) &&
+      integrationTenantSpec.includes(
+        'rotates one-time credentials only inside the active organization'
+      ) &&
+      integrationTenantSpec.includes("token: 'tenant-b-original-token'"),
+    'The opt-in database suite must cover channel reads, mutations and credential-rotation isolation.',
   ],
 ];
 

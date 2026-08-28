@@ -339,6 +339,7 @@ export class IntegrationRepository {
 
       await this._integration.model.integration.updateMany({
         where: {
+          organizationId: org,
           id: {
             not: upsert.id,
           },
@@ -398,11 +399,12 @@ export class IntegrationRepository {
     });
   }
 
-  updateNameAndUrl(id: string, name: string, url: string) {
+  updateNameAndUrl(org: string, id: string, name: string, url: string) {
     return this._integration.model.integration.update({
       select: { id: true },
       where: {
         id,
+        organizationId: org,
       },
       data: {
         ...(name ? { name } : {}),

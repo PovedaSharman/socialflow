@@ -176,7 +176,7 @@ export class IntegrationsController {
         )
       : { name: '' };
 
-    return this._integrationService.updateNameAndUrl(id, name, url);
+    return this._integrationService.updateNameAndUrl(org.id, id, name, url);
   }
 
   @Get('/:id')
