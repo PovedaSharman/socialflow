@@ -184,9 +184,14 @@ No production-readiness claim is made.
 - Added an opt-in two-tenant billing repository suite covering customer/subscription lookup, duplicate customer rejection, customer-routed webhook updates, credit aggregation and subscription deletion isolation.
 - Files changed for the billing isolation slice: the Prisma schema, subscription service and cycle specification, opt-in subscription repository suite, billing-key runbook, account/tenant matrix guide, account/tenant and resource audits, and this progress record.
 - Verification for the billing isolation slice: targeted Prettier completed under a 128 MB heap cap; Prisma `format` completed under 128 MB; the 64 MB account/tenant and resource-safety audits passed with 21 and 16 invariants respectively; `git diff --check` passed. Jest, PostgreSQL migration/application, Prisma client generation, compiler, Stripe fixtures, application runtime and browser checks were not run and are not claimed.
+- Added a fixed 18-file release-host account/tenant runner. It refuses to start without three explicit test/disposable-database flags, requires a database name containing `test`, launches one non-shell Jest child with `--runInBand` and caps that child at a 1 GB heap.
+- Added a cancel-in-progress, 20-minute GitHub Actions gate with disposable PostgreSQL, schema application and a retained 14-day log artifact. The workflow definition prepares evidence collection but is not itself passing evidence.
+- Files changed for the release-host gate slice: the fixed runner, package script, account/tenant CI workflow, matrix guide, account/tenant and resource-safety audits, and this progress record.
+- Verification for the release-host gate slice: targeted Prettier completed under a 128 MB heap cap; the runner's fail-closed guard was exercised under 64 MB and exited before Jest; `package.json` parsed under 64 MB; the 64 MB account/tenant and resource-safety audits passed with 22 and 17 invariants respectively; `git diff --check` passed. The 18-file Jest/PostgreSQL gate and GitHub Actions workflow were not executed and are not claimed.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
 - Run the credential dry-run, bounded encryption migration and Temporal legacy-history drain/retention procedure on a suitable explicitly approved host, then exercise test-provider reconnect, refresh and publish paths.
 - Execute the assembled account lifecycle and two-tenant database matrix on a suitable host, retain its output, repair any failures and update the release-readiness evidence.
+- While the milestone-4 execution gate awaits that host, begin milestone 5 by auditing retry idempotency and the documented test-provider schedule/publish journey without starting local services.

@@ -70,6 +70,8 @@ const subscriptionTenantSpec = read(
   'libraries/nestjs-libraries/src/database/prisma/subscriptions/subscription.repository.tenant.integration.spec.ts'
 );
 const billingTenantRunbook = read('docs/BILLING_TENANT_KEYS.md');
+const accountTenantRunner = read('scripts/run-account-tenant-gate.mjs');
+const accountTenantWorkflow = read('.github/workflows/account-tenant-gate.yml');
 
 const requirements = [
   [
@@ -246,6 +248,15 @@ const requirements = [
         'deleteSubscriptionByCustomerId(customerB)'
       ),
     'The opt-in database suite must cover billing key collisions, webhook routing, credits and deletion isolation.',
+  ],
+  [
+    (accountTenantRunner.match(/\.spec\.ts'/g) || []).length === 18 &&
+      accountTenantRunner.includes('ALLOW_DISPOSABLE_DATABASE_TESTS') &&
+      accountTenantRunner.includes('databaseUrl.pathname') &&
+      accountTenantRunner.includes("'--runTestsByPath'") &&
+      accountTenantWorkflow.includes('socialflow_tenant_test') &&
+      accountTenantWorkflow.includes('actions/upload-artifact@v4'),
+    'The release-host gate must use a fixed test manifest, disposable database safeguards and retained CI output.',
   ],
 ];
 

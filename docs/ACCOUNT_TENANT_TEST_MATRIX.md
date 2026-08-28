@@ -48,3 +48,23 @@ credits and subscription deletion. The source matrix is now assembled; execute
 it, retain command output and confirm database cleanup on the approved release
 host. Until that evidence exists, the milestone integration gate remains
 pending.
+
+The fixed-path runner refuses to start unless `NODE_ENV=test`,
+`RUN_DATABASE_INTEGRATION_TESTS=true` and
+`ALLOW_DISPOSABLE_DATABASE_TESTS=true`; the database name must also contain
+`test`. After preparing that disposable database, run:
+
+```bash
+NODE_ENV=test \
+RUN_DATABASE_INTEGRATION_TESTS=true \
+ALLOW_DISPOSABLE_DATABASE_TESTS=true \
+DATABASE_URL='postgresql://USER:PASSWORD@HOST:5432/socialflow_tenant_test' \
+pnpm test:account-tenant:release
+```
+
+The runner starts one Jest process with `--runInBand`, a fixed 1 GB heap ceiling
+and an explicit 18-file manifest. It does not create or migrate a database.
+`.github/workflows/account-tenant-gate.yml` supplies a disposable PostgreSQL
+service, applies the schema, enforces a 20-minute job timeout and retains the
+gate log for 14 days. A workflow definition is not passing evidence; record the
+completed run and artifact before changing this milestone's status.

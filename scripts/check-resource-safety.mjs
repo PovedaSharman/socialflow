@@ -30,6 +30,8 @@ const subscriptionService = read(
 const subscriptionCycleSpec = read(
   'libraries/nestjs-libraries/src/database/prisma/subscriptions/subscription.cycle.spec.ts'
 );
+const accountTenantRunner = read('scripts/run-account-tenant-gate.mjs');
+const accountTenantWorkflow = read('.github/workflows/account-tenant-gate.yml');
 
 const requirements = [
   [
@@ -108,6 +110,19 @@ const requirements = [
       subscriptionCycleSpec.includes('2035-08-20T10:00:00.000Z') &&
       subscriptionCycleSpec.includes('2035-08-15T10:00:00.000Z'),
     'Billing-cycle credit calculation must remain constant-time.',
+  ],
+  [
+    accountTenantRunner.includes("'--runInBand'") &&
+      accountTenantRunner.includes('shell: false') &&
+      accountTenantRunner.includes(
+        "NODE_OPTIONS: '--max-old-space-size=1024'"
+      ) &&
+      packageJson.scripts['test:account-tenant:release'].includes(
+        '--max-old-space-size=128'
+      ) &&
+      accountTenantWorkflow.includes('cancel-in-progress: true') &&
+      accountTenantWorkflow.includes('timeout-minutes: 20'),
+    'The release-host tenant gate must remain single-process, memory-capped and time-bounded.',
   ],
 ];
 

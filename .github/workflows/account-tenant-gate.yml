@@ -1,0 +1,68 @@
+---
+name: Account and tenant gate
+
+on:
+  pull_request:
+  push:
+
+concurrency:
+  group: account-tenant-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  account-tenant:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: socialflow_tenant_test
+          POSTGRES_USER: socialflow
+          POSTGRES_PASSWORD: socialflow-test-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U socialflow -d socialflow_tenant_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://socialflow:socialflow-test-only@127.0.0.1:5432/socialflow_tenant_test
+      RUN_DATABASE_INTEGRATION_TESTS: 'true'
+      ALLOW_DISPOSABLE_DATABASE_TESTS: 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.1
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare disposable database
+        run: NODE_OPTIONS=--max-old-space-size=512 pnpm exec prisma db push --schema libraries/nestjs-libraries/src/database/prisma/schema.prisma
+
+      - name: Run account and tenant gate
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test:account-tenant:release 2>&1 | tee account-tenant-gate.log
+
+      - name: Retain gate output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: account-tenant-gate-${{ github.run_id }}
+          path: account-tenant-gate.log
+          if-no-files-found: warn
+          retention-days: 14
