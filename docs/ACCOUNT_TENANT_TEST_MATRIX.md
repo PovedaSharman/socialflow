@@ -19,6 +19,7 @@ this workstation.
 | Media ownership               | Active media can be listed, described, attached and deleted by its tenant            | Another tenant's ID or a soft-deleted media row is supplied for attachment                       | `media.repository.tenant.integration.spec.ts`, account/tenant coverage audit                                                        |
 | Social connection ownership   | Channel reads, profile changes and credential rotation stay inside the active tenant | Another tenant reuses the same provider account ID or supplies its channel ID                    | `integration.repository.tenant.integration.spec.ts`, account/tenant coverage audit                                                  |
 | Webhook ownership             | A bounded channel set is validated and saved atomically for its owning tenant        | Another tenant's channel/webhook ID, duplicates, or an inactive channel at validation            | `webhooks.repository.tenant.integration.spec.ts`, account/tenant coverage audit                                                     |
+| Reusable content sets         | A bounded template is listed, created, updated and deleted inside its tenant         | Another tenant's set ID is supplied for update or deletion                                       | `sets.repository.tenant.integration.spec.ts`, account/tenant coverage audit                                                         |
 | Social credentials            | Tenant-scoped internal read authenticates an encrypted envelope                      | Plaintext production row, unknown key, tampering, public projection or workflow-history exposure | `social-credential-encryption.service.spec.ts`, credential-safety audit                                                             |
 
 ## Bounded local audit
@@ -40,6 +41,6 @@ provider account ID. Media-library reads and mutations are also isolated, and
 post attachment resolution rejects cross-tenant and soft-deleted media IDs.
 Webhook writes additionally validate a maximum of 100 active, tenant-owned
 channels in the same transaction as relationship replacement. Extend the
-request-level matrix to sets, signatures, invitations and billing, recording
-command output and database cleanup. Until that evidence exists, the milestone
+request-level matrix to signatures, invitations and billing, recording command
+output and database cleanup. Until that evidence exists, the milestone
 integration gate remains pending.

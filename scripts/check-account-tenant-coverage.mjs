@@ -44,6 +44,13 @@ const webhooksDto = read(
 const webhooksTenantSpec = read(
   'libraries/nestjs-libraries/src/database/prisma/webhooks/webhooks.repository.tenant.integration.spec.ts'
 );
+const setsRepository = read(
+  'libraries/nestjs-libraries/src/database/prisma/sets/sets.repository.ts'
+);
+const setsDto = read('libraries/nestjs-libraries/src/dtos/sets/sets.dto.ts');
+const setsTenantSpec = read(
+  'libraries/nestjs-libraries/src/database/prisma/sets/sets.repository.tenant.integration.spec.ts'
+);
 
 const requirements = [
   [
@@ -150,6 +157,22 @@ const requirements = [
       webhooksTenantSpec.includes('deleteWebhook(organizationA, webhookB)') &&
       webhooksTenantSpec.includes('only de-duplicated relationships'),
     'The opt-in database suite must cover webhook/channel ownership, mutation denial and relationship de-duplication.',
+  ],
+  [
+    setsRepository.includes('const setId = body.id || uuidv4()') &&
+      (setsRepository.match(/organizationId: orgId/g)?.length || 0) >= 5 &&
+      setsDto.match(/@MaxLength\(128\)/g)?.length === 2 &&
+      setsDto.match(/@MaxLength\(120\)/g)?.length === 2 &&
+      setsDto.match(/@MaxLength\(100_000\)/g)?.length === 2,
+    'Content-set writes must use stable IDs, tenant predicates and bounded text fields.',
+  ],
+  [
+    setsTenantSpec.includes("RUN_DATABASE_INTEGRATION_TESTS === 'true'") &&
+      setsTenantSpec.includes('getSets(organizationA)') &&
+      setsTenantSpec.includes('id: setB') &&
+      setsTenantSpec.includes('deleteSet(organizationA, setB)') &&
+      setsTenantSpec.includes('organizationId: organizationB'),
+    'The opt-in database suite must cover set list/count isolation and cross-tenant update/delete denial.',
   ],
 ];
 
