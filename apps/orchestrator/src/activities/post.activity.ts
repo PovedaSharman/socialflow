@@ -25,6 +25,7 @@ import {
 } from '@gitroom/nestjs-libraries/temporal/temporal.search.attribute';
 import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { SocialCredentialEncryptionService } from '@gitroom/nestjs-libraries/security/social-credential-encryption.service';
+import { publicationIdempotencyKey } from '@gitroom/nestjs-libraries/integrations/social/publication.idempotency';
 
 // Drops fields the workflow and downstream activities never read — biggest wins are `error` (grows per retry) and `childrenPost` (Prisma side-loads it on every recursive row).
 function slimPost(post: any) {
@@ -211,6 +212,7 @@ export class PostActivity {
       await Promise.all(
         (newPosts || []).map(async (p) => ({
           id: p.id,
+          idempotencyKey: publicationIdempotencyKey(p),
           message: stripHtmlValidation(
             getIntegration.editor,
             p.content,
@@ -274,6 +276,7 @@ export class PostActivity {
     const mappedPosts = await Promise.all(
       (newPosts || []).map(async (p) => ({
         id: p.id,
+        idempotencyKey: publicationIdempotencyKey(p),
         message: stripHtmlValidation(
           getIntegration.editor,
           p.content,

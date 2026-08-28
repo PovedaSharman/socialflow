@@ -76,6 +76,12 @@ const requirements = [
     'The pending approval queue must retain a finite result limit.',
   ],
   [
+    /searchForMissingThreeHoursPosts\(\)[\s\S]*?orderBy: \{ publishDate: 'asc' \},[\s\S]*?take: 100/.test(
+      postsRepository
+    ),
+    'The missing-post recovery sweep must retain a finite batch limit.',
+  ],
+  [
     credentialMigration.includes('const BATCH_SIZE = 100') &&
       credentialMigration.includes('processed < initialTotal'),
     'Social credential migration must remain batch- and iteration-bounded.',

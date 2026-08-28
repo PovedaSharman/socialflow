@@ -2,9 +2,9 @@
 
 Last updated: 28 August 2026
 
-## Current implementation milestone: 4 — authentication and tenancy
+## Current implementation milestone: 5 — content and OAuth
 
-Milestone 3 implementation is checkpointed; its automated WCAG and visual gate remains pending on a suitable, explicitly approved host.
+Milestone 3 implementation is checkpointed; its automated WCAG and visual gate remains pending on a suitable, explicitly approved host. Milestone 4's source matrix is assembled, while its PostgreSQL/Jest execution gate remains pending on that host.
 
 ### Verified
 
@@ -194,4 +194,17 @@ No production-readiness claim is made.
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
 - Run the credential dry-run, bounded encryption migration and Temporal legacy-history drain/retention procedure on a suitable explicitly approved host, then exercise test-provider reconnect, refresh and publish paths.
 - Execute the assembled account lifecycle and two-tenant database matrix on a suitable host, retain its output, repair any failures and update the release-readiness evidence.
-- While the milestone-4 execution gate awaits that host, begin milestone 5 by auditing retry idempotency and the documented test-provider schedule/publish journey without starting local services.
+
+### Milestone 5 in progress
+
+- Added deterministic `sfpub:v1:` SHA-256 keys derived from organisation, channel, post, scheduled time and previous release ID. Keys exclude content and credentials, remain stable for the same logical attempt, change on reschedule/repeat and are passed to both main-post and comment providers.
+- Updated the local-only SocialFlow test provider to derive its simulated platform ID from that key; its specification calls the provider twice with the same attempt and expects one identical result.
+- Removed manual retries for unknown irreversible provider-mutation failures. Unknown outcomes and timeouts now stop, mark the post unconfirmed and tell the user to check the platform; only an explicit pre-publication credential-refresh classification can retry.
+- Bounded the overdue missing-post recovery query to the oldest 100 root posts per sweep, which the activity already signals sequentially.
+- Added `docs/PUBLISHING_RETRIES.md`, pure publication-key specifications and a 64 MB `check:publish-safety` audit covering seven key, provider, workflow and recovery invariants.
+- Files changed for this slice: publication-key helper/specification, social provider contract, posting activity and workflow, local test provider/specification, posts repository, publishing retry guide, root scripts manifest, publish/resource audits, implementation plan and this progress record.
+- Verification for this slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB publish-safety and resource-safety audits passed with 7 and 18 invariants respectively; `git diff --check` passed. Jest, TypeScript, Temporal, database, provider runtime and the end-to-end test-provider journey were not run and are not claimed.
+
+### Milestone 5 next
+
+- Add provider-contract coverage proving `refresh_token` is emitted only before publication, then prepare a bounded release-host test-provider workflow gate that injects safe refresh, timeout and unknown-outcome scenarios.

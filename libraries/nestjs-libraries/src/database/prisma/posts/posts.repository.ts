@@ -275,6 +275,8 @@ export class PostsRepository {
         },
         publishDate: true,
       },
+      orderBy: { publishDate: 'asc' },
+      take: 100,
     });
   }
 

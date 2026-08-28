@@ -68,13 +68,13 @@ export class SocialFlowTestProvider
   }
 
   async post(
-    id: string,
+    _id: string,
     _accessToken: string,
     postDetails: PostDetails[],
     _integration: Integration
   ): Promise<PostResponse[]> {
-    return postDetails.map((post, index) => {
-      const postId = `local-${id}-${index + 1}`;
+    return postDetails.map((post) => {
+      const postId = `local-${post.idempotencyKey}`;
       return {
         id: post.id,
         postId,

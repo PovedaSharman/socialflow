@@ -32,7 +32,7 @@ export interface IAuthenticator {
     integrationId: string,
     accessToken: string,
     postId: string,
-    fromDate: number,
+    fromDate: number
   ): Promise<AnalyticsData[]>;
   changeNickname?(
     id: string,
@@ -55,7 +55,6 @@ export interface AnalyticsData {
   data: Array<{ total: string; date: string }>;
   percentageChange: number;
 }
-
 
 export type GenerateAuthUrlResponse = {
   url: string;
@@ -132,6 +131,7 @@ export type PendingCheckResponse =
 
 export type PostDetails<T = any> = {
   id: string;
+  idempotencyKey: string;
   message: string;
   settings: T;
   media?: MediaContent[];

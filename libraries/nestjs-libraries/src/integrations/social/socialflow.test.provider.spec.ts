@@ -1,4 +1,5 @@
 import { SocialFlowTestProvider } from './socialflow.test.provider';
+import { publicationIdempotencyKey } from './publication.idempotency';
 
 describe('SocialFlowTestProvider', () => {
   it('connects and publishes without network access', async () => {
@@ -15,21 +16,42 @@ describe('SocialFlowTestProvider', () => {
       username: 'local-test',
     });
 
-    const result = await provider.post(
+    const idempotencyKey = publicationIdempotencyKey({
+      id: 'post-id',
+      organizationId: 'organization-id',
+      integrationId: 'integration-id',
+      publishDate: '2030-01-01T10:00:00.000Z',
+    });
+    const details = [
+      {
+        id: 'post-id',
+        idempotencyKey,
+        message: 'Safe local post',
+        settings: {},
+      },
+    ];
+    const first = await provider.post(
       'integration-id',
       'ignored',
-      [{ id: 'post-id', message: 'Safe local post', settings: {} }],
+      details,
+      {} as never
+    );
+    const retry = await provider.post(
+      'integration-id',
+      'ignored',
+      details,
       {} as never
     );
 
-    expect(result).toEqual([
+    expect(first).toEqual([
       {
         id: 'post-id',
-        postId: 'local-integration-id-1',
-        releaseURL: 'socialflow-test://posts/local-integration-id-1',
+        postId: `local-${idempotencyKey}`,
+        releaseURL: `socialflow-test://posts/local-${idempotencyKey}`,
         status: 'completed',
       },
     ]);
+    expect(retry).toEqual(first);
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });

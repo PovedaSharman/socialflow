@@ -504,6 +504,18 @@ export async function postWorkflowV106({
           return false;
         }
 
+        // An unknown mutation failure may have happened after the provider
+        // accepted the post. Never retry it: preserve the draft and ask the
+        // user to confirm the platform outcome before taking another action.
+        if (handle.type === 'unknown') {
+          try {
+            await markUnconfirmed(err);
+          } catch (e) {
+            /**empty**/
+          }
+          return false;
+        }
+
         // for other errors, change state and inform the user if needed
         await changeState(postsList[0].id, 'ERROR', err, postsList);
 
