@@ -1,0 +1,81 @@
+import { readFileSync } from 'node:fs';
+
+const read = (file) => readFileSync(file, 'utf8');
+const middleware = read('apps/backend/src/services/auth/auth.middleware.ts');
+const middlewareSpec = read(
+  'apps/backend/src/services/auth/auth.middleware.spec.ts'
+);
+const authService = read('apps/backend/src/services/auth/auth.service.ts');
+const authSpec = read('apps/backend/src/services/auth/auth.service.spec.ts');
+const organizationRepository = read(
+  'libraries/nestjs-libraries/src/database/prisma/organizations/organization.repository.ts'
+);
+const invitationSpec = read(
+  'libraries/helpers/src/auth/invitation.token.spec.ts'
+);
+const databaseTenantSpec = read(
+  'libraries/nestjs-libraries/src/database/prisma/posts/posts.repository.tenant.integration.spec.ts'
+);
+
+const requirements = [
+  [
+    middleware.includes('getUserById(payload.id)') &&
+      middleware.includes('selectActiveOrganization(organization, orgHeader)'),
+    'Authenticated requests must re-resolve the user and active membership.',
+  ],
+  [
+    middleware.includes('loadImpersonate && !loadImpersonate.disabled') &&
+      middleware.includes('f.userId === user.id'),
+    'Support impersonation must reject disabled memberships and isolate the target.',
+  ],
+  [
+    middlewareSpec.includes('rejects forged activation claims') &&
+      middlewareSpec.includes('outside the membership set') &&
+      middlewareSpec.includes('rejects disabled and malformed memberships'),
+    'The middleware matrix must cover forged, cross-tenant and disabled cases.',
+  ],
+  [
+    middlewareSpec.includes('limits enabled impersonation') &&
+      middlewareSpec.includes('strips the password'),
+    'The middleware matrix must cover successful isolation and secret stripping.',
+  ],
+  [
+    authService.includes('updatePasswordIfCurrent(') &&
+      authSpec.includes('atomic predicate and accepts the token once') &&
+      authSpec.includes('rejects a stale password fingerprint'),
+    'Password-reset coverage must prove stale and single-use behaviour.',
+  ],
+  [
+    organizationRepository.includes('acceptTeamInvitation(') &&
+      organizationRepository.includes('claimed.count !== 1') &&
+      organizationRepository.includes('email: user.email.toLowerCase()'),
+    'Invitation acceptance must remain email-bound and atomically claimed.',
+  ],
+  [
+    invitationSpec.includes('high-entropy URL-safe values') &&
+      invitationSpec.includes('hash rather than the raw token'),
+    'Invitation tests must retain entropy and at-rest hashing coverage.',
+  ],
+  [
+    databaseTenantSpec.includes("RUN_DATABASE_INTEGRATION_TESTS === 'true'") &&
+      databaseTenantSpec.includes('getPostsByGroup(organizationA, groupB)') &&
+      databaseTenantSpec.includes('deletePost(organizationA, groupB)') &&
+      databaseTenantSpec.includes('requestPostApproval('),
+    'The opt-in database suite must cover cross-tenant read, delete and approval denial.',
+  ],
+];
+
+const failures = requirements
+  .filter(([passed]) => !passed)
+  .map(([, message]) => message);
+
+if (failures.length > 0) {
+  process.stderr.write(
+    `Account/tenant coverage audit failed:\n${failures.join('\n')}\n`
+  );
+  process.exitCode = 1;
+} else {
+  process.stdout.write(
+    `Account/tenant coverage audit passed (${requirements.length} invariants).\n`
+  );
+}

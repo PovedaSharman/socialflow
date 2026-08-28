@@ -147,9 +147,15 @@ No production-readiness claim is made.
 - Added pure specifications for random authenticated encryption, tamper rejection, old-key rotation and production fail-closed behaviour. They are intentionally unexecuted under the workstation restriction.
 - Files changed for the credential slice: the encryption service/specification, database module, integration/post repositories and services, autopost state type, public API and MCP trigger paths, orchestrator activities/current workflows, bounded migration and audit scripts, environment template, deployment/security documentation and the credential runbook.
 - Verification for the credential slice: targeted Prettier completed under a 256 MB heap cap; `package.json` parsed under 64 MB; the 64 MB social-credential, resource, approval and tenant-policy audits passed with 10, 15, 7 and 12-controller invariants respectively; `git diff --check` passed. Jest, TypeScript, application/runtime, migration execution and Temporal-history inspection were not run and are not claimed.
+- Added an authenticated middleware matrix covering database user re-resolution, forged activation claims, explicit cross-tenant workspace selection, disabled/malformed memberships, password stripping and enabled/disabled support impersonation isolation.
+- Expanded account lifecycle specifications for malformed/expired password reset claims, non-local users, stale password fingerprints and a compare-and-swap result that accepts the same reset token only once.
+- Added an opt-in PostgreSQL repository suite guarded by `RUN_DATABASE_INTEGRATION_TESTS=true`. It seeds two isolated organisations and verifies cross-tenant post group reads, ID reads, deletion and approval submission return no data and do not mutate the owning tenant.
+- Added `docs/ACCOUNT_TENANT_TEST_MATRIX.md` and a 64 MB `check:account-tenant-coverage` audit spanning session, membership, impersonation, password-reset, invitation and database isolation evidence.
+- Files changed for this matrix slice: the auth middleware/service specifications, opt-in post repository integration specification, account/tenant matrix guide, root scripts manifest and bounded coverage audit.
+- Verification for this matrix slice: targeted Prettier completed under a 256 MB heap cap; the 64 MB account/tenant coverage audit passed eight invariants; `git diff --check` passed. Jest, PostgreSQL setup, Prisma generation, compiler and request-level application tests were not run and are not claimed.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
 - Run the credential dry-run, bounded encryption migration and Temporal legacy-history drain/retention procedure on a suitable explicitly approved host, then exercise test-provider reconnect, refresh and publish paths.
-- Build the cross-tenant access matrix and account-lifecycle integration tests for execution on a suitable host.
+- Extend the opt-in two-tenant database/request matrix to media, integrations, webhooks, sets, signatures, invitations and billing, then execute the complete account lifecycle gate on a suitable host.
