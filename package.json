@@ -55,6 +55,7 @@
     "test:publish-workflow:release": "cross-env NODE_OPTIONS=--max-old-space-size=128 node ./scripts/run-publish-workflow-gate.mjs",
     "check:approval-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-approval-safety.mjs",
     "check:account-tenant-coverage": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-account-tenant-coverage.mjs",
+    "check:connection-health": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-connection-health.mjs",
     "check:publish-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-publish-safety.mjs",
     "check:tenant-policies": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-tenant-policies.mjs",
     "check:resource-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-resource-safety.mjs",

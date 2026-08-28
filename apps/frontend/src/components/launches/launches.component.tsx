@@ -27,6 +27,7 @@ import { useIntegrationList } from '@gitroom/frontend/components/launches/helper
 import useCookie from 'react-use-cookie';
 import { Onboarding } from '@gitroom/frontend/components/onboarding/onboarding';
 import { PendingApprovals } from '@gitroom/frontend/components/launches/pending.approvals';
+import type { IntegrationConnectionHealth } from '@gitroom/nestjs-libraries/integrations/integration.connection-health';
 
 export const SVGLine = () => {
   return (
@@ -222,6 +223,7 @@ export const MenuComponent: FC<
       changeProfilePicture: boolean;
       changeNickName: boolean;
       refreshNeeded?: boolean;
+      health?: IntegrationConnectionHealth;
     };
   }
 > = (props) => {
@@ -242,18 +244,46 @@ export const MenuComponent: FC<
       id: integration.id,
     },
   }));
+  const health: IntegrationConnectionHealth = integration.health || {
+    status: integration.disabled
+      ? 'disabled'
+      : integration.refreshNeeded
+      ? 'action_required'
+      : integration.inBetweenSteps
+      ? 'connecting'
+      : 'healthy',
+    requiredAction: integration.disabled
+      ? 'upgrade'
+      : integration.refreshNeeded
+      ? 'reconnect'
+      : integration.inBetweenSteps
+      ? 'continue'
+      : 'none',
+    message: integration.disabled
+      ? t(
+          'channel_disabled_plan',
+          'This channel is disabled by the current plan.'
+        )
+      : integration.refreshNeeded
+      ? t(
+          'channel_reconnect_required',
+          'Reconnect this channel before publishing.'
+        )
+      : integration.inBetweenSteps
+      ? t('channel_finish_connection', 'Finish connecting this channel.')
+      : t('channel_connection_healthy', 'Channel connection is healthy.'),
+    expiresAt: null,
+  };
+  const connectionAction =
+    health.requiredAction === 'reconnect'
+      ? refreshChannel(integration)
+      : health.requiredAction === 'continue'
+      ? continueIntegration(integration)
+      : undefined;
   return (
     <div
       // @ts-ignore
       ref={dragPreview}
-      {...(integration.refreshNeeded && {
-        onClick: refreshChannel(integration),
-        'data-tooltip-id': 'tooltip',
-        'data-tooltip-content': t(
-          'channel_disconnected_click_to_reconnect',
-          'Channel disconnected, click to reconnect.'
-        ),
-      })}
       {...(collapsed
         ? {
             'data-tooltip-id': 'tooltip',
@@ -262,7 +292,7 @@ export const MenuComponent: FC<
         : {})}
       className={clsx(
         'flex gap-[12px] items-center bg-newBgColorInner hover:bg-boxHover group/profile transition-all rounded-e-[8px]',
-        integration.refreshNeeded && 'cursor-pointer'
+        health.status !== 'healthy' && 'min-h-[52px]'
       )}
     >
       <div
@@ -274,21 +304,35 @@ export const MenuComponent: FC<
         <div className="h-full w-[4px] -ms-[12px] rounded-s-[3px] opacity-0 group-hover/profile:opacity-100 transition-opacity">
           <SVGLine />
         </div>
-        {(integration.inBetweenSteps || integration.refreshNeeded) && (
-          <div
-            className="absolute start-0 top-0 w-[39px] h-[46px] cursor-pointer"
-            onClick={
-              integration.refreshNeeded
-                ? refreshChannel(integration)
-                : continueIntegration(integration)
-            }
-          >
-            <div className="bg-red-500 w-[15px] h-[15px] rounded-full start-[5px] top-[5px] absolute z-[200] text-[10px] flex justify-center items-center">
+        {health.status !== 'healthy' &&
+          (connectionAction ? (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                connectionAction();
+              }}
+              aria-label={`${integration.name}: ${health.message}`}
+              data-tooltip-id="tooltip"
+              data-tooltip-content={health.message}
+              className="absolute start-[-4px] top-[-4px] z-[200] h-[44px] w-[44px] rounded-full bg-primary/60 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-newBgColorInner"
+            >
+              <span
+                aria-hidden="true"
+                className="absolute start-[9px] top-[9px] flex h-[15px] w-[15px] items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-black"
+              >
+                !
+              </span>
+            </button>
+          ) : (
+            <span
+              role="img"
+              aria-label={`${integration.name}: ${health.message}`}
+              className="absolute start-[5px] top-[5px] z-[200] flex h-[15px] w-[15px] items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-black"
+            >
               !
-            </div>
-            <div className="bg-primary/60 w-[39px] h-[46px] start-0 top-0 absolute rounded-full z-[199]" />
-          </div>
-        )}
+            </span>
+          ))}
         <ImageWithFallback
           fallbackSrc={'/no-picture.jpg'}
           src={integration.picture || '/no-picture.jpg'}
@@ -326,13 +370,19 @@ export const MenuComponent: FC<
               ),
             }
           : {})}
-        role="Handle"
         className={clsx(
-          'group-[.sidebar]:hidden flex-1 whitespace-nowrap text-ellipsis overflow-hidden cursor-move',
+          'group-[.sidebar]:hidden min-w-0 flex-1 cursor-move py-1',
           integration.disabled && 'opacity-50'
         )}
       >
-        {integration.name}
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+          {integration.name}
+        </div>
+        {health.status !== 'healthy' && !collapsed && (
+          <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[11px] text-amber-300">
+            {health.message}
+          </div>
+        )}
       </div>
       <Menu
         canChangeProfilePicture={integration.changeProfilePicture}

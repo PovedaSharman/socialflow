@@ -21,6 +21,7 @@ import { GetUserFromRequest } from '@gitroom/nestjs-libraries/user/user.from.req
 import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/posts.service';
 import { IntegrationTimeDto } from '@gitroom/nestjs-libraries/dtos/integrations/integration.time.dto';
 import { PlugDto } from '@gitroom/nestjs-libraries/dtos/plugs/plug.dto';
+import { integrationConnectionHealth } from '@gitroom/nestjs-libraries/integrations/integration.connection-health';
 import { RefreshToken } from '@gitroom/nestjs-libraries/integrations/social.abstract';
 
 import { timer } from '@gitroom/helpers/utils/timer';
@@ -108,6 +109,7 @@ export class IntegrationsController {
             identifier: p.providerIdentifier,
             inBetweenSteps: p.inBetweenSteps,
             refreshNeeded: p.refreshNeeded,
+            health: integrationConnectionHealth(p),
             isCustomFields: !!findIntegration.customFields,
             ...(findIntegration.customFields
               ? { customFields: await findIntegration.customFields() }

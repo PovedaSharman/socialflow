@@ -563,6 +563,7 @@ export class IntegrationRepository {
         profile: true,
         inBetweenSteps: true,
         refreshNeeded: true,
+        tokenExpiration: true,
         postingTimes: true,
         additionalSettings: true,
         customer: true,
