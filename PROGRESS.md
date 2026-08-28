@@ -179,9 +179,14 @@ No production-readiness claim is made.
 - The existing hashed-token, expiry and atomic-claim implementation required no behavioural rewrite; the account/tenant matrix now links its source-level invitation checks to database evidence prepared for the release host.
 - Files changed for the invitation isolation slice: the opt-in organisation repository invitation suite, account/tenant matrix guide, bounded coverage audit and this progress record.
 - Verification for the invitation isolation slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB account/tenant and resource-safety audits passed with 19 and 15 invariants respectively; `git diff --check` passed. Jest, PostgreSQL, Prisma generation, compiler, application runtime and browser checks were not run and are not claimed.
+- Made Stripe customer IDs and subscription identifiers unique nullable tenant-routing keys in the Prisma schema, with duplicate-detection queries, migration sequencing and signed-fixture replay requirements documented in `docs/BILLING_TENANT_KEYS.md`.
+- Replaced month-by-month credit-cycle iteration with constant-time month arithmetic and added pure boundary specifications, including a ten-year interval, so corrupt or ancient dates cannot multiply work.
+- Added an opt-in two-tenant billing repository suite covering customer/subscription lookup, duplicate customer rejection, customer-routed webhook updates, credit aggregation and subscription deletion isolation.
+- Files changed for the billing isolation slice: the Prisma schema, subscription service and cycle specification, opt-in subscription repository suite, billing-key runbook, account/tenant matrix guide, account/tenant and resource audits, and this progress record.
+- Verification for the billing isolation slice: targeted Prettier completed under a 128 MB heap cap; Prisma `format` completed under 128 MB; the 64 MB account/tenant and resource-safety audits passed with 21 and 16 invariants respectively; `git diff --check` passed. Jest, PostgreSQL migration/application, Prisma client generation, compiler, Stripe fixtures, application runtime and browser checks were not run and are not claimed.
 
 ### Milestone 4 next
 
 - Generate the Prisma client and validate the invitation/role schema migrations and account flows on a suitable explicitly approved host.
 - Run the credential dry-run, bounded encryption migration and Temporal legacy-history drain/retention procedure on a suitable explicitly approved host, then exercise test-provider reconnect, refresh and publish paths.
-- Extend the opt-in two-tenant database/request matrix to billing, then execute the complete account lifecycle gate on a suitable host.
+- Execute the assembled account lifecycle and two-tenant database matrix on a suitable host, retain its output, repair any failures and update the release-readiness evidence.

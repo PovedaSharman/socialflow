@@ -21,6 +21,7 @@ this workstation.
 | Webhook ownership             | A bounded channel set is validated and saved atomically for its owning tenant        | Another tenant's channel/webhook ID, duplicates, or an inactive channel at validation            | `webhooks.repository.tenant.integration.spec.ts`, account/tenant coverage audit                                                     |
 | Reusable content sets         | A bounded template is listed, created, updated and deleted inside its tenant         | Another tenant's set ID is supplied for update or deletion                                       | `sets.repository.tenant.integration.spec.ts`, account/tenant coverage audit                                                         |
 | Signatures                    | Bounded signatures and the default selection remain inside their owning tenant       | Another tenant's signature ID is supplied or its default is affected                             | `signature.repository.tenant.integration.spec.ts`, account/tenant coverage audit                                                    |
+| Billing routing               | Unique Stripe keys route updates, credits and deletion to one tenant                 | A duplicate customer/subscription key or another tenant's billing state is targeted              | `subscription.repository.tenant.integration.spec.ts`, `BILLING_TENANT_KEYS.md`                                                      |
 | Social credentials            | Tenant-scoped internal read authenticates an encrypted envelope                      | Plaintext production row, unknown key, tampering, public projection or workflow-history exposure | `social-credential-encryption.service.spec.ts`, credential-safety audit                                                             |
 
 ## Bounded local audit
@@ -41,7 +42,9 @@ one tenant cannot rotate another tenant's credentials when both use the same
 provider account ID. Media-library reads and mutations are also isolated, and
 post attachment resolution rejects cross-tenant and soft-deleted media IDs.
 Webhook writes additionally validate a maximum of 100 active, tenant-owned
-channels in the same transaction as relationship replacement. Extend the
-request-level matrix to billing, recording command
-output and database cleanup. Until that evidence exists, the milestone
-integration gate remains pending.
+channels in the same transaction as relationship replacement. Billing coverage
+verifies unique Stripe routing keys, collision rejection, webhook updates,
+credits and subscription deletion. The source matrix is now assembled; execute
+it, retain command output and confirm database cleanup on the approved release
+host. Until that evidence exists, the milestone integration gate remains
+pending.

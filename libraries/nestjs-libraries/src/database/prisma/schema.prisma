@@ -13,7 +13,7 @@ model Organization {
   name                 String
   description          String?
   apiKey               String?
-  paymentId            String?
+  paymentId            String?               @unique
   streakSince          DateTime?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -48,7 +48,6 @@ model Organization {
 
   @@index([apiKey])
   @@index([streakSince])
-  @@index([paymentId])
 }
 
 model Tags {
@@ -337,7 +336,7 @@ model Subscription {
   id               String           @id @default(cuid())
   organizationId   String           @unique
   subscriptionTier SubscriptionTier
-  identifier       String?
+  identifier       String?          @unique
   cancelAt         DateTime?
   period           Period
   totalChannels    Int

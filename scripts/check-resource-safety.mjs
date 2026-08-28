@@ -24,6 +24,12 @@ const publicIntegrationsController = read(
 const integrationTriggerTool = read(
   'libraries/nestjs-libraries/src/chat/tools/integration.trigger.tool.ts'
 );
+const subscriptionService = read(
+  'libraries/nestjs-libraries/src/database/prisma/subscriptions/subscription.service.ts'
+);
+const subscriptionCycleSpec = read(
+  'libraries/nestjs-libraries/src/database/prisma/subscriptions/subscription.cycle.spec.ts'
+);
 
 const requirements = [
   [
@@ -94,6 +100,14 @@ const requirements = [
     !integrationTriggerTool.includes('while (true)') &&
       integrationTriggerTool.includes('refreshAttempt <= 1'),
     'MCP integration credential refresh must remain bounded to one retry.',
+  ],
+  [
+    !subscriptionService.includes('while (date.isBefore') &&
+      subscriptionService.includes('elapsedBillingCycles') &&
+      subscriptionService.includes("diff(createdAt, 'month', true)") &&
+      subscriptionCycleSpec.includes('2035-08-20T10:00:00.000Z') &&
+      subscriptionCycleSpec.includes('2035-08-15T10:00:00.000Z'),
+    'Billing-cycle credit calculation must remain constant-time.',
   ],
 ];
 

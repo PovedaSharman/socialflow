@@ -63,6 +63,13 @@ const signatureTenantSpec = read(
 const invitationTenantSpec = read(
   'libraries/nestjs-libraries/src/database/prisma/organizations/organization.repository.invitation.tenant.integration.spec.ts'
 );
+const prismaSchema = read(
+  'libraries/nestjs-libraries/src/database/prisma/schema.prisma'
+);
+const subscriptionTenantSpec = read(
+  'libraries/nestjs-libraries/src/database/prisma/subscriptions/subscription.repository.tenant.integration.spec.ts'
+);
+const billingTenantRunbook = read('docs/BILLING_TENANT_KEYS.md');
 
 const requirements = [
   [
@@ -218,6 +225,27 @@ const requirements = [
       invitationTenantSpec.includes('email: wrongEmail') &&
       invitationTenantSpec.includes('organizationId: organizationB'),
     'The opt-in database suite must cover invitation list/revoke, supersession, email binding and membership isolation.',
+  ],
+  [
+    /paymentId\s+String\?\s+@unique/.test(prismaSchema) &&
+      /identifier\s+String\?\s+@unique/.test(prismaSchema) &&
+      billingTenantRunbook.includes('Both queries must return zero rows') &&
+      billingTenantRunbook.includes('Replay signed Stripe test fixtures'),
+    'Stripe customer and subscription routing keys must be unique with a reviewed migration runbook.',
+  ],
+  [
+    subscriptionTenantSpec.includes(
+      "RUN_DATABASE_INTEGRATION_TESTS === 'true'"
+    ) &&
+      subscriptionTenantSpec.includes(
+        'updateCustomerId(organizationA, customerB)'
+      ) &&
+      subscriptionTenantSpec.includes('routes a webhook update only') &&
+      subscriptionTenantSpec.includes('getCreditsFrom(organizationA') &&
+      subscriptionTenantSpec.includes(
+        'deleteSubscriptionByCustomerId(customerB)'
+      ),
+    'The opt-in database suite must cover billing key collisions, webhook routing, credits and deletion isolation.',
   ],
 ];
 

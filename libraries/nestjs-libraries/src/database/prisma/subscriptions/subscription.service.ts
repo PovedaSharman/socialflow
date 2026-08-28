@@ -7,6 +7,18 @@ import { Organization } from '@prisma/client';
 import dayjs from 'dayjs';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 
+export const currentBillingCycleStart = (
+  subscriptionCreatedAt: Date,
+  now = dayjs()
+) => {
+  const createdAt = dayjs(subscriptionCreatedAt);
+  const elapsedBillingCycles = Math.max(
+    0,
+    Math.ceil(now.diff(createdAt, 'month', true))
+  );
+  return createdAt.add(elapsedBillingCycles - 1, 'month');
+};
+
 @Injectable()
 export class SubscriptionService {
   constructor(
@@ -225,12 +237,9 @@ export class SubscriptionService {
     }
 
     // @ts-ignore
-    let date = dayjs(organization.subscription.createdAt);
-    while (date.isBefore(dayjs())) {
-      date = date.add(1, 'month');
-    }
-
-    const checkFromMonth = date.subtract(1, 'month');
+    const checkFromMonth = currentBillingCycleStart(
+      organization.subscription.createdAt
+    );
     const imageGenerationCount =
       checkType === 'ai_images'
         ? pricing[type].image_generation_count
