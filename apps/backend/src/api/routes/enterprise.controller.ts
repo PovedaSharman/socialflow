@@ -8,6 +8,7 @@ import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/po
 import {
   createOAuthConnectTransaction,
   hardenOAuthState,
+  validateOAuthRedirectUrl,
 } from '@gitroom/nestjs-libraries/integrations/oauth.connect.transaction';
 
 @ApiTags('Enterprise')
@@ -88,7 +89,11 @@ export class EnterpriseController {
         organizationId: org.id,
         codeVerifier,
         refreshId: load.refreshId,
-        redirectUrl: load.redirectUrl,
+        redirectUrl: validateOAuthRedirectUrl(load.redirectUrl, {
+          flow: 'enterprise',
+          frontendUrl: process.env.FRONTEND_URL,
+          nodeEnv: process.env.NODE_ENV,
+        }),
         webhookUrl: load.webhookUrl,
         flow: 'enterprise',
       });

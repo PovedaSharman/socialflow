@@ -35,6 +35,7 @@ import { RefreshIntegrationService } from '@gitroom/nestjs-libraries/integration
 import {
   createOAuthConnectTransaction,
   hardenOAuthState,
+  validateOAuthRedirectUrl,
 } from '@gitroom/nestjs-libraries/integrations/oauth.connect.transaction';
 
 @ApiTags('Integrations')
@@ -250,7 +251,11 @@ export class IntegrationsController {
           : undefined,
         refreshId: refresh || undefined,
         onboarding: onboarding === 'true',
-        redirectUrl: redirectUrl || undefined,
+        redirectUrl: validateOAuthRedirectUrl(redirectUrl, {
+          flow: 'user',
+          frontendUrl: process.env.FRONTEND_URL,
+          nodeEnv: process.env.NODE_ENV,
+        }),
         flow: 'user',
       });
 

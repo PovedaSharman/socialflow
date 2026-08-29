@@ -23,6 +23,7 @@ import {
   createOAuthConnectTransaction,
   createPublicProviderContinuation,
   hardenOAuthState,
+  validateOAuthRedirectUrl,
 } from './oauth.connect.transaction';
 
 describe('OAuth connect transactions', () => {
@@ -55,6 +56,37 @@ describe('OAuth connect transactions', () => {
     });
     expect(hardened.url).toBe(`client-id||${hardened.state}`);
     expect(hardened.state).toHaveLength(43);
+  });
+
+  it('allows only same-origin or supported mobile user returns', () => {
+    const options = {
+      flow: 'user' as const,
+      frontendUrl: 'https://socialflow.example',
+      nodeEnv: 'production',
+    };
+    expect(validateOAuthRedirectUrl('/launches', options)).toBe(
+      'https://socialflow.example/launches'
+    );
+    expect(validateOAuthRedirectUrl('postiz://integrations', options)).toBe(
+      'postiz://integrations'
+    );
+    expect(() =>
+      validateOAuthRedirectUrl('https://attacker.example/phish', options)
+    ).toThrow('Invalid OAuth return URL');
+  });
+
+  it('requires HTTPS for production enterprise returns', () => {
+    const options = {
+      flow: 'enterprise' as const,
+      frontendUrl: 'https://socialflow.example',
+      nodeEnv: 'production',
+    };
+    expect(
+      validateOAuthRedirectUrl('https://customer.example/done', options)
+    ).toBe('https://customer.example/done');
+    expect(() =>
+      validateOAuthRedirectUrl('http://customer.example/done', options)
+    ).toThrow('Invalid OAuth return URL');
   });
 
   it('binds a transaction to its provider and consumes it once', async () => {

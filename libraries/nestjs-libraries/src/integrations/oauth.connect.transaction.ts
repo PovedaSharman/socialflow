@@ -24,6 +24,54 @@ export type PublicProviderContinuation = {
   integrationId: string;
 };
 
+export function validateOAuthRedirectUrl(
+  value: string | undefined,
+  options: {
+    flow: 'user' | 'enterprise';
+    frontendUrl: string | undefined;
+    nodeEnv: string | undefined;
+  }
+) {
+  if (!value) {
+    return undefined;
+  }
+
+  if (options.flow === 'user' && value === 'postiz://integrations') {
+    return value;
+  }
+
+  let frontend: URL | undefined;
+  try {
+    frontend = options.frontendUrl ? new URL(options.frontendUrl) : undefined;
+  } catch {
+    frontend = undefined;
+  }
+
+  try {
+    const redirect = new URL(value, frontend);
+    if (
+      options.flow === 'user' &&
+      frontend &&
+      redirect.origin === frontend.origin &&
+      ['http:', 'https:'].includes(redirect.protocol)
+    ) {
+      return redirect.toString();
+    }
+
+    if (
+      options.flow === 'enterprise' &&
+      (redirect.protocol === 'https:' ||
+        (options.nodeEnv !== 'production' && redirect.protocol === 'http:'))
+    ) {
+      return redirect.toString();
+    }
+  } catch {
+    // Fall through to the stable public error below.
+  }
+
+  throw new Error('Invalid OAuth return URL');
+}
+
 const oauthTransactionKey = (provider: string, state: string) =>
   `oauth-connect:v1:${provider}:${state}`;
 

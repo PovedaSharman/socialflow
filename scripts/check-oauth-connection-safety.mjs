@@ -83,6 +83,26 @@ const invariants = [
     'enterprise flows harden provider state',
   ],
   [
+    transaction.includes("value === 'postiz://integrations'"),
+    'the supported mobile return is explicit',
+  ],
+  [
+    transaction.includes('redirect.origin === frontend.origin'),
+    'user web returns are same-origin',
+  ],
+  [
+    transaction.includes("redirect.protocol === 'https:'"),
+    'production enterprise returns require HTTPS',
+  ],
+  [
+    authenticated.includes('validateOAuthRedirectUrl(redirectUrl'),
+    'user initiation validates its return URL',
+  ],
+  [
+    enterprise.includes('validateOAuthRedirectUrl(load.redirectUrl'),
+    'enterprise initiation validates its return URL',
+  ],
+  [
     frontend.includes('publicContinuationToken'),
     'the client sends the scoped continuation token',
   ],

@@ -233,6 +233,10 @@ No production-readiness claim is made.
 - Added pure availability specifications and `check:provider-release-gates`, covering exact allowlist matching, blank credential failure, alternative Google credential pairs, test-provider exclusion and consistent filtered discovery.
 - Files changed for the provider-gate slice: provider availability helper/specification, integration manager discovery, environment/Compose templates, provider release guide, root scripts manifest, bounded release-gate audit and this progress record.
 - Verification for the provider-gate slice: targeted source/docs Prettier completed under a 128 MB heap cap (`.env.example` has no inferred Prettier parser and was reviewed directly); `package.json` parsed under 64 MB; the 64 MB provider release-gate audit passed with 12 invariants; `git diff --check` passed. Jest, TypeScript, Compose runtime and live provider sandbox flows were not run and are not claimed.
+- Closed the OAuth return open-redirect surface. Authenticated user flows now accept only same-origin web destinations or the exact supported `postiz://integrations` mobile deep link; signed enterprise flows require HTTPS in production and permit HTTP only in non-production environments.
+- Added pure return-URL cases for same-origin, mobile, attacker-origin, enterprise HTTPS and production HTTP rejection; expanded the bounded OAuth audit and security guide accordingly.
+- Files changed for the OAuth return slice: OAuth transaction helper/specification, authenticated and enterprise initiation routes, OAuth security guide, bounded OAuth audit and this progress record.
+- Verification for the OAuth return slice: the 64 MB OAuth connection audit passed with 23 invariants. Jest, TypeScript, browser navigation and enterprise callback runtime were not run and are not claimed.
 
 ### Milestone 5 next
 

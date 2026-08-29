@@ -36,6 +36,12 @@ provider and new integration. The public selection route consumes this token
 once and verifies current tenant-scoped integration metadata before saving.
 OAuth state is never reused as a continuation credential.
 
+Authenticated web return URLs are restricted to the configured frontend
+origin (relative paths are resolved against it). The existing mobile client
+may use only the exact `postiz://integrations` deep link. Signed enterprise
+flows may return to an external HTTPS URL; plain HTTP is accepted only outside
+production. Invalid destinations are rejected before a transaction is stored.
+
 ## Verification
 
 Run the bounded source audit:
