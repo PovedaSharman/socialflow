@@ -56,7 +56,11 @@ export class ApiCredentialRepository {
         OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
       },
       include: {
-        organization: true,
+        organization: {
+          include: {
+            subscription: true,
+          },
+        },
       },
     });
   }

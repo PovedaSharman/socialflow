@@ -294,10 +294,10 @@ No production-readiness claim is made.
 - Verification for the privacy/ops slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB privacy-ops audit passed with 6 invariants; `git diff --check` passed. Prisma generate/migrate, restore drills, browser privacy flows and monitoring destinations were not run and are not claimed.
 - Audited API credential create/revoke, expanded release-host evidence through Milestone 10 Definition of Done, and added a privacy-export help article. Verification: privacy-ops audit (7 invariants) and onboarding-help audit under 64 MB heaps; targeted Prettier under 128 MB. Runtime proofs remain pending.
 - Added MCP `audit:read` list tool, schedule-tool audit events, Redis monthly MCP call budgets from plan config, and media `storage_bytes` enforcement on upload. Pricing now declares MCP/API/storage quotas. Verification: MCP credentials audit (9 invariants) and billing-safety audit (5 invariants) under 64 MB; targeted Prettier under 128 MB. Live Redis/MCP proofs were not run.
+- Enforced monthly public API call budgets on non-GET routes, accepted hashed `sf_live_` credentials in public auth, and documented release-host schema apply (`docs/SCHEMA_APPLY.md`). Verification: billing-safety audit (6 invariants) under 64 MB.
 
 ### Next (source vs release host)
 
-- Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
 - Obtain Milestone 4–10 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
-- On an approved host: Prisma migrate for `ApiCredential`, `AuditEvent` and `ConsentPreference`; MCP/Stripe/privacy/browser proofs.
+- On an approved host: Prisma generate/schema apply for `ApiCredential`, `AuditEvent` and `ConsentPreference`; MCP/Stripe/privacy/browser proofs.
 - Keep `docs/READINESS.md` Definition of Done honest; do not claim production readiness without off-host evidence.
