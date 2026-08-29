@@ -111,6 +111,7 @@ export class IntegrationsController {
             stripLinks: !!findIntegration?.stripLinks?.(),
             picture: p.picture || '/no-picture.jpg',
             identifier: p.providerIdentifier,
+            mediaAlternativeText: findIntegration.mediaAlternativeText,
             inBetweenSteps: p.inBetweenSteps,
             refreshNeeded: p.refreshNeeded,
             health: integrationConnectionHealth(p),

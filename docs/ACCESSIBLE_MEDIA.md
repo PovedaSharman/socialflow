@@ -13,9 +13,29 @@ writes and post media DTOs also trim and validate the value server-side.
 
 Alternative text should describe essential visual information and should not
 repeat the post caption. This contract validates presence and bounds; it cannot
-automatically determine whether a description is meaningful. Provider sandbox
-verification must confirm which official APIs transmit alt text and document
-any platform limitation before production enablement.
+automatically determine whether a description is meaningful.
+
+## Provider transmission capability
+
+Adapters declare `mediaAlternativeText = 'official-api'` only after source
+review shows they pass `MediaContent.alt` through an official platform field.
+Absence of the flag means SocialFlow still stores the description for its own
+accessibility contract, but does not claim the channel will receive it. The
+media editor discloses selected channels that lack the capability.
+
+Source-verified transmitters in this repository:
+
+| Identifier                     | Official field used                |
+| ------------------------------ | ---------------------------------- |
+| `bluesky`                      | Bluesky embed `alt`                |
+| `mastodon` / `mastodon-custom` | Mastodon media `description`       |
+| `tumblr`                       | Tumblr image block `alt_text`      |
+| `slack`                        | Slack image block `alt_text`       |
+| `socialflow-test`              | Local simulation (no outbound API) |
+
+All other adapters remain undisclosed transmitters until an official-API audit
+and sandbox proof are recorded. Production enablement still follows
+`docs/PROVIDER_RELEASE_GATES.md`, including alternative-text verification.
 
 Run the 64 MB bounded source audit:
 
@@ -23,6 +43,6 @@ Run the 64 MB bounded source audit:
 pnpm check:media-accessibility
 ```
 
-The pure rule specification is included in the guarded release-host manifest.
-Browser, screen-reader and live-provider verification remain pending on the
-approved host and are not claimed by the source audit.
+The pure rule and disclosure specifications are included in the guarded
+release-host manifest. Browser, screen-reader and live-provider verification
+remain pending on the approved host and are not claimed by the source audit.

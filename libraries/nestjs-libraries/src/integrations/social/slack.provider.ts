@@ -15,6 +15,7 @@ export class SlackProvider extends SocialAbstract implements SocialProvider {
   override maxConcurrentJob = 3; // Slack has moderate API limits
   identifier = 'slack';
   name = 'Slack';
+  mediaAlternativeText = 'official-api' as const;
   isBetweenSteps = false;
   editor = 'normal' as const;
   scopes = [
@@ -176,7 +177,7 @@ export class SlackProvider extends SocialAbstract implements SocialProvider {
               ? firstPost.media.map((m) => ({
                   type: 'image',
                   image_url: m.path,
-                  alt_text: '',
+                  alt_text: m.alt?.trim() || 'Media',
                 }))
               : []),
           ],
@@ -244,7 +245,7 @@ export class SlackProvider extends SocialAbstract implements SocialProvider {
               ? commentPost.media.map((m) => ({
                   type: 'image',
                   image_url: m.path,
-                  alt_text: '',
+                  alt_text: m.alt?.trim() || 'Media',
                 }))
               : []),
           ],

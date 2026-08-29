@@ -36,7 +36,9 @@ For each provider proposed for production:
 2. Verify exact production callback URLs and least-privilege scopes.
 3. Configure the adapter's required environment variables in the secret store.
 4. Exercise connect, callback, refresh/reconnect, publish and disconnect in the
-   platform sandbox/test account.
+   platform sandbox/test account. Confirm whether official media alternative
+   text is transmitted; only then may the adapter declare
+   `mediaAlternativeText = 'official-api'`.
 5. Add the exact identifier to `SOCIAL_PROVIDER_ALLOWLIST` and deploy.
 6. Confirm the provider appears while an unlisted or incompletely configured
    provider remains absent.

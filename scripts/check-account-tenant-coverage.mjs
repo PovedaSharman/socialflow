@@ -250,11 +250,12 @@ const requirements = [
     'The opt-in database suite must cover billing key collisions, webhook routing, credits and deletion isolation.',
   ],
   [
-    (accountTenantRunner.match(/\.spec\.ts'/g) || []).length === 22 &&
+    (accountTenantRunner.match(/\.spec\.ts'/g) || []).length === 23 &&
       accountTenantRunner.includes('oauth.connect.transaction.spec.ts') &&
       accountTenantRunner.includes('social.provider.availability.spec.ts') &&
       accountTenantRunner.includes('post.error-history.spec.ts') &&
       accountTenantRunner.includes('media.accessibility.spec.ts') &&
+      accountTenantRunner.includes('media.alternative-text.spec.ts') &&
       accountTenantRunner.includes('ALLOW_DISPOSABLE_DATABASE_TESTS') &&
       accountTenantRunner.includes('databaseUrl.pathname') &&
       accountTenantRunner.includes("'--runTestsByPath'") &&

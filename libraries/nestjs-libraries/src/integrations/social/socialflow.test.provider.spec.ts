@@ -6,6 +6,7 @@ describe('SocialFlowTestProvider', () => {
     const fetchSpy = jest.spyOn(global, 'fetch');
     const provider = new SocialFlowTestProvider();
     expect(provider.publicationRetry).toBe('idempotency-key');
+    expect(provider.mediaAlternativeText).toBe('official-api');
     const code = Buffer.from(
       JSON.stringify({ displayName: 'Development account' })
     ).toString('base64');

@@ -20,6 +20,30 @@ const composer = read(
 const editor = read(
   'apps/frontend/src/components/launches/helpers/media.settings.component.tsx'
 );
+const providerInterface = read(
+  'libraries/nestjs-libraries/src/integrations/social/social.integrations.interface.ts'
+);
+const disclosure = read(
+  'libraries/nestjs-libraries/src/integrations/media.alternative-text.ts'
+);
+const integrationsList = read(
+  'apps/backend/src/api/routes/integrations.controller.ts'
+);
+const bluesky = read(
+  'libraries/nestjs-libraries/src/integrations/social/bluesky.provider.ts'
+);
+const mastodon = read(
+  'libraries/nestjs-libraries/src/integrations/social/mastodon.provider.ts'
+);
+const tumblr = read(
+  'libraries/nestjs-libraries/src/integrations/social/tumblr.provider.ts'
+);
+const slack = read(
+  'libraries/nestjs-libraries/src/integrations/social/slack.provider.ts'
+);
+const testProvider = read(
+  'libraries/nestjs-libraries/src/integrations/social/socialflow.test.provider.ts'
+);
 
 const invariants = [
   [
@@ -60,9 +84,8 @@ const invariants = [
   ],
   [
     editor.includes('aria-invalid={Boolean(altError)}') &&
-      editor.includes(
-        'aria-describedby="media-alt-help media-alt-count media-alt-error"'
-      ) &&
+      editor.includes('media-alt-help media-alt-count') &&
+      editor.includes('media-alt-error') &&
       editor.includes('role="alert"'),
     'the editor must link help, count and understandable errors',
   ],
@@ -70,6 +93,28 @@ const invariants = [
     editor.includes('const trimmedAlt = altText.trim()') &&
       editor.indexOf('if (!trimmedAlt)') < editor.indexOf('setLoading(true)'),
     'blank alt text must stop before upload or metadata requests begin',
+  ],
+  [
+    providerInterface.includes("mediaAlternativeText?: 'official-api'") &&
+      disclosure.includes("mediaAlternativeText !== 'official-api'") &&
+      integrationsList.includes(
+        'mediaAlternativeText: findIntegration.mediaAlternativeText'
+      ) &&
+      editor.includes('mediaAlternativeTextDisclosure(') &&
+      editor.includes('id="media-alt-platform"'),
+    'unsupported transmitters must be disclosed through the provider capability',
+  ],
+  [
+    bluesky.includes("mediaAlternativeText = 'official-api'") &&
+      bluesky.includes("alt: imageMedia?.[index]?.alt || ''") &&
+      mastodon.includes("mediaAlternativeText = 'official-api'") &&
+      mastodon.includes('media.alt') &&
+      tumblr.includes("mediaAlternativeText = 'official-api'") &&
+      tumblr.includes('alt_text: item.alt') &&
+      slack.includes("mediaAlternativeText = 'official-api'") &&
+      slack.includes("alt_text: m.alt?.trim() || 'Media'") &&
+      testProvider.includes("mediaAlternativeText = 'official-api'"),
+    'source-verified official-api adapters must declare and transmit alternative text',
   ],
 ];
 

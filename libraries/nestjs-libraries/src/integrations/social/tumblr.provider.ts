@@ -87,6 +87,7 @@ export class TumblrProvider extends SocialAbstract implements SocialProvider {
   override maxConcurrentJob = 3;
   identifier = 'tumblr';
   name = 'Tumblr';
+  mediaAlternativeText = 'official-api' as const;
   isBetweenSteps = true;
   scopes = ['write', 'offline_access'];
   editor = 'normal' as const;

@@ -164,6 +164,13 @@ export interface SocialProvider
     ISocialMediaIntegration {
   identifier: string;
   publicationRetry?: 'idempotency-key';
+  /**
+   * Declared only after the adapter is verified to send MediaContent.alt through
+   * the platform's official API. Absence means SocialFlow still requires the
+   * description for its own accessibility contract, but does not claim platform
+   * transmission.
+   */
+  mediaAlternativeText?: 'official-api';
   refreshWait?: boolean;
   convertToJPEG?: boolean;
   stripLinks?: () => boolean;

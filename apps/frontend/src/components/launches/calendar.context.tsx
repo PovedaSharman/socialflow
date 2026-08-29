@@ -101,6 +101,7 @@ export interface Integrations {
   identifier: string;
   type: string;
   picture: string;
+  mediaAlternativeText?: 'official-api';
   changeProfilePicture: boolean;
   additionalSettings: string;
   changeNickName: boolean;

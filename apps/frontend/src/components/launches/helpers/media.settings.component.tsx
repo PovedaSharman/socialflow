@@ -8,6 +8,7 @@ import { hasExtension } from '@gitroom/helpers/utils/has.extension';
 import { useLaunchStore } from '@gitroom/frontend/components/new-launch/store';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
 import { MEDIA_ALT_MAX_LENGTH } from '@gitroom/nestjs-libraries/dtos/media/media.accessibility';
+import { mediaAlternativeTextDisclosure } from '@gitroom/nestjs-libraries/integrations/media.alternative-text';
 const postUrlEmitter = new EventEmitter();
 
 export const MediaSettingsLayout = () => {
@@ -309,6 +310,13 @@ export const MediaComponentInner: FC<{
 }> = (props) => {
   const { onClose, onSelect, media } = props;
   const setActivateExitButton = useLaunchStore((e) => e.setActivateExitButton);
+  const selectedIntegrations = useLaunchStore((e) => e.selectedIntegrations);
+  const platformAltDisclosure = mediaAlternativeTextDisclosure(
+    selectedIntegrations.map(({ integration }) => ({
+      name: integration.name,
+      mediaAlternativeText: integration.mediaAlternativeText,
+    }))
+  );
   const newFetch = useFetch();
   const [newThumbnail, setNewThumbnail] = useState<string | null>(null);
   const [isEditingThumbnail, setIsEditingThumbnail] = useState(false);
@@ -384,7 +392,11 @@ export const MediaComponentInner: FC<{
           required
           maxLength={MEDIA_ALT_MAX_LENGTH}
           aria-invalid={Boolean(altError)}
-          aria-describedby="media-alt-help media-alt-count media-alt-error"
+          aria-describedby={
+            platformAltDisclosure
+              ? 'media-alt-help media-alt-count media-alt-platform media-alt-error'
+              : 'media-alt-help media-alt-count media-alt-error'
+          }
           onChange={(e) => {
             setAltText(e.target.value);
             if (altError) setAltError('');
@@ -400,6 +412,11 @@ export const MediaComponentInner: FC<{
             {altText.length}/{MEDIA_ALT_MAX_LENGTH}
           </span>
         </div>
+        {platformAltDisclosure ? (
+          <p id="media-alt-platform" className="text-[12px] text-textColor/80">
+            {platformAltDisclosure}
+          </p>
+        ) : null}
         <div
           id="media-alt-error"
           role="alert"

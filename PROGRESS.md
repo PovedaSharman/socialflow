@@ -265,8 +265,13 @@ No production-readiness claim is made.
 - Added `docs/ACCESSIBLE_MEDIA.md`, a pure helper specification and a 64 MB `check:media-accessibility` audit. Included the helper suite in the guarded account/tenant release-host manifest (22 explicit files).
 - Files changed for the accessible-media slice: accessibility helper/specification, media DTOs, posts service/controller, media settings and composer, accessible-media guide, account/tenant matrix, root scripts/manifest, bounded media and account audits and this progress record.
 - Verification for the accessible-media slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB media-accessibility and account/tenant audits passed with 8 and 22 invariants respectively; `git diff --check` passed. Jest, TypeScript, browser/screen-reader checks and live-provider alt-text transport were not run and are not claimed.
+- Added an opt-in `mediaAlternativeText = 'official-api'` provider capability. Source review currently verifies Bluesky, Mastodon (including custom instances), Tumblr, Slack and the local test provider; every other adapter remains undisclosed until an official-API audit and sandbox proof exist.
+- Slack image blocks now send trimmed `MediaContent.alt` through the official `alt_text` field instead of an empty string. The media editor discloses selected channels that lack the capability without blocking SocialFlow's own accessibility requirement.
+- Documented the transmitter matrix in `docs/ACCESSIBLE_MEDIA.md` and added alternative-text verification to the provider release procedure.
+- Files changed for the alt-text capability slice: provider interface, disclosure helper/specification, Bluesky/Mastodon/Tumblr/Slack/test adapters, integration manager and channel list, media settings disclosure, accessible-media and release-gate guides, account/tenant matrix/manifest and this progress record.
+- Verification for the alt-text capability slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB media-accessibility and account/tenant audits passed with 10 and 22 invariants respectively; `git diff --check` passed. Jest, TypeScript, browser/screen-reader checks and live-provider sandbox proof were not run and are not claimed.
 
 ### Milestone 5 next
 
-- Audit every supported provider adapter for official alt-text transport; gate or disclose unsupported capabilities before production enablement.
+- Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
 - Execute the guarded Temporal workflow, connection-health responsive gate, OAuth transaction units, account/tenant gate and provider sandbox matrix on the approved host; retain the evidence and add only verified provider identifiers to the production allowlist.
