@@ -38,6 +38,7 @@ import { WhopProvider } from '@gitroom/nestjs-libraries/integrations/social/whop
 import { MeweProvider } from '@gitroom/nestjs-libraries/integrations/social/mewe.provider';
 import { TumblrProvider } from '@gitroom/nestjs-libraries/integrations/social/tumblr.provider';
 import { SocialFlowTestProvider } from '@gitroom/nestjs-libraries/integrations/social/socialflow.test.provider';
+import { isSocialProviderAvailable } from '@gitroom/nestjs-libraries/integrations/social.provider.availability';
 
 export const isTestProviderEnabled = (env: NodeJS.ProcessEnv) =>
   env.ENABLE_TEST_PROVIDER === 'true' && env.NODE_ENV !== 'production';
@@ -83,10 +84,16 @@ export const socialIntegrationList: Array<SocialAbstract & SocialProvider> = [
 
 @Injectable()
 export class IntegrationManager {
+  private getAvailableSocialIntegrations() {
+    return socialIntegrationList.filter((provider) =>
+      isSocialProviderAvailable(provider.identifier, process.env)
+    );
+  }
+
   async getAllIntegrations() {
     return {
       social: await Promise.all(
-        socialIntegrationList.map(async (p) => ({
+        this.getAvailableSocialIntegrations().map(async (p) => ({
           name: p.name,
           identifier: p.identifier,
           toolTip: p.toolTip,
@@ -111,7 +118,7 @@ export class IntegrationManager {
       methodName: string;
     }[];
   } {
-    return socialIntegrationList.reduce(
+    return this.getAvailableSocialIntegrations().reduce(
       (all, current) => ({
         ...all,
         [current.identifier]:
@@ -125,7 +132,7 @@ export class IntegrationManager {
   getAllRulesDescription(): {
     [key: string]: string;
   } {
-    return socialIntegrationList.reduce(
+    return this.getAvailableSocialIntegrations().reduce(
       (all, current) => ({
         ...all,
         [current.identifier]:
@@ -139,7 +146,7 @@ export class IntegrationManager {
   }
 
   getAllPlugs() {
-    return socialIntegrationList
+    return this.getAvailableSocialIntegrations()
       .map((p) => {
         return {
           name: p.name,
@@ -161,7 +168,12 @@ export class IntegrationManager {
   }
 
   getInternalPlugs(providerName: string) {
-    const p = socialIntegrationList.find((p) => p.identifier === providerName)!;
+    const p = this.getAvailableSocialIntegrations().find(
+      (provider) => provider.identifier === providerName
+    );
+    if (!p) {
+      return { internalPlugs: [] };
+    }
     return {
       internalPlugs:
         (
@@ -174,7 +186,7 @@ export class IntegrationManager {
   }
 
   getAllowedSocialsIntegrations() {
-    return socialIntegrationList.map((p) => p.identifier);
+    return this.getAvailableSocialIntegrations().map((p) => p.identifier);
   }
   getSocialIntegration(integration: string): SocialProvider {
     return socialIntegrationList.find((i) => i.identifier === integration)!;

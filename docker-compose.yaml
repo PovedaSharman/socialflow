@@ -31,6 +31,8 @@ services:
       # CLOUDFLARE_REGION: 'auto'
 
       # === Social Media API Settings
+      # Explicit production approval/configuration gate (comma-separated IDs).
+      SOCIAL_PROVIDER_ALLOWLIST: ''
       X_URL: ''
       X_API_KEY: ''
       X_API_SECRET: ''
