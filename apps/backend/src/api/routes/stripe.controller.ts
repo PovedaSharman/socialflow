@@ -7,22 +7,36 @@ import {
 } from '@nestjs/common';
 import { StripeService } from '@gitroom/nestjs-libraries/services/stripe.service';
 import { ApiTags } from '@nestjs/swagger';
+import {
+  claimStripeWebhookEvent,
+  isStripeBillingConfigured,
+} from '@gitroom/nestjs-libraries/services/stripe.webhook.safety';
 
 @ApiTags('Stripe')
 @Controller('/stripe')
 export class StripeController {
-  constructor(
-    private readonly _stripeService: StripeService,
-  ) {}
+  constructor(private readonly _stripeService: StripeService) {}
 
   @Post('/')
-  stripe(@Req() req: RawBodyRequest<Request>) {
+  async stripe(@Req() req: RawBodyRequest<Request>) {
+    if (!isStripeBillingConfigured(process.env)) {
+      throw new HttpException(
+        'Stripe billing is not configured for this mode',
+        503
+      );
+    }
+
     const event = this._stripeService.validateRequest(
       req.rawBody,
       // @ts-ignore
       req.headers['stripe-signature'],
       process.env.STRIPE_SIGNING_KEY
     );
+
+    const claimed = await claimStripeWebhookEvent(event.id);
+    if (!claimed) {
+      return { ok: true, duplicate: true };
+    }
 
     // Maybe it comes from another stripe webhook
     if (
