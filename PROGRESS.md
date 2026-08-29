@@ -239,6 +239,10 @@ No production-readiness claim is made.
 - Verification for the OAuth return slice: the 64 MB OAuth connection audit passed with 23 invariants. Jest, TypeScript, browser navigation and enterprise callback runtime were not run and are not claimed.
 - Added the OAuth transaction and production provider-availability unit suites to the guarded release-host account/tenant manifest. The gate remains one sequential Jest process with the existing 1 GB ceiling and disposable-database guards; its current fixed manifest contains 20 files.
 - Verification for the expanded manifest: the runner's fail-closed guard was exercised under 64 MB and exited before Jest; the 64 MB account/tenant audit passed with 22 invariants. The 20-file Jest/PostgreSQL gate was not executed and is not claimed.
+- Replaced the composer’s hover-only immediate-publish menu with a visible 44 px keyboard/touch button and focus treatment. “Post Now”, including republish, now requires an explicit confirmation that names the immediate multi-channel effect and inability to recall through SocialFlow before submission begins.
+- Expanded the publishing recovery guide and bounded publish audit to cover confirmation ordering and the visible control. Cancelling confirmation leaves the composer untouched and starts no request.
+- Files changed for the immediate-publish slice: composer action footer, publishing retry/recovery guide, bounded publish-safety audit and this progress record.
+- Verification for the immediate-publish slice: the 64 MB publish-safety audit passed with 12 invariants. Jest, TypeScript, browser keyboard/touch interaction and responsive visual checks were not run and are not claimed.
 
 ### Milestone 5 next
 

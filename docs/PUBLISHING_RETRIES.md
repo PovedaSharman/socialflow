@@ -30,6 +30,14 @@ before taking another action.
 This is deliberately different from status polling: status checks are
 read-only, use durable 20-second timers and have a finite 90-check horizon.
 
+## Immediate publication
+
+“Post Now” is a separate, always-visible keyboard and touch control for roles
+that may approve publication. It requires an explicit confirmation immediately
+before validation/submission begins. The confirmation states that every
+selected channel will receive the content immediately and that SocialFlow
+cannot recall it. Cancelling returns to the composer without starting a request.
+
 ## Recovery sweep
 
 The missing-post sweep selects at most 100 overdue root posts at a time, oldest

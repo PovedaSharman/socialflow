@@ -37,7 +37,6 @@ import {
   ChevronDownIcon,
   CloseIcon,
   TrashIcon,
-  DropdownArrowSmallIcon,
 } from '@gitroom/frontend/components/ui/icons';
 import { useHasScroll } from '@gitroom/frontend/components/ui/is.scroll.hook';
 import { useShortlinkPreference } from '@gitroom/frontend/components/settings/shortlink-preference.component';
@@ -273,6 +272,26 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
         if (whatToDo === 'update') {
           type = 'update';
         }
+      }
+
+      if (
+        type === 'now' &&
+        !(await deleteDialog(
+          selectedIntegrations.length === 1
+            ? t(
+                'publish_now_confirmation_one',
+                'Publish this post now? It will be sent to the selected channel immediately and cannot be recalled by SocialFlow.'
+              )
+            : t(
+                'publish_now_confirmation_many',
+                'Publish these posts now? They will be sent to all selected channels immediately and cannot be recalled by SocialFlow.'
+              ),
+          t('confirm_publish_now', 'Yes, publish now'),
+          t('publish_now_title', 'Publish now?'),
+          t('keep_editing', 'Keep editing')
+        ))
+      ) {
+        return;
       }
 
       setLoading(true);
@@ -850,60 +869,50 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
               </button>
             )}
             {!addEditSets && canEditContent && (
-              <div className="group cursor-pointer relative">
-                <button
-                  disabled={
-                    selectedIntegrations.length === 0 || loading || locked
-                  }
-                  onClick={schedule(
-                    canApproveContent ? 'schedule' : 'approval'
-                  )}
-                  className="text-white relative min-w-[180px] btnSub disabled:cursor-not-allowed disabled:opacity-80 outline-none gap-[8px] flex justify-center items-center h-[44px] rounded-[8px] bg-[#612BD3] ps-[20px] pe-[16px]"
-                >
-                  {loading && (
-                    <div className="absolute left-[50%] top-[50%] -translate-y-[50%] -translate-x-[50%]">
-                      <div className="animate-spin h-[20px] w-[20px] border-4 border-white border-t-transparent rounded-full" />
-                    </div>
-                  )}
-                  <div
-                    className={clsx(
-                      'text-[15px] font-[600]',
-                      loading && 'invisible'
-                    )}
-                  >
-                    {!canApproveContent
-                      ? t('request_approval', 'Request approval')
-                      : selectedIntegrations.length === 0
-                      ? t('check_circles_above', 'Check the circles above')
-                      : dummy
-                      ? t('create_output', 'Create output')
-                      : !existingData?.integration
-                      ? t('add_to_calendar', 'Add to calendar')
-                      : existingData?.posts?.[0]?.state === 'DRAFT'
-                      ? t('schedule', 'Schedule')
-                      : t('update', 'Update')}
+              <button
+                type="button"
+                disabled={
+                  selectedIntegrations.length === 0 || loading || locked
+                }
+                onClick={schedule(canApproveContent ? 'schedule' : 'approval')}
+                className="text-white relative min-w-[180px] btnSub disabled:cursor-not-allowed disabled:opacity-80 gap-[8px] flex justify-center items-center h-[44px] rounded-[8px] bg-[#612BD3] ps-[20px] pe-[16px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#612BD3]"
+              >
+                {loading && (
+                  <div className="absolute left-[50%] top-[50%] -translate-y-[50%] -translate-x-[50%]">
+                    <div className="animate-spin h-[20px] w-[20px] border-4 border-white border-t-transparent rounded-full" />
                   </div>
-                  {!dummy && canApproveContent && (
-                    <div className="flex justify-center items-center h-[20px] w-[20px] pt-[4px] arrow-change">
-                      <DropdownArrowSmallIcon className="group-hover:rotate-180 text-white" />
-                    </div>
-                  )}
-                </button>
-
-                {!dummy && canApproveContent && (
-                  <button
-                    onClick={schedule('now')}
-                    disabled={
-                      selectedIntegrations.length === 0 || loading || locked
-                    }
-                    className="rounded-[8px] z-[300] disabled:cursor-not-allowed disabled:opacity-80 hidden group-hover:flex absolute bottom-[100%] -left-[12px] p-[12px] w-[206px] bg-newBgColorInner"
-                  >
-                    <div className="text-white rounded-[8px] bg-[#D82D7E] h-[44px] w-full flex justify-center items-center post-now">
-                      {t('post_now', 'Post Now')}
-                    </div>
-                  </button>
                 )}
-              </div>
+                <span
+                  className={clsx(
+                    'text-[15px] font-[600]',
+                    loading && 'invisible'
+                  )}
+                >
+                  {!canApproveContent
+                    ? t('request_approval', 'Request approval')
+                    : selectedIntegrations.length === 0
+                    ? t('check_circles_above', 'Check the circles above')
+                    : dummy
+                    ? t('create_output', 'Create output')
+                    : !existingData?.integration
+                    ? t('add_to_calendar', 'Add to calendar')
+                    : existingData?.posts?.[0]?.state === 'DRAFT'
+                    ? t('schedule', 'Schedule')
+                    : t('update', 'Update')}
+                </span>
+              </button>
+            )}
+            {!addEditSets && !dummy && canEditContent && canApproveContent && (
+              <button
+                type="button"
+                onClick={schedule('now')}
+                disabled={
+                  selectedIntegrations.length === 0 || loading || locked
+                }
+                className="post-now flex h-[44px] min-w-[132px] items-center justify-center rounded-[8px] bg-[#D82D7E] px-[18px] text-[15px] font-[600] text-white disabled:cursor-not-allowed disabled:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D82D7E] focus-visible:ring-offset-2"
+              >
+                {t('post_now', 'Post Now')}
+              </button>
             )}
           </div>
         </div>

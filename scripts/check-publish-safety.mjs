@@ -28,6 +28,10 @@ const workflowIntegrationSpec = read(
 );
 const workflowGateRunner = read('scripts/run-publish-workflow-gate.mjs');
 const gitignore = read('.gitignore');
+const composer = read(
+  'apps/frontend/src/components/new-launch/manage.modal.tsx'
+);
+const scheduleFlow = composer.slice(composer.indexOf('const schedule ='));
 
 const requirements = [
   [
@@ -101,6 +105,19 @@ const requirements = [
       workflowGateRunner.includes("'--runInBand'") &&
       gitignore.includes('/artifacts/temporal-post-safety/'),
     'The release-host workflow runner must fail closed and remain single-process and time-bounded.',
+  ],
+  [
+    scheduleFlow.indexOf("type === 'now' &&") > -1 &&
+      scheduleFlow.indexOf("type === 'now' &&") <
+        scheduleFlow.indexOf('setLoading(true);') &&
+      scheduleFlow.includes("t('confirm_publish_now', 'Yes, publish now')"),
+    'Immediate publication must require explicit confirmation before submission begins.',
+  ],
+  [
+    /className="post-now[^\"]*focus-visible:ring/.test(composer) &&
+      composer.includes("onClick={schedule('now')}") &&
+      !/className="[^"]*hidden group-hover:flex[^"]*"/.test(composer),
+    'Immediate publication must be a visible keyboard and touch control.',
   ],
 ];
 
