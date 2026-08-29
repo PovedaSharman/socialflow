@@ -5,11 +5,13 @@ import { MCPServer } from '@mastra/mcp';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { OAuthService } from '@gitroom/nestjs-libraries/database/prisma/oauth/oauth.service';
 import { ApiCredentialService } from '@gitroom/nestjs-libraries/database/prisma/api-credentials/api.credential.service';
+import { SubscriptionService } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service';
 import { runWithContext } from './async.storage';
 import { createOAuthMiddleware } from './oauth-middleware';
 import { DEFAULT_MCP_SCOPES, MCP_SCOPES } from './mcp.scopes';
 import { areMcpUrlSecretsAllowed } from './mcp.url-secret';
 import { API_CREDENTIAL_PREFIX } from '@gitroom/nestjs-libraries/database/prisma/api-credentials/api.credential.secret';
+import { enforceMcpCallBudget } from './mcp.budget';
 const fixAcceptHeader = (req: Request) => {
   const value = 'application/json, text/event-stream';
   req.headers.accept = value;
@@ -26,6 +28,7 @@ export const startMcp = async (app: INestApplication) => {
   const organizationService = app.get(OrganizationService, { strict: false });
   const oauthService = app.get(OAuthService, { strict: false });
   const apiCredentialService = app.get(ApiCredentialService, { strict: false });
+  const subscriptionService = app.get(SubscriptionService, { strict: false });
 
   const resolveAuth = async (token: string) => {
     if (token.startsWith('pos_')) {
@@ -55,6 +58,33 @@ export const startMcp = async (app: INestApplication) => {
       ...organization,
       mcpScopes: [...DEFAULT_MCP_SCOPES],
     };
+  };
+
+  const gateMcpBudget = async (
+    organizationId: string,
+    res: Response
+  ): Promise<boolean> => {
+    if (!subscriptionService) {
+      return true;
+    }
+    const decision = await enforceMcpCallBudget(
+      subscriptionService,
+      organizationId
+    );
+    if (!decision.allowed && decision.denial) {
+      res.status(402).json({
+        error: 'mcp_limit_exceeded',
+        message: decision.denial.message,
+        nextStep: decision.denial.nextStep,
+        used: decision.used,
+        limit: decision.limit,
+      });
+      return false;
+    }
+    if (decision.warning) {
+      res.setHeader('X-Usage-Warning', decision.warning);
+    }
+    return true;
   };
 
   const mastra = await mastraService.mastra();
@@ -181,6 +211,10 @@ export const startMcp = async (app: INestApplication) => {
         return;
       }
 
+      if (!(await gateMcpBudget(auth.id, res))) {
+        return;
+      }
+
       fixAcceptHeader(req);
       await runWithContext({ requestId: token!, auth }, async () => {
         await server.startHTTP({
@@ -226,6 +260,11 @@ export const startMcp = async (app: INestApplication) => {
     // @ts-ignore
     if (!req.auth) {
       res.status(401).send('Invalid API Key or OAuth token');
+      return;
+    }
+
+    // @ts-ignore
+    if (!(await gateMcpBudget(req.auth.id, res))) {
       return;
     }
 

@@ -15,6 +15,8 @@ import {
   ValidUrlExtension,
   ValidUrlPath,
 } from '@gitroom/helpers/utils/valid.url.path';
+import { PrivacyRepository } from '@gitroom/nestjs-libraries/database/prisma/privacy/privacy.repository';
+import { recordMcpAudit } from '@gitroom/nestjs-libraries/chat/mcp.audit';
 
 const validUrlExtension = new ValidUrlExtension();
 const validUrlPath = new ValidUrlPath();
@@ -34,7 +36,8 @@ const attachmentUrl = z
 export class IntegrationSchedulePostTool implements AgentToolInterface {
   constructor(
     private _postsService: PostsService,
-    private _integrationService: IntegrationService
+    private _integrationService: IntegrationService,
+    private _privacyRepository: PrivacyRepository
   ) {}
   name = 'integrationSchedulePostTool';
 
@@ -146,6 +149,12 @@ If the tools return errors, you would need to rerun it with the right parameters
           : 'posts:draft';
         const scopeError = missingMcpScope(requiredScope, context);
         if (scopeError) {
+          await recordMcpAudit(this._privacyRepository, context, {
+            action: 'mcp.posts.write',
+            targetType: 'post',
+            outcome: 'denied',
+            metadata: { reason: 'missing_scope', requiredScope },
+          });
           return { errors: scopeError };
         }
         const organizationId = JSON.parse(
@@ -262,6 +271,17 @@ If the tools return errors, you would need to rerun it with the right parameters
           );
           finalOutput.push(...output);
         }
+
+        await recordMcpAudit(this._privacyRepository, context, {
+          organizationId,
+          action: 'mcp.posts.write',
+          targetType: 'post',
+          outcome: 'success',
+          metadata: {
+            requiredScope,
+            posts: finalOutput.length,
+          },
+        });
 
         return {
           output: finalOutput,

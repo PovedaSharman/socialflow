@@ -35,11 +35,8 @@ Milestone 3 implementation is checkpointed; its automated WCAG and visual gate r
 - Existing social credential rows and pre-boundary Temporal histories may
   contain plaintext tokens until the documented bounded maintenance migration
   and history-retention procedure are executed and verified.
-- MCP retains URL-embedded API-key routes and renders legacy URL instructions.
-- MCP scopes are coarse and do not default-deny immediate publishing or media generation.
-- No purpose-built immutable audit, scoped credential, consent or general usage-ledger models exist.
-- Role vocabulary is insufficient for approver/editor/viewer separation.
 - Provider approval, production credentials, Stripe live mode and production infrastructure are not verified.
+- Off-host runtime evidence listed in `docs/RELEASE_HOST_EVIDENCE.md` and the Definition of Done in `docs/READINESS.md` remain unmet.
 
 ### Validation log
 
@@ -296,6 +293,7 @@ No production-readiness claim is made.
 - Started Milestone 9 admin/operations: `AuditEvent` and `ConsentPreference` models; hashed IP and sanitised metadata helpers; organisation export, consent recording and password-reauthenticated deletion-request APIs; Settings privacy tab; backend `/monitor/live` and `/monitor/ready`; auth IP rate limits; `docs/PRIVACY.md` and `docs/OPS_BACKUP_MONITORING.md`.
 - Verification for the privacy/ops slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB privacy-ops audit passed with 6 invariants; `git diff --check` passed. Prisma generate/migrate, restore drills, browser privacy flows and monitoring destinations were not run and are not claimed.
 - Audited API credential create/revoke, expanded release-host evidence through Milestone 10 Definition of Done, and added a privacy-export help article. Verification: privacy-ops audit (7 invariants) and onboarding-help audit under 64 MB heaps; targeted Prettier under 128 MB. Runtime proofs remain pending.
+- Added MCP `audit:read` list tool, schedule-tool audit events, Redis monthly MCP call budgets from plan config, and media `storage_bytes` enforcement on upload. Pricing now declares MCP/API/storage quotas. Verification: MCP credentials audit (9 invariants) and billing-safety audit (5 invariants) under 64 MB; targeted Prettier under 128 MB. Live Redis/MCP proofs were not run.
 
 ### Next (source vs release host)
 

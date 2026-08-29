@@ -15,6 +15,9 @@ export enum Sections {
   CONTENT = 'content',
   APPROVAL = 'approval',
   BILLING = 'billing',
+  MCP_CALLS = 'mcp_calls',
+  API_CALLS = 'api_calls',
+  STORAGE_BYTES = 'storage_bytes',
 }
 
 export enum AuthorizationActions {

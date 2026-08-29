@@ -11,7 +11,8 @@ export class MediaRepository {
     org: string,
     fileName: string,
     filePath: string,
-    originalName?: string
+    originalName?: string,
+    fileSize = 0
   ) {
     return this._media.model.media.create({
       data: {
@@ -23,6 +24,7 @@ export class MediaRepository {
         name: fileName,
         path: filePath,
         originalName: originalName || null,
+        fileSize: Math.max(0, Number(fileSize) || 0),
       },
       select: {
         id: true,
@@ -31,8 +33,22 @@ export class MediaRepository {
         path: true,
         thumbnail: true,
         alt: true,
+        fileSize: true,
       },
     });
+  }
+
+  async sumOrganizationFileSize(org: string) {
+    const result = await this._media.model.media.aggregate({
+      where: {
+        organizationId: org,
+        deletedAt: null,
+      },
+      _sum: {
+        fileSize: true,
+      },
+    });
+    return Number(result._sum.fileSize || 0);
   }
 
   getMediaById(org: string, id: string) {

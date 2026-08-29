@@ -28,6 +28,10 @@ fixtures and live Stripe proofs remain pending on an approved host.
   returns `message` and `nextStep` for clients.
 - Channel, webhook and monthly post checks use the same hard-limit helper. Video
   generation continues to use credit balances and raises the same exception shape.
+- Plan configuration now includes `mcp_calls_per_month`, `api_calls_per_month`
+  and `storage_bytes`. MCP HTTP sessions increment a Redis monthly counter and
+  return HTTP 402 with `message`/`nextStep` when over budget. Media uploads
+  aggregate `fileSize` and refuse new files that would exceed storage.
 
 ## Operator notes
 

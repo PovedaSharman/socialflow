@@ -47,11 +47,14 @@ const invariants = [
     usage.includes('resolveChannelLimit') &&
       usage.includes('isWithinHardLimit') &&
       usage.includes('nextStep') &&
+      usage.includes('mcp_calls') &&
+      usage.includes('storage_bytes') &&
       !permissions.includes('channel: tier === ') &&
       permissions.includes('resolveChannelLimit(') &&
       permissions.includes('isWithinHardLimit(') &&
       exception.includes('usageLimitDenial(') &&
-      exception.includes('nextStep: denial.nextStep'),
+      exception.includes('nextStep: denial.nextStep') &&
+      exception.includes('STORAGE_BYTES'),
     'hard limits must use plan configuration and explain the next step',
   ],
 ];

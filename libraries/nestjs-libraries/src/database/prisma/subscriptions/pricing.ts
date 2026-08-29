@@ -15,6 +15,12 @@ export interface PricingInnerInterface {
   public_api: boolean;
   webhooks: number;
   autoPost: boolean;
+  /** Monthly MCP tool invocations per organisation. */
+  mcp_calls_per_month: number;
+  /** Monthly authenticated API mutations counted for public API routes. */
+  api_calls_per_month: number;
+  /** Soft media storage budget in bytes (enforced on upload paths). */
+  storage_bytes: number;
 }
 export interface PricingInterface {
   [key: string]: PricingInnerInterface;
@@ -37,6 +43,9 @@ export const pricing: PricingInterface = {
     webhooks: 0,
     autoPost: false,
     generate_videos: 0,
+    mcp_calls_per_month: 0,
+    api_calls_per_month: 0,
+    storage_bytes: 0,
   },
   STANDARD: {
     current: 'STANDARD',
@@ -55,6 +64,9 @@ export const pricing: PricingInterface = {
     webhooks: 2,
     autoPost: false,
     generate_videos: 3,
+    mcp_calls_per_month: 2_000,
+    api_calls_per_month: 5_000,
+    storage_bytes: 2 * 1024 * 1024 * 1024,
   },
   TEAM: {
     current: 'TEAM',
@@ -73,6 +85,9 @@ export const pricing: PricingInterface = {
     webhooks: 10,
     autoPost: true,
     generate_videos: 10,
+    mcp_calls_per_month: 10_000,
+    api_calls_per_month: 20_000,
+    storage_bytes: 10 * 1024 * 1024 * 1024,
   },
   PRO: {
     current: 'PRO',
@@ -91,6 +106,9 @@ export const pricing: PricingInterface = {
     webhooks: 30,
     autoPost: true,
     generate_videos: 30,
+    mcp_calls_per_month: 50_000,
+    api_calls_per_month: 100_000,
+    storage_bytes: 50 * 1024 * 1024 * 1024,
   },
   ULTIMATE: {
     current: 'ULTIMATE',
@@ -109,5 +127,8 @@ export const pricing: PricingInterface = {
     webhooks: 10000,
     autoPost: true,
     generate_videos: 60,
+    mcp_calls_per_month: 200_000,
+    api_calls_per_month: 500_000,
+    storage_bytes: 200 * 1024 * 1024 * 1024,
   },
 };

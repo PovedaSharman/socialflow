@@ -34,6 +34,14 @@ const imageTool = read(
   'libraries/nestjs-libraries/src/chat/tools/generate.image.tool.ts'
 );
 const authContext = read('libraries/nestjs-libraries/src/chat/auth.context.ts');
+const auditTool = read(
+  'libraries/nestjs-libraries/src/chat/tools/audit.list.tool.ts'
+);
+const toolList = read('libraries/nestjs-libraries/src/chat/tools/tool.list.ts');
+const startMcpBudget = read('libraries/nestjs-libraries/src/chat/start.mcp.ts');
+const pricing = read(
+  'libraries/nestjs-libraries/src/database/prisma/subscriptions/pricing.ts'
+);
 
 const invariants = [
   [
@@ -95,8 +103,17 @@ const invariants = [
       authContext.includes("ui === 'true'") &&
       scheduleTool.includes('missingMcpScope(requiredScope') &&
       scheduleTool.includes("'posts:publish'") &&
+      scheduleTool.includes('recordMcpAudit') &&
       imageTool.includes("missingMcpScope('media:generate'"),
     'MCP tools must enforce scopes with UI sessions exempt',
+  ],
+  [
+    auditTool.includes("missingMcpScope('audit:read'") &&
+      toolList.includes('AuditListTool') &&
+      startMcpBudget.includes('gateMcpBudget') &&
+      pricing.includes('mcp_calls_per_month') &&
+      pricing.includes('storage_bytes'),
+    'MCP must expose audit:read listing and enforce monthly call budgets from plan config',
   ],
 ];
 

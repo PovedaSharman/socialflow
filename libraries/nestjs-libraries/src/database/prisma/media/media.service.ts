@@ -13,6 +13,7 @@ import {
   Sections,
   SubscriptionException,
 } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
 
 @Injectable()
 export class MediaService {
@@ -57,17 +58,34 @@ export class MediaService {
     }
   }
 
-  saveFile(
+  async saveFile(
     org: string,
     fileName: string,
     filePath: string,
-    originalName?: string
+    originalName?: string,
+    fileSize = 0
   ) {
+    if (process.env.STRIPE_PUBLISHABLE_KEY) {
+      const subscription =
+        await this._subscriptionService.getSubscriptionByOrganizationId(org);
+      const tier = subscription?.subscriptionTier || 'FREE';
+      const limit = pricing[tier]?.storage_bytes ?? 0;
+      const used = await this._mediaRepository.sumOrganizationFileSize(org);
+      const incoming = Math.max(0, Number(fileSize) || 0);
+      if (incoming > 0 && used + incoming > limit) {
+        throw new SubscriptionException({
+          section: Sections.STORAGE_BYTES,
+          action: AuthorizationActions.Create,
+        });
+      }
+    }
+
     return this._mediaRepository.saveFile(
       org,
       fileName,
       filePath,
-      originalName
+      originalName,
+      fileSize
     );
   }
 

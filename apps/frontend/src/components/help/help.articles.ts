@@ -54,6 +54,7 @@ export const helpArticles: HelpArticle[] = [
       'Open Access and create a scoped API credential. Copy the secret once; SocialFlow stores only a hash.',
       'Configure clients with Authorization: Bearer on /mcp. URL-embedded keys are retired for new instructions and disabled in production by default.',
       'Immediate publishing and media generation stay off unless you grant those scopes explicitly. Revoke credentials you no longer need.',
+      'The auditList tool requires audit:read. Monthly MCP call budgets follow your plan and return a clear next step when exceeded.',
     ].join('\n'),
   },
   {

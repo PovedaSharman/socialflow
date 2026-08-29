@@ -38,9 +38,17 @@ const denials: Record<string, { message: string; nextStep: string }> = {
     message: 'Community features are not included in your current plan.',
     nextStep: 'Upgrade your plan to unlock community features.',
   },
-  featured_by_gitroom: {
-    message: 'Featured placement is not included in your current plan.',
-    nextStep: 'Upgrade your plan to unlock featured placement.',
+  mcp_calls: {
+    message: 'You have reached the MCP call limit for your plan this period.',
+    nextStep: 'Upgrade your plan or wait until the period renews.',
+  },
+  api_calls: {
+    message: 'You have reached the API call limit for your plan this period.',
+    nextStep: 'Upgrade your plan or wait until the period renews.',
+  },
+  storage_bytes: {
+    message: 'You have reached the media storage limit for your plan.',
+    nextStep: 'Upgrade your plan or remove unused media, then try again.',
   },
 };
 
