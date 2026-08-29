@@ -270,8 +270,10 @@ No production-readiness claim is made.
 - Documented the transmitter matrix in `docs/ACCESSIBLE_MEDIA.md` and added alternative-text verification to the provider release procedure.
 - Files changed for the alt-text capability slice: provider interface, disclosure helper/specification, Bluesky/Mastodon/Tumblr/Slack/test adapters, integration manager and channel list, media settings disclosure, accessible-media and release-gate guides, account/tenant matrix/manifest and this progress record.
 - Verification for the alt-text capability slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB media-accessibility and account/tenant audits passed with 10 and 22 invariants respectively; `git diff --check` passed. Jest, TypeScript, browser/screen-reader checks and live-provider sandbox proof were not run and are not claimed.
+- Documented Milestone 4/5 disposable-host evidence requirements in `docs/RELEASE_HOST_EVIDENCE.md` and refreshed `docs/READINESS.md` so source audits and fail-closed runners are not mistaken for runtime evidence. No release-host gate was executed on this laptop.
 
 ### Milestone 5 next
 
 - Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
-- Execute the guarded Temporal workflow, connection-health responsive gate, OAuth transaction units, account/tenant gate and provider sandbox matrix on the approved host; retain the evidence and add only verified provider identifiers to the production allowlist.
+- Obtain Milestone 4/5 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`; retain logs and update this file with commands, dates and artefact paths. Do not run those gates on the development laptop.
+- After release-host evidence is recorded, continue Milestone 6 scoped MCP/API credentials.
