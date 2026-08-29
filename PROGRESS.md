@@ -279,9 +279,11 @@ No production-readiness claim is made.
 - Verification for the hashed-credential slice: targeted Prettier completed under a 128 MB heap cap (`schema.prisma` has no inferred Prettier parser and was reviewed directly); `package.json` parsed under 64 MB; the 64 MB MCP credentials audit passed with 6 invariants; `git diff --check` passed. Prisma generate/db push, Jest, TypeScript, UI one-time secret display and live MCP client proofs were not run and are not claimed.
 - Added an Access-page one-time secret UI for scoped credentials: dedicated SWR hook, labelled create form, copy-once secret panel and revoke confirmation. Lists show prefix and scopes only.
 - Verification for the credentials UI slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB MCP credentials audit passed with 7 invariants; `git diff --check` passed. Browser interaction and schema-backed runtime create/revoke were not run and are not claimed.
+- Enforced MCP tool scopes: immediate publish requires `posts:publish`, scheduling requires `posts:schedule`, drafts require `posts:draft`, image/video generation requires `media:generate`, and channel listing requires `channels:read`. In-app copilot sessions remain exempt.
+- Verification for the MCP scope-enforcement slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB MCP credentials audit passed with 8 invariants; `git diff --check` passed. Live MCP tool calls and schema-backed credential resolution were not run and are not claimed.
 
 ### Milestone 5 next
 
 - Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
 - Obtain Milestone 4/5 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`; retain logs and update this file with commands, dates and artefact paths. Do not run those gates on the development laptop.
-- Continue Milestone 6: tool-level scope enforcement on MCP tools, audit history and verified client connection proofs after schema generate/push on an approved host.
+- Finish Milestone 6 remaining items on an approved host: Prisma generate/push for `ApiCredential`, create/use/revoke runtime proofs, and client connection checks. Then start Milestone 7 Stripe test-mode.

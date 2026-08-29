@@ -4,7 +4,10 @@ import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
 import { MediaService } from '@gitroom/nestjs-libraries/database/prisma/media/media.service';
 import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
-import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
+import {
+  checkAuth,
+  missingMcpScope,
+} from '@gitroom/nestjs-libraries/chat/auth.context';
 
 @Injectable()
 export class GenerateImageTool implements AgentToolInterface {
@@ -38,7 +41,13 @@ export class GenerateImageTool implements AgentToolInterface {
       }),
       execute: async (inputData, context) => {
         checkAuth(inputData, context);
-        const org = JSON.parse((context?.requestContext as any)?.get('organization') as string);
+        const scopeError = missingMcpScope('media:generate', context);
+        if (scopeError) {
+          throw new Error(scopeError);
+        }
+        const org = JSON.parse(
+          (context?.requestContext as any)?.get('organization') as string
+        );
         const image = await this._mediaService.generateImage(
           inputData.prompt,
           org

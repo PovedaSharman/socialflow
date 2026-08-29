@@ -1,11 +1,12 @@
-import {
-  AgentToolInterface,
-} from '@gitroom/nestjs-libraries/chat/agent.tool.interface';
+import { AgentToolInterface } from '@gitroom/nestjs-libraries/chat/agent.tool.interface';
 import { createTool } from '@mastra/core/tools';
 import { Injectable } from '@nestjs/common';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import z from 'zod';
-import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
+import {
+  checkAuth,
+  missingMcpScope,
+} from '@gitroom/nestjs-libraries/chat/auth.context';
 
 @Injectable()
 export class IntegrationListTool implements AgentToolInterface {
@@ -45,6 +46,10 @@ export class IntegrationListTool implements AgentToolInterface {
       }),
       execute: async (inputData, context) => {
         checkAuth(inputData, context);
+        const scopeError = missingMcpScope('channels:read', context);
+        if (scopeError) {
+          throw new Error(scopeError);
+        }
         const organizationId = JSON.parse(
           (context?.requestContext as any)?.get('organization') as string
         ).id;
@@ -53,7 +58,9 @@ export class IntegrationListTool implements AgentToolInterface {
           output: (
             await this._integrationService.getIntegrationsList(organizationId)
           )
-            .filter((p) => !inputData.group || p.customer?.id === inputData.group)
+            .filter(
+              (p) => !inputData.group || p.customer?.id === inputData.group
+            )
             .map((p) => ({
               name: p.name,
               id: p.id,

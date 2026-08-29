@@ -27,7 +27,11 @@ remain pending. Schema push/generate must run on an approved host.
   then falls back to the legacy organisation `apiKey` with default-deny scopes.
 - `areMcpUrlSecretsAllowed` denies `/mcp/:id`, `/sse/:id` and `/message/:id` in
   production unless `ALLOW_MCP_URL_SECRETS=true`.
-- Public API MCP instructions render Bearer header examples only.
+- Tool-level MCP enforcement uses `missingMcpScope`: schedule/now/draft map to
+  `posts:schedule` / `posts:publish` / `posts:draft`, image and video generation
+  require `media:generate`, and channel listing requires `channels:read`. The
+  in-app copilot (`ui=true`) remains session-authorised and is not limited by
+  MCP scopes.
 
 ## Operator notes
 

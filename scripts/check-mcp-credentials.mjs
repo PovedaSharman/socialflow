@@ -27,6 +27,13 @@ const service = read(
 const controller = read(
   'apps/backend/src/api/routes/api-credentials.controller.ts'
 );
+const scheduleTool = read(
+  'libraries/nestjs-libraries/src/chat/tools/integration.schedule.post.ts'
+);
+const imageTool = read(
+  'libraries/nestjs-libraries/src/chat/tools/generate.image.tool.ts'
+);
+const authContext = read('libraries/nestjs-libraries/src/chat/auth.context.ts');
 
 const invariants = [
   [
@@ -82,6 +89,14 @@ const invariants = [
       scopedUi.includes('I have copied it') &&
       scopedUi.includes("method: 'DELETE'"),
     'the public API page must offer one-time secret create/list/revoke UI',
+  ],
+  [
+    authContext.includes('missingMcpScope') &&
+      authContext.includes("ui === 'true'") &&
+      scheduleTool.includes('missingMcpScope(requiredScope') &&
+      scheduleTool.includes("'posts:publish'") &&
+      imageTool.includes("missingMcpScope('media:generate'"),
+    'MCP tools must enforce scopes with UI sessions exempt',
   ],
 ];
 

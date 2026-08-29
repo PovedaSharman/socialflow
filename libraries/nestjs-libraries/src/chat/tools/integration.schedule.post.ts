@@ -7,7 +7,10 @@ import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/po
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import { AllProvidersSettings } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/all.providers.settings';
 import { Integration } from '@prisma/client';
-import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
+import {
+  checkAuth,
+  missingMcpScope,
+} from '@gitroom/nestjs-libraries/chat/auth.context';
 import {
   ValidUrlExtension,
   ValidUrlPath,
@@ -132,6 +135,19 @@ If the tools return errors, you would need to rerun it with the right parameters
       }),
       execute: async (inputData, context) => {
         checkAuth(inputData, context);
+        const requiredScope = inputData.socialPost.some(
+          (post: { type: string }) => post.type === 'now'
+        )
+          ? 'posts:publish'
+          : inputData.socialPost.some(
+              (post: { type: string }) => post.type === 'schedule'
+            )
+          ? 'posts:schedule'
+          : 'posts:draft';
+        const scopeError = missingMcpScope(requiredScope, context);
+        if (scopeError) {
+          return { errors: scopeError };
+        }
         const organizationId = JSON.parse(
           (context?.requestContext as any)?.get('organization') as string
         ).id;
@@ -207,36 +223,43 @@ If the tools return errors, you would need to rerun it with the right parameters
             throw new Error('Integration not found');
           }
 
-          const output = await this._postsService.createPost(organizationId, {
-            date: post.date,
-            type: post.type as 'draft' | 'schedule' | 'now',
-            shortLink: post.shortLink,
-            tags: [],
-            posts: [
-              {
-                integration,
-                group: makeId(10),
-                settings: post.settings.reduce(
-                  (acc: AllProvidersSettings, s: { key: string; value: any }) => ({
-                    ...acc,
-                    [s.key]: s.value,
-                  }),
-                  {
-                    __type: integration.providerIdentifier,
-                  } as AllProvidersSettings
-                ),
-                value: post.postsAndComments.map((p: any) => ({
-                  content: p.content,
-                  id: makeId(10),
-                  delay: 0,
-                  image: p.attachments.map((p: any) => ({
+          const output = await this._postsService.createPost(
+            organizationId,
+            {
+              date: post.date,
+              type: post.type as 'draft' | 'schedule' | 'now',
+              shortLink: post.shortLink,
+              tags: [],
+              posts: [
+                {
+                  integration,
+                  group: makeId(10),
+                  settings: post.settings.reduce(
+                    (
+                      acc: AllProvidersSettings,
+                      s: { key: string; value: any }
+                    ) => ({
+                      ...acc,
+                      [s.key]: s.value,
+                    }),
+                    {
+                      __type: integration.providerIdentifier,
+                    } as AllProvidersSettings
+                  ),
+                  value: post.postsAndComments.map((p: any) => ({
+                    content: p.content,
                     id: makeId(10),
-                    path: p,
+                    delay: 0,
+                    image: p.attachments.map((p: any) => ({
+                      id: makeId(10),
+                      path: p,
+                    })),
                   })),
-                })),
-              },
-            ],
-          }, 'MCP');
+                },
+              ],
+            },
+            'MCP'
+          );
           finalOutput.push(...output);
         }
 
