@@ -32,6 +32,10 @@ fixtures and live Stripe proofs remain pending on an approved host.
   and `storage_bytes`. MCP HTTP sessions increment a Redis monthly counter and
   return HTTP 402 with `message`/`nextStep` when over budget. Media uploads
   aggregate `fileSize` and refuse new files that would exceed storage.
+- Public API mutations (non-GET) increment a Redis monthly API counter via
+  `PublicAuthMiddleware` and return HTTP 402 with the same denial shape when
+  over budget. Auth mutations and `/public/v1/*` writes remain rate-limited by
+  the Nest throttler.
 
 ## Operator notes
 

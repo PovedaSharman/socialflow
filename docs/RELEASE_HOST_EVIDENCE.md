@@ -63,9 +63,11 @@ Evidence is complete only when all of the following are true:
 
 Also record on an approved host:
 
-1. Prisma migrate for `ApiCredential`, `AuditEvent` and `ConsentPreference`.
+1. Prisma generate/schema apply for `ApiCredential`, `AuditEvent` and
+   `ConsentPreference` (`docs/SCHEMA_APPLY.md`).
 2. Scoped MCP credential create / Bearer use / revoke with tool scope denials.
-3. Stripe test checkout, portal, webhook replay and hard usage-limit matrix.
+3. Stripe test checkout, portal, webhook replay and hard usage-limit matrix
+   (including MCP/API/storage budgets).
 4. Help centre search and first-schedule onboarding browser pass.
 5. Privacy export download, consent record, deletion re-auth denial and success.
 6. `/monitor/live` and `/monitor/ready` against a running stack.

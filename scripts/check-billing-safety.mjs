@@ -11,6 +11,12 @@ const controller = read('apps/backend/src/api/routes/stripe.controller.ts');
 const usage = read(
   'libraries/nestjs-libraries/src/database/prisma/subscriptions/usage.limit.ts'
 );
+const apiUsage = read(
+  'libraries/nestjs-libraries/src/database/prisma/subscriptions/api.usage.ts'
+);
+const publicAuth = read(
+  'apps/backend/src/services/auth/public.auth.middleware.ts'
+);
 const permissions = read(
   'apps/backend/src/services/auth/permissions/permissions.service.ts'
 );
@@ -49,6 +55,7 @@ const invariants = [
       usage.includes('nextStep') &&
       usage.includes('mcp_calls') &&
       usage.includes('storage_bytes') &&
+      usage.includes('api_calls') &&
       !permissions.includes('channel: tier === ') &&
       permissions.includes('resolveChannelLimit(') &&
       permissions.includes('isWithinHardLimit(') &&
@@ -56,6 +63,13 @@ const invariants = [
       exception.includes('nextStep: denial.nextStep') &&
       exception.includes('STORAGE_BYTES'),
     'hard limits must use plan configuration and explain the next step',
+  ],
+  [
+    apiUsage.includes('enforceApiCallBudget') &&
+      publicAuth.includes('enforceApiCallBudget') &&
+      publicAuth.includes('PAYMENT_REQUIRED') &&
+      publicAuth.includes('API_CREDENTIAL_PREFIX'),
+    'public API mutations must count against monthly API call budgets',
   ],
 ];
 

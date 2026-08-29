@@ -21,10 +21,13 @@ export class ThrottlerBehindProxyGuard extends ThrottlerGuard {
     const isAuthMutation =
       method === 'POST' &&
       AUTH_MUTATION_PATHS.some((candidate) => path.endsWith(candidate));
-    const isPublicPosts =
-      method === 'POST' && path.includes('/public/v1/posts');
+    const isPublicApiMutation =
+      method !== 'GET' &&
+      method !== 'HEAD' &&
+      method !== 'OPTIONS' &&
+      path.includes('/public/v1/');
 
-    if (isAuthMutation || isPublicPosts) {
+    if (isAuthMutation || isPublicApiMutation) {
       return super.canActivate(context);
     }
 
