@@ -1,6 +1,9 @@
 'use client';
 
-import { useCalendar, ListStateFilter } from '@gitroom/frontend/components/launches/calendar.context';
+import {
+  useCalendar,
+  ListStateFilter,
+} from '@gitroom/frontend/components/launches/calendar.context';
 import clsx from 'clsx';
 import dayjs from 'dayjs';
 import { useCallback } from 'react';
@@ -287,7 +290,7 @@ export const Filters = () => {
   }, [calendar]);
 
   return (
-    <div className="text-textColor flex flex-col md:flex-row gap-[8px] items-center select-none">
+    <div className="text-textColor flex w-full flex-col items-stretch gap-[8px] select-none md:w-auto md:flex-row md:items-center">
       {!isListView && (
         <div className="flex flex-grow flex-row items-center gap-[10px]">
           <div className="border h-[42px] border-newTableBorder bg-newTableBorder gap-[1px] flex items-center rounded-[8px] overflow-hidden">
@@ -350,15 +353,22 @@ export const Filters = () => {
         </div>
       )}
       {isListView && (
-        <div className="flex flex-grow flex-row items-center gap-[10px]">
-          <div className="border h-[42px] border-newTableBorder bg-newTableBorder gap-[1px] flex items-center rounded-[8px] overflow-hidden">
-            <div
+        <div className="flex w-full flex-grow flex-col items-stretch gap-[8px] sm:flex-row sm:items-center md:w-auto">
+          <div
+            className="flex h-[44px] w-full items-center overflow-hidden rounded-[8px] border border-newTableBorder bg-newTableBorder sm:w-auto"
+            role="group"
+            aria-label={t('list_pagination', 'List pagination')}
+          >
+            <button
+              type="button"
               onClick={previousPage}
+              disabled={calendar.listPage <= 0}
+              aria-label={t('previous_page', 'Previous page')}
               className={clsx(
-                'text-textColor rtl:rotate-180 px-[9px] bg-newBgColorInner h-full flex items-center justify-center',
+                'text-textColor rtl:rotate-180 min-w-[44px] px-[9px] bg-newBgColorInner h-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-btnPrimary disabled:opacity-50 disabled:cursor-not-allowed',
                 calendar.listPage > 0
                   ? 'cursor-pointer hover:text-textItemFocused hover:bg-boxFocused'
-                  : 'opacity-50 cursor-not-allowed'
+                  : ''
               )}
             >
               <svg
@@ -376,19 +386,26 @@ export const Filters = () => {
                   strokeLinejoin="round"
                 />
               </svg>
-            </div>
-            <div className="min-w-[200px] text-center bg-newBgColorInner h-full flex items-center justify-center">
+            </button>
+            <div
+              className="flex h-full min-w-0 flex-1 items-center justify-center bg-newBgColorInner px-[8px] text-center sm:min-w-[160px]"
+              aria-live="polite"
+            >
               <div className="py-[3px] px-[9px] rounded-[5px] transition-all text-[14px]">
-                {t('page', 'Page')} {calendar.listPage + 1} {t('of', 'of')} {Math.max(1, calendar.listTotalPages)}
+                {t('page', 'Page')} {calendar.listPage + 1} {t('of', 'of')}{' '}
+                {Math.max(1, calendar.listTotalPages)}
               </div>
             </div>
-            <div
+            <button
+              type="button"
               onClick={nextPage}
+              disabled={calendar.listPage >= calendar.listTotalPages - 1}
+              aria-label={t('next_page', 'Next page')}
               className={clsx(
-                'text-textColor rtl:rotate-180 px-[9px] bg-newBgColorInner h-full flex items-center justify-center',
+                'text-textColor rtl:rotate-180 min-w-[44px] px-[9px] bg-newBgColorInner h-full flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-btnPrimary disabled:opacity-50 disabled:cursor-not-allowed',
                 calendar.listPage < calendar.listTotalPages - 1
                   ? 'cursor-pointer hover:text-textItemFocused hover:bg-boxFocused'
-                  : 'opacity-50 cursor-not-allowed'
+                  : ''
               )}
             >
               <svg
@@ -406,24 +423,29 @@ export const Filters = () => {
                   strokeLinejoin="round"
                 />
               </svg>
-            </div>
+            </button>
           </div>
-          <div className="flex flex-row p-[4px] border border-newTableBorder rounded-[8px] text-[14px] font-[500]">
+          <div
+            className="flex w-full flex-row rounded-[8px] border border-newTableBorder p-[4px] text-[14px] font-[500] sm:w-auto"
+            role="group"
+            aria-label={t('filter_posts_by_status', 'Filter posts by status')}
+          >
             {listStateOptions.map((option) => (
-              <div
+              <button
+                type="button"
                 key={option.value}
                 onClick={setListStateFilter(option.value)}
+                aria-pressed={calendar.listState === option.value}
                 className={clsx(
-                  'pt-[6px] pb-[5px] cursor-pointer min-w-[80px] px-[12px] text-center rounded-[6px]',
+                  'min-h-[44px] flex-1 cursor-pointer rounded-[6px] px-[10px] text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-btnPrimary sm:min-w-[80px]',
                   calendar.listState === option.value &&
                     'text-textItemFocused bg-boxFocused'
                 )}
               >
                 {option.label}
-              </div>
+              </button>
             ))}
           </div>
-          <div className="flex-1" />
         </div>
       )}
       <SelectCustomer
@@ -445,7 +467,8 @@ export const Filters = () => {
           <div
             className={clsx(
               'pt-[6px] pb-[5px] cursor-pointer w-[74px] text-center rounded-[6px]',
-              calendar.display === 'week' && 'text-textItemFocused bg-boxFocused'
+              calendar.display === 'week' &&
+                'text-textItemFocused bg-boxFocused'
             )}
             onClick={setWeek}
           >
@@ -454,7 +477,8 @@ export const Filters = () => {
           <div
             className={clsx(
               'pt-[6px] pb-[5px] cursor-pointer w-[74px] text-center rounded-[6px]',
-              calendar.display === 'month' && 'text-textItemFocused bg-boxFocused'
+              calendar.display === 'month' &&
+                'text-textItemFocused bg-boxFocused'
             )}
             onClick={setMonth}
           >
@@ -462,11 +486,18 @@ export const Filters = () => {
           </div>
         </div>
       )}
-      <div className="flex flex-row p-[4px] border border-newTableBorder rounded-[8px] text-[14px] font-[500]">
-        <div
+      <div
+        className="flex flex-row self-end rounded-[8px] border border-newTableBorder p-[4px] text-[14px] font-[500] md:self-auto"
+        role="group"
+        aria-label={t('calendar_display', 'Calendar display')}
+      >
+        <button
+          type="button"
           onClick={setCalendarView}
+          aria-label={t('calendar_view', 'Calendar view')}
+          aria-pressed={!isListView}
           className={clsx(
-            'pt-[6px] pb-[5px] cursor-pointer flex justify-center items-center w-[34px] text-center rounded-[6px]',
+            'cursor-pointer flex min-h-[44px] min-w-[44px] justify-center items-center text-center rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-btnPrimary',
             !isListView && 'text-textItemFocused bg-boxFocused'
           )}
         >
@@ -486,11 +517,14 @@ export const Filters = () => {
               strokeLinejoin="round"
             />
           </svg>
-        </div>
-        <div
+        </button>
+        <button
+          type="button"
           onClick={setList}
+          aria-label={t('list_view', 'List view')}
+          aria-pressed={isListView}
           className={clsx(
-            'pt-[6px] pb-[5px] flex justify-center items-center cursor-pointer w-[34px] text-center rounded-[6px]',
+            'flex min-h-[44px] min-w-[44px] justify-center items-center cursor-pointer text-center rounded-[6px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-btnPrimary',
             isListView && 'text-textItemFocused bg-boxFocused'
           )}
         >
@@ -510,7 +544,7 @@ export const Filters = () => {
               strokeLinejoin="round"
             />
           </svg>
-        </div>
+        </button>
       </div>
     </div>
   );

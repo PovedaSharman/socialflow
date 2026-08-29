@@ -251,6 +251,11 @@ No production-readiness claim is made.
 - Added 128 MB-capped package commands and expanded the publishing guide/audit with the exact maintenance procedure and resource invariants. The cleanup command was not executed against any database.
 - Files changed for the legacy-cleanup slice: bounded maintenance script/package commands, publishing guide, publish-safety audit and this progress record.
 - Verification for the legacy-cleanup slice: `package.json` parsed under 64 MB and the 64 MB publish-safety audit passed with 16 invariants. TypeScript, Prisma/database runtime and apply mode were not run and are not claimed.
+- Repaired the calendar’s existing list alternative for mobile and keyboard use. Pagination and status filters now stack within narrow widths, use labelled native buttons, preserve 44 px targets, expose disabled/pressed state and retain visible focus; the calendar/list mode switch is a labelled toggle group.
+- Made each calendar/list post body a labelled keyboard edit button and exposed failed-card text through an announced status in addition to the red ring and `!` marker.
+- Added `docs/MOBILE_CALENDAR.md` and a 64 MB bounded audit covering list pagination bounds, narrow toolbar layout, semantic toggles, edit access and non-colour error communication.
+- Files changed for the mobile-calendar slice: calendar filters/context-facing controls, post card semantics, mobile calendar guide, root scripts manifest, bounded audit and this progress record.
+- Verification for the mobile-calendar slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB mobile calendar audit passed with 9 invariants; `git diff --check` passed. TypeScript, Jest, browser keyboard interaction and 360/768/1024/1440 visual checks were not run and are not claimed.
 
 ### Milestone 5 next
 
