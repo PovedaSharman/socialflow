@@ -277,9 +277,11 @@ No production-readiness claim is made.
 - Added the `ApiCredential` Prisma model plus create/list/revoke admin API that stores only a SHA-256 hash and display prefix, returns the plaintext secret once, defaults scopes to deny immediate publish and media generation, and resolves `sf_live_` Bearer tokens in MCP before falling back to the legacy organisation API key.
 - Files changed for the hashed-credential slice: Prisma schema, secret helper/specification, repository/service, DTO, controller, database and API modules, MCP resolver, MCP credentials guide, bounded audit and this progress record.
 - Verification for the hashed-credential slice: targeted Prettier completed under a 128 MB heap cap (`schema.prisma` has no inferred Prettier parser and was reviewed directly); `package.json` parsed under 64 MB; the 64 MB MCP credentials audit passed with 6 invariants; `git diff --check` passed. Prisma generate/db push, Jest, TypeScript, UI one-time secret display and live MCP client proofs were not run and are not claimed.
+- Added an Access-page one-time secret UI for scoped credentials: dedicated SWR hook, labelled create form, copy-once secret panel and revoke confirmation. Lists show prefix and scopes only.
+- Verification for the credentials UI slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB MCP credentials audit passed with 7 invariants; `git diff --check` passed. Browser interaction and schema-backed runtime create/revoke were not run and are not claimed.
 
 ### Milestone 5 next
 
 - Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
 - Obtain Milestone 4/5 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`; retain logs and update this file with commands, dates and artefact paths. Do not run those gates on the development laptop.
-- Continue Milestone 6: one-time secret UI, tool-level scope enforcement on MCP tools, audit history and verified client connection proofs after schema generate/push on an approved host.
+- Continue Milestone 6: tool-level scope enforcement on MCP tools, audit history and verified client connection proofs after schema generate/push on an approved host.

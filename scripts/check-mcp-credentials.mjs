@@ -10,6 +10,9 @@ const startMcp = read('libraries/nestjs-libraries/src/chat/start.mcp.ts');
 const publicApi = read(
   'apps/frontend/src/components/public-api/public.component.tsx'
 );
+const scopedUi = read(
+  'apps/frontend/src/components/public-api/scoped.api.credentials.tsx'
+);
 const envExample = read('.env.example');
 const compose = read('docker-compose.yaml');
 const schema = read(
@@ -69,7 +72,16 @@ const invariants = [
       service.includes('secretHash: created.secretHash') &&
       !service.includes('secretHash: created.secret,') &&
       controller.includes("'/user/api-credentials'"),
-    'hashed credentials must be created, listed and revoked without storing plaintext',
+    '    hashed credentials must be created, listed and revoked without storing plaintext',
+  ],
+  [
+    publicApi.includes('ScopedApiCredentialsSection') &&
+      scopedUi.includes('const useApiCredentials = () =>') &&
+      scopedUi.includes('return useSWR') &&
+      scopedUi.includes('one_time_secret') &&
+      scopedUi.includes('I have copied it') &&
+      scopedUi.includes("method: 'DELETE'"),
+    'the public API page must offer one-time secret create/list/revoke UI',
   ],
 ];
 

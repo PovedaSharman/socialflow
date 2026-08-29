@@ -10,6 +10,7 @@ import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { useDecisionModal } from '@gitroom/frontend/components/layout/new-modal';
 import { DeveloperComponent } from '@gitroom/frontend/components/developer/developer.component';
+import { ScopedApiCredentialsSection } from '@gitroom/frontend/components/public-api/scoped.api.credentials';
 import clsx from 'clsx';
 
 const mcpClients = [
@@ -648,6 +649,8 @@ const PublicApiContent = () => {
           </div>
         </div>
       </div>
+
+      <ScopedApiCredentialsSection />
 
       <CliSection apiKey={user.publicApi} />
 

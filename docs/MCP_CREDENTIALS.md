@@ -42,5 +42,6 @@ remain pending. Schema push/generate must run on an approved host.
 pnpm check:mcp-credentials
 ```
 
-Runtime create/use/revoke tests, tool-level scope enforcement, UI one-time
-secret display and client connection proofs remain pending on an approved host.
+Runtime create/use/revoke tests, tool-level scope enforcement and client
+connection proofs remain pending on an approved host. The Access page includes
+a one-time secret create/list/revoke UI for hashed credentials.
