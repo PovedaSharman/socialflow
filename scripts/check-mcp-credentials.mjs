@@ -12,6 +12,18 @@ const publicApi = read(
 );
 const envExample = read('.env.example');
 const compose = read('docker-compose.yaml');
+const schema = read(
+  'libraries/nestjs-libraries/src/database/prisma/schema.prisma'
+);
+const secretHelper = read(
+  'libraries/nestjs-libraries/src/database/prisma/api-credentials/api.credential.secret.ts'
+);
+const service = read(
+  'libraries/nestjs-libraries/src/database/prisma/api-credentials/api.credential.service.ts'
+);
+const controller = read(
+  'apps/backend/src/api/routes/api-credentials.controller.ts'
+);
 
 const invariants = [
   [
@@ -30,8 +42,9 @@ const invariants = [
   [
     startMcp.includes('areMcpUrlSecretsAllowed(process.env)') &&
       startMcp.includes("error: 'url_secret_disabled'") &&
-      startMcp.includes('MCP_SCOPES'),
-    'MCP mounts must gate URL secrets and advertise granular scopes',
+      startMcp.includes('MCP_SCOPES') &&
+      startMcp.includes('apiCredentialService.resolveOrganizationBySecret'),
+    'MCP mounts must gate URL secrets and resolve hashed credentials',
   ],
   [
     !publicApi.includes('/mcp/${') &&
@@ -45,6 +58,18 @@ const invariants = [
     envExample.includes('ALLOW_MCP_URL_SECRETS') &&
       compose.includes('ALLOW_MCP_URL_SECRETS:'),
     'the compatibility control must be documented and fail closed by default',
+  ],
+  [
+    schema.includes('model ApiCredential') &&
+      schema.includes('secretHash') &&
+      schema.includes('scopes') &&
+      secretHelper.includes('createHash') &&
+      secretHelper.includes('API_CREDENTIAL_PREFIX') &&
+      service.includes('secret: created.secret') &&
+      service.includes('secretHash: created.secretHash') &&
+      !service.includes('secretHash: created.secret,') &&
+      controller.includes("'/user/api-credentials'"),
+    'hashed credentials must be created, listed and revoked without storing plaintext',
   ],
 ];
 

@@ -4,10 +4,12 @@ import { MastraService } from '@gitroom/nestjs-libraries/chat/mastra.service';
 import { MCPServer } from '@mastra/mcp';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { OAuthService } from '@gitroom/nestjs-libraries/database/prisma/oauth/oauth.service';
+import { ApiCredentialService } from '@gitroom/nestjs-libraries/database/prisma/api-credentials/api.credential.service';
 import { runWithContext } from './async.storage';
 import { createOAuthMiddleware } from './oauth-middleware';
-import { MCP_SCOPES } from './mcp.scopes';
+import { DEFAULT_MCP_SCOPES, MCP_SCOPES } from './mcp.scopes';
 import { areMcpUrlSecretsAllowed } from './mcp.url-secret';
+import { API_CREDENTIAL_PREFIX } from '@gitroom/nestjs-libraries/database/prisma/api-credentials/api.credential.secret';
 const fixAcceptHeader = (req: Request) => {
   const value = 'application/json, text/event-stream';
   req.headers.accept = value;
@@ -23,14 +25,36 @@ export const startMcp = async (app: INestApplication) => {
   const mastraService = app.get(MastraService, { strict: false });
   const organizationService = app.get(OrganizationService, { strict: false });
   const oauthService = app.get(OAuthService, { strict: false });
+  const apiCredentialService = app.get(ApiCredentialService, { strict: false });
 
   const resolveAuth = async (token: string) => {
     if (token.startsWith('pos_')) {
       const authorization = await oauthService.getOrgByOAuthToken(token);
       if (!authorization) return null;
-      return authorization.organization;
+      return {
+        ...authorization.organization,
+        mcpScopes: [...DEFAULT_MCP_SCOPES],
+      };
     }
-    return organizationService.getOrgByApiKey(token);
+
+    if (token.startsWith(API_CREDENTIAL_PREFIX) && apiCredentialService) {
+      const resolved = await apiCredentialService.resolveOrganizationBySecret(
+        token
+      );
+      if (!resolved) return null;
+      return {
+        ...resolved.organization,
+        mcpScopes: resolved.scopes,
+        apiCredentialId: resolved.credentialId,
+      };
+    }
+
+    const organization = await organizationService.getOrgByApiKey(token);
+    if (!organization) return null;
+    return {
+      ...organization,
+      mcpScopes: [...DEFAULT_MCP_SCOPES],
+    };
   };
 
   const mastra = await mastraService.mastra();
@@ -150,12 +174,10 @@ export const startMcp = async (app: INestApplication) => {
       const token = result.tokenValidation?.subject;
       const auth = await resolveAuth(token!);
       if (!auth) {
-        res
-          .status(401)
-          .json({
-            error: 'invalid_token',
-            error_description: 'Could not resolve organization',
-          });
+        res.status(401).json({
+          error: 'invalid_token',
+          error_description: 'Could not resolve organization',
+        });
         return;
       }
 

@@ -43,6 +43,7 @@ model Organization {
   webhooks             Webhooks[]
   oauthApp             OAuthApp[]
   oauthAuthorizations  OAuthAuthorization[]
+  apiCredentials       ApiCredential[]
   teamInvitations      TeamInvitation[]
   postApprovalRequests PostApprovalRequest[]
 
@@ -114,6 +115,7 @@ model User {
   sendFailureEmails      Boolean               @default(true)
   sendStreakEmails       Boolean               @default(true)
   oauthAuthorizations    OAuthAuthorization[]
+  apiCredentials         ApiCredential[]       @relation("apiCredentialCreator")
   sentTeamInvitations    TeamInvitation[]      @relation("teamInvitationInviter")
   acceptedInvitations    TeamInvitation[]      @relation("teamInvitationAcceptor")
   requestedPostApprovals PostApprovalRequest[] @relation("postApprovalRequester")
@@ -938,6 +940,27 @@ model OAuthAuthorization {
   @@index([userId])
   @@index([organizationId])
   @@index([revokedAt])
+}
+
+model ApiCredential {
+  id               String       @id @default(uuid())
+  organizationId   String
+  createdByUserId  String
+  name             String
+  prefix           String
+  secretHash       String       @unique
+  scopes           String[]
+  expiresAt        DateTime?
+  lastUsedAt       DateTime?
+  revokedAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id])
+  createdBy        User         @relation("apiCredentialCreator", fields: [createdByUserId], references: [id])
+
+  @@index([organizationId, revokedAt])
+  @@index([prefix])
+  @@index([createdByUserId])
 }
 
 enum OrderStatus {

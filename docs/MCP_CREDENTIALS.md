@@ -1,8 +1,9 @@
 # MCP and API credentials
 
-Status: **partial** — Bearer-only instructions and production URL-secret denial
-are in place. Hashed multi-credential records, one-time secret display,
-revocation UI, tool-level enforcement and connection testing remain pending.
+Status: **partial** — Bearer-only instructions, production URL-secret denial,
+product scope defaults and hashed `ApiCredential` create/list/revoke APIs are
+in source. Tool-level enforcement, one-time UI display and connection proofs
+remain pending. Schema push/generate must run on an approved host.
 
 ## Required end state
 
@@ -19,23 +20,27 @@ revocation UI, tool-level enforcement and connection testing remain pending.
 
 ## Current source controls
 
-- `libraries/nestjs-libraries/src/chat/mcp.scopes.ts` defines the product scope
-  set, defaults and publish/media helpers.
+- `ApiCredential` Prisma model stores only `secretHash` and a display `prefix`.
+- `POST/GET/DELETE /user/api-credentials` create, list and revoke credentials
+  for organisation admins. Create responses include the plaintext secret once.
+- MCP Bearer auth resolves `sf_live_…` secrets through the hashed table first,
+  then falls back to the legacy organisation `apiKey` with default-deny scopes.
 - `areMcpUrlSecretsAllowed` denies `/mcp/:id`, `/sse/:id` and `/message/:id` in
-  production unless `ALLOW_MCP_URL_SECRETS=true` for a temporary compatibility
-  window.
+  production unless `ALLOW_MCP_URL_SECRETS=true`.
 - Public API MCP instructions render Bearer header examples only.
-- Organisation `apiKey` remains a legacy single shared secret until the hashed
-  credential model lands; treat rotation and hashing as a follow-up slice.
 
 ## Operator notes
 
-Keep `ALLOW_MCP_URL_SECRETS` unset in production. Enable it only while migrating
-existing remote clients, then remove it. Never commit live secrets.
+1. On an approved host, run `pnpm prisma-generate` then apply the schema with the
+   documented disposable/non-production push procedure before enabling the new
+   endpoints against a database.
+2. Keep `ALLOW_MCP_URL_SECRETS` unset in production.
+3. Prefer creating scoped `sf_live_` credentials over rotating the legacy shared
+   organisation API key.
 
 ```bash
 pnpm check:mcp-credentials
 ```
 
-Runtime create/use/revoke tests, tool-level scope enforcement and client
-connection proofs remain pending on an approved host.
+Runtime create/use/revoke tests, tool-level scope enforcement, UI one-time
+secret display and client connection proofs remain pending on an approved host.

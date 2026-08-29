@@ -49,6 +49,8 @@ import { ErrorsService } from '@gitroom/nestjs-libraries/database/prisma/errors/
 import { AdminStatsRepository } from '@gitroom/nestjs-libraries/database/prisma/admin-stats/admin-stats.repository';
 import { AdminStatsService } from '@gitroom/nestjs-libraries/database/prisma/admin-stats/admin-stats.service';
 import { SocialCredentialEncryptionService } from '@gitroom/nestjs-libraries/security/social-credential-encryption.service';
+import { ApiCredentialRepository } from '@gitroom/nestjs-libraries/database/prisma/api-credentials/api.credential.repository';
+import { ApiCredentialService } from '@gitroom/nestjs-libraries/database/prisma/api-credentials/api.credential.service';
 
 @Global()
 @Module({
@@ -96,6 +98,8 @@ import { SocialCredentialEncryptionService } from '@gitroom/nestjs-libraries/sec
     ThirdPartyService,
     OAuthRepository,
     OAuthService,
+    ApiCredentialRepository,
+    ApiCredentialService,
     VideoManager,
     AnnouncementsRepository,
     AnnouncementsService,

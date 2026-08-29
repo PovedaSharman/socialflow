@@ -274,9 +274,12 @@ No production-readiness claim is made.
 - Started Milestone 6 MCP hardening: product scope defaults deny `posts:publish` and `media:generate`, production denies URL-embedded `/mcp/:id` `/sse/:id` `/message/:id` unless `ALLOW_MCP_URL_SECRETS=true`, and the public API page now renders Bearer-only client instructions.
 - Files changed for this MCP slice: scope and URL-secret helpers/specifications, MCP mount gate, public API instructions, MCP credentials guide, environment/Compose templates, bounded MCP audit, root scripts manifest and this progress record.
 - Verification for this MCP slice: targeted Prettier completed under a 128 MB heap cap (`.env.example` has no inferred Prettier parser and was reviewed directly); `package.json` parsed under 64 MB; the 64 MB MCP credentials audit passed with 5 invariants; `git diff --check` passed. Jest, TypeScript, live MCP client connections and hashed credential persistence were not run and are not claimed.
+- Added the `ApiCredential` Prisma model plus create/list/revoke admin API that stores only a SHA-256 hash and display prefix, returns the plaintext secret once, defaults scopes to deny immediate publish and media generation, and resolves `sf_live_` Bearer tokens in MCP before falling back to the legacy organisation API key.
+- Files changed for the hashed-credential slice: Prisma schema, secret helper/specification, repository/service, DTO, controller, database and API modules, MCP resolver, MCP credentials guide, bounded audit and this progress record.
+- Verification for the hashed-credential slice: targeted Prettier completed under a 128 MB heap cap (`schema.prisma` has no inferred Prettier parser and was reviewed directly); `package.json` parsed under 64 MB; the 64 MB MCP credentials audit passed with 6 invariants; `git diff --check` passed. Prisma generate/db push, Jest, TypeScript, UI one-time secret display and live MCP client proofs were not run and are not claimed.
 
 ### Milestone 5 next
 
 - Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
 - Obtain Milestone 4/5 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`; retain logs and update this file with commands, dates and artefact paths. Do not run those gates on the development laptop.
-- Continue Milestone 6: hashed multi-credential records with one-time secret display, revocation, tool-level scope enforcement, audit history and verified client connection proofs.
+- Continue Milestone 6: one-time secret UI, tool-level scope enforcement on MCP tools, audit history and verified client connection proofs after schema generate/push on an approved host.
