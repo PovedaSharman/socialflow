@@ -44,6 +44,8 @@ model Organization {
   oauthApp             OAuthApp[]
   oauthAuthorizations  OAuthAuthorization[]
   apiCredentials       ApiCredential[]
+  auditEvents          AuditEvent[]
+  consentPreferences   ConsentPreference[]
   teamInvitations      TeamInvitation[]
   postApprovalRequests PostApprovalRequest[]
 
@@ -116,6 +118,7 @@ model User {
   sendStreakEmails       Boolean               @default(true)
   oauthAuthorizations    OAuthAuthorization[]
   apiCredentials         ApiCredential[]       @relation("apiCredentialCreator")
+  auditEvents            AuditEvent[]          @relation("auditEventActor")
   sentTeamInvitations    TeamInvitation[]      @relation("teamInvitationInviter")
   acceptedInvitations    TeamInvitation[]      @relation("teamInvitationAcceptor")
   requestedPostApprovals PostApprovalRequest[] @relation("postApprovalRequester")
@@ -961,6 +964,40 @@ model ApiCredential {
   @@index([organizationId, revokedAt])
   @@index([prefix])
   @@index([createdByUserId])
+}
+
+model AuditEvent {
+  id             String       @id @default(uuid())
+  organizationId String
+  actorUserId    String?
+  action         String
+  targetType     String
+  targetId       String?
+  outcome        String
+  source         String
+  requestId      String?
+  metadata       Json?
+  ipHash         String?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  actor          User?        @relation("auditEventActor", fields: [actorUserId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([action, createdAt])
+  @@index([actorUserId])
+}
+
+model ConsentPreference {
+  id             String       @id @default(uuid())
+  organizationId String
+  purpose        String
+  version        String
+  granted        Boolean
+  recordedByUserId String?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, purpose, createdAt])
 }
 
 enum OrderStatus {

@@ -15,6 +15,15 @@ Account/profile data, organisation membership, social OAuth credentials, social 
 - Keep audit/security retention separate from product-content retention.
 - Do not send customer content to an AI provider without an explicit action and disclosed provider/purpose.
 
+## Implemented in source (not production evidence)
+
+- `AuditEvent` and `ConsentPreference` models (require off-host Prisma migrate).
+- Admin APIs under `/user/privacy/*` for audit listing, consent record/list, organisation export and password-reauthenticated deletion requests.
+- Settings UI tab **Privacy and audit** for organisation admins.
+- Audit metadata sanitisation drops secrets and full post content; IP addresses are stored hashed.
+- Organisation export excludes OAuth tokens and API secrets.
+- Deletion requests are audited as `requested`; automated purge across backups and processors waits on legal retention decisions.
+
 ## Decisions required before launch
 
 Controller identity and contact, lawful bases, processor roles, subprocessors, international transfers, retention schedule, cookie categories, data residency, age restrictions, data-subject request verification, backup deletion and AI-training policy.

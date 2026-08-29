@@ -31,6 +31,7 @@ import { Autopost } from '@gitroom/frontend/components/autopost/autopost';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import { SVGLine } from '@gitroom/frontend/components/launches/launches.component';
 import { GlobalSettings } from '@gitroom/frontend/components/settings/global.settings';
+import { PrivacyAdminComponent } from '@gitroom/frontend/components/settings/privacy.admin.component';
 import { ApprovedAppsComponent } from '@gitroom/frontend/components/approved-apps/approved-apps.component';
 export const SettingsPopup: FC<{
   getRef?: Ref<any>;
@@ -86,7 +87,10 @@ export const SettingsPopup: FC<{
   const t = useT();
   const list = useMemo(() => {
     const arr = [];
-    arr.push({ tab: 'global_settings', label: t('global_settings', 'Global Settings') });
+    arr.push({
+      tab: 'global_settings',
+      label: t('global_settings', 'Global Settings'),
+    });
     // Populate tabs based on user permissions
     if (user?.tier?.team_members && isGeneral) {
       arr.push({ tab: 'teams', label: t('teams', 'Teams') });
@@ -106,7 +110,16 @@ export const SettingsPopup: FC<{
     if (user?.tier?.public_api && isGeneral && showLogout) {
       arr.push({ tab: 'api', label: t('developers', 'Developers') });
     }
-    arr.push({ tab: 'approved_apps', label: t('approved_apps', 'Approved Apps') });
+    arr.push({
+      tab: 'approved_apps',
+      label: t('approved_apps', 'Approved Apps'),
+    });
+    if (user?.role === 'SUPERADMIN' || user?.role === 'ADMIN') {
+      arr.push({
+        tab: 'privacy',
+        label: t('privacy_admin', 'Privacy and audit'),
+      });
+    }
 
     return arr;
   }, [user, isGeneral, showLogout, t]);
@@ -209,6 +222,13 @@ export const SettingsPopup: FC<{
                   <ApprovedAppsComponent />
                 </div>
               )}
+
+              {tab === 'privacy' &&
+                (user?.role === 'SUPERADMIN' || user?.role === 'ADMIN') && (
+                  <div>
+                    <PrivacyAdminComponent />
+                  </div>
+                )}
             </div>
           </form>
         </FormProvider>

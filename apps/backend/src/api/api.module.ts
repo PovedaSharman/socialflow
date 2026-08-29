@@ -34,6 +34,7 @@ import { NoAuthIntegrationsController } from '@gitroom/backend/api/routes/no.aut
 import { EnterpriseController } from '@gitroom/backend/api/routes/enterprise.controller';
 import { OAuthAppController } from '@gitroom/backend/api/routes/oauth-app.controller';
 import { ApiCredentialsController } from '@gitroom/backend/api/routes/api-credentials.controller';
+import { PrivacyController } from '@gitroom/backend/api/routes/privacy.controller';
 import { ApprovedAppsController } from '@gitroom/backend/api/routes/approved-apps.controller';
 import {
   OAuthController,
@@ -65,6 +66,7 @@ const authenticatedController = [
   ThirdPartyController,
   OAuthAppController,
   ApiCredentialsController,
+  PrivacyController,
   ApprovedAppsController,
   OAuthAuthorizedController,
   AnnouncementsController,

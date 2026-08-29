@@ -9,11 +9,11 @@ The plan uses evidence gates. Inherited Postiz behaviour is **available**, not *
 | 3. Design system        | Central branding, tokens, primitives, responsive shell, themes, component showcase                               | Automated WCAG checks plus visual review at 360/768/1024/1440                    | Gate pending |
 | 4. Auth and tenancy     | Account lifecycle, roles, invitations, tenant guards, encrypted tokens                                           | Cross-tenant matrix and account lifecycle integration tests pass                 | In progress  |
 | 5. Content and OAuth    | Composer, approvals, calendar, media, retries, connection health and test provider                               | User schedules with documented test provider; retry produces one publish         | In progress  |
-| 6. MCP and API          | Hashed scoped credentials, Bearer-only streamable HTTP, audit and client instructions                            | Create/use/revoke credential tests; default immediate publish denial             | Pending      |
-| 7. Billing and usage    | Stripe test checkout/portal/webhooks, plan config, atomic quotas, cost caps                                      | Signed replay-safe webhook fixtures and limit boundary tests pass                | Pending      |
-| 8. Onboarding and help  | Checklist, contextual recovery, MDX help/FAQ, email catalogue                                                    | New non-technical user completes first schedule; search and links tested         | Pending      |
-| 9. Admin and operations | Audit viewer, privacy export/deletion, consent, rate limits, logs, health, backup/monitoring docs                | Security tests, restore drill record and operational smoke tests pass            | Pending      |
-| 10. Release validation  | Full CI/build/accessibility/security/responsive/deployment review                                                | Readiness report lists evidence and all external blockers                        | Pending      |
+| 6. MCP and API          | Hashed scoped credentials, Bearer-only streamable HTTP, audit and client instructions                            | Create/use/revoke credential tests; default immediate publish denial             | Source done / gate pending |
+| 7. Billing and usage    | Stripe test checkout/portal/webhooks, plan config, atomic quotas, cost caps                                      | Signed replay-safe webhook fixtures and limit boundary tests pass                | Source done / gate pending |
+| 8. Onboarding and help  | Checklist, contextual recovery, MDX help/FAQ, email catalogue                                                    | New non-technical user completes first schedule; search and links tested         | Source done / gate pending |
+| 9. Admin and operations | Audit viewer, privacy export/deletion, consent, rate limits, logs, health, backup/monitoring docs                | Security tests, restore drill record and operational smoke tests pass            | Source done / gate pending |
+| 10. Release validation  | Full CI/build/accessibility/security/responsive/deployment review                                                | Readiness report lists evidence and all external blockers                        | In progress                 |
 
 ## Working rules
 

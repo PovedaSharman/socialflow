@@ -3,31 +3,34 @@
 Status: **not production-ready**  
 Assessment date: 29 August 2026
 
-## Verified
+## Verified (source / laptop-safe)
 
 - Empty starting directory and absence of prior Git metadata.
 - Exact import of upstream Postiz `v2.23.0` into the root.
 - Presence of the documented monorepo components and baseline feature code.
-- Source-level account/tenant matrix, OAuth connection safety, publish-safety,
-  provider release-gate, mobile calendar, media accessibility and media
-  alternative-text audits under bounded Node heaps (see `PROGRESS.md`).
+- Source-level audits under bounded Node heaps (account/tenant, OAuth, publish,
+  provider gates, calendar, media accessibility/alt-text, MCP credentials,
+  billing safety, onboarding/help, privacy/ops). See `PROGRESS.md`.
 - Fail-closed release-host runners and CI workflow definitions for account/
   tenant and Temporal publish gates. Definitions are not passing evidence.
+- Privacy/ops source controls: audit sanitisation, consent/export/deletion
+  request APIs, settings UI, `/monitor/live` + `/monitor/ready`, auth IP
+  throttling, backup/monitoring runbook (`docs/OPS_BACKUP_MONITORING.md`).
 
-## Not yet verified
+## Not yet verified (requires approved release host or external systems)
 
-- Milestone 4/5 runtime gates on an approved disposable host
-  (`docs/RELEASE_HOST_EVIDENCE.md`).
+- Milestone 4/5 runtime gates (`docs/RELEASE_HOST_EVIDENCE.md`).
 - Compatible full-service startup, registration-to-onboarding and email
   delivery on the current release candidate.
 - Provider OAuth sandboxes, alt-text transport proofs and production allowlist
   population.
 - Temporal publish histories for refresh, unknown and timeout outcomes.
-- Scoped MCP create/use/revoke with hashed secrets, tool-level enforcement and
-  client connection proofs (`docs/MCP_CREDENTIALS.md`).
+- Prisma migrate for `ApiCredential`, `AuditEvent` and `ConsentPreference`.
+- Scoped MCP create/use/revoke with hashed secrets and client connection proofs.
 - Stripe test checkout, portal, webhook replay/idempotency and hard usage
-  limits.
-- GDPR export/deletion, audit completeness, backup restore and monitoring.
+  limit matrix.
+- GDPR export/deletion browser proof, audit completeness under load, recorded
+  restore drill and monitoring destinations.
 - WCAG AA automation, keyboard review, responsive visual review and current
   production builds.
 
@@ -38,4 +41,6 @@ domain, Stripe account/mode decision, object storage, monitoring destinations,
 legal/privacy decisions and operational ownership.
 
 This report must be updated with commands, test artefacts and dates; code
-presence alone is not evidence.
+presence alone is not evidence. Do not mark the project production-ready until
+every Definition-of-Done item above is verified or explicitly waived with an
+owner.

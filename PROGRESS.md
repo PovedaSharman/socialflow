@@ -293,23 +293,12 @@ No production-readiness claim is made.
 - Verification for the usage-limit slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB billing-safety audit passed with 5 invariants; `git diff --check` passed. Stripe test fixtures and live limit-matrix proofs were not run and are not claimed.
 - Added a searchable in-app help centre at `/help` with version-controlled articles for first schedule, OAuth, accessible media, MCP, billing limits and failed-post recovery, plus onboarding and email-catalogue documentation.
 - Verification for the onboarding/help slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB onboarding-help audit passed with 4 invariants; `git diff --check` passed. Browser search/link checks and first-run journey proofs were not run and are not claimed.
+- Started Milestone 9 admin/operations: `AuditEvent` and `ConsentPreference` models; hashed IP and sanitised metadata helpers; organisation export, consent recording and password-reauthenticated deletion-request APIs; Settings privacy tab; backend `/monitor/live` and `/monitor/ready`; auth IP rate limits; `docs/PRIVACY.md` and `docs/OPS_BACKUP_MONITORING.md`.
+- Verification for the privacy/ops slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB privacy-ops audit passed with 6 invariants; `git diff --check` passed. Prisma generate/migrate, restore drills, browser privacy flows and monitoring destinations were not run and are not claimed.
 
-### Milestone 5 next
-
-- Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
-- Obtain Milestone 4/5 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
-- On an approved host: Prisma generate/push for `ApiCredential`, MCP credential runtime proofs, then Stripe checkout/portal/limit matrix evidence.
-- Continue Milestone 9 admin/security/privacy after onboarding/help is checkpointed.
-
-### Milestone 5 next
+### Next (source vs release host)
 
 - Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
 - Obtain Milestone 4/5 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
-- On an approved host: Prisma generate/push for `ApiCredential`, MCP credential runtime proofs, then Stripe checkout/portal/limit matrix evidence.
-- Continue Milestone 8 onboarding/help after billing source gates are checkpointed.
-
-### Milestone 5 next
-
-- Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
-- Obtain Milestone 4/5 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
-- On an approved host: Prisma generate/push for `ApiCredential`, MCP credential runtime proofs, then Stripe checkout/portal/limit matrix evidence.
+- On an approved host: Prisma generate/migrate for `ApiCredential`, `AuditEvent` and `ConsentPreference`; MCP/Stripe/privacy runtime proofs.
+- Milestone 10: keep `docs/READINESS.md` separated into verified vs blockers; do not claim production readiness without off-host evidence.
