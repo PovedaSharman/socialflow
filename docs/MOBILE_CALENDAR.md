@@ -12,8 +12,10 @@ are grouped toggle buttons with `aria-pressed`, visible focus and non-colour
 selection state.
 
 Each post card exposes its edit surface as a labelled keyboard button. Failed
-cards retain a visible ring and `!` marker while also announcing the error as a
-status, so failure is not conveyed by red alone.
+cards retain a visible ring and `!` marker, show and announce their bounded error
+text, and tell the customer to open the post, review it and check the platform
+before retrying. The edit button is linked to that status description, so
+failure and recovery are not conveyed by red alone.
 
 ## Verification
 

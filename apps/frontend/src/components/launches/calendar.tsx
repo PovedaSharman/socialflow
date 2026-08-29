@@ -1074,10 +1074,7 @@ const CalendarItem: FC<{
       {state === 'ERROR' && (
         <div
           className="absolute -top-[6px] -left-[6px] z-20 w-[18px] h-[18px] rounded-full bg-red-500 flex items-center justify-center text-white text-[11px] font-bold cursor-pointer"
-          role="status"
-          aria-label={
-            post.error || 'An error occurred while publishing this post'
-          }
+          aria-hidden="true"
           data-tooltip-id="tooltip"
           data-tooltip-content={
             post.error || 'An error occurred while publishing this post'
@@ -1178,6 +1175,9 @@ const CalendarItem: FC<{
       <button
         type="button"
         onClick={editPost}
+        aria-describedby={
+          state === 'ERROR' ? `post-error-${post.id}` : undefined
+        }
         aria-label={`${t('edit_post', 'Edit post')}: ${post.integration.name}`}
         className={clsx(
           'gap-[5px] w-full flex h-full flex-1 rounded-br-[10px] rounded-bl-[10px] p-[8px] text-[14px] bg-newColColor text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-btnPrimary',
@@ -1206,6 +1206,22 @@ const CalendarItem: FC<{
               {stripHtmlValidation('none', post.content, false, true, false) ||
                 t('no_content', 'no content')}
             </div>
+            {state === 'ERROR' && (
+              <span
+                id={`post-error-${post.id}`}
+                className="mt-[22px] block line-clamp-2 text-start text-[12px] font-[600] text-red-600 dark:text-red-300"
+              >
+                {post.error ||
+                  t(
+                    'publishing_failed',
+                    'An error occurred while publishing this post.'
+                  )}{' '}
+                {t(
+                  'review_before_retrying',
+                  'Open to review, then check the platform before retrying.'
+                )}
+              </span>
+            )}
           </div>
         </div>
         {showTime && (

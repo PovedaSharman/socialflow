@@ -256,6 +256,9 @@ No production-readiness claim is made.
 - Added `docs/MOBILE_CALENDAR.md` and a 64 MB bounded audit covering list pagination bounds, narrow toolbar layout, semantic toggles, edit access and non-colour error communication.
 - Files changed for the mobile-calendar slice: calendar filters/context-facing controls, post card semantics, mobile calendar guide, root scripts manifest, bounded audit and this progress record.
 - Verification for the mobile-calendar slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB mobile calendar audit passed with 9 invariants; `git diff --check` passed. TypeScript, Jest, browser keyboard interaction and 360/768/1024/1440 visual checks were not run and are not claimed.
+- Made failed post cards show their bounded error rather than relying on a hover tooltip, link the edit button to that status for assistive technology, and give a visible recovery cue to review the post and check the platform before retrying.
+- Files changed for the failed-card recovery slice: calendar post card, mobile calendar guide/audit and this progress record.
+- Verification for the failed-card recovery slice: the 64 MB mobile calendar audit passed with 9 invariants. TypeScript, browser/screen-reader behavior and responsive visuals were not run and are not claimed.
 
 ### Milestone 5 next
 

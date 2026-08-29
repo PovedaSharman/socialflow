@@ -60,9 +60,12 @@ const invariants = [
     'each list/calendar card must expose a keyboard edit action',
   ],
   [
-    calendar.includes('role="status"') &&
-      calendar.includes("post.error || 'An error occurred while publishing"),
-    'failed cards must expose their error without colour alone',
+    calendar.includes('id={`post-error-${post.id}`}') &&
+      calendar.includes("'review_before_retrying'") &&
+      /aria-describedby=\{\s*state === 'ERROR' \? `post-error-\$\{post\.id\}`/.test(
+        calendar
+      ),
+    'failed cards must expose visible linked recovery guidance without colour alone',
   ],
 ];
 
