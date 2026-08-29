@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+
+const read = (path) =>
+  readFileSync(new URL(`../${path}`, import.meta.url), 'utf8');
+
+const scopes = read('libraries/nestjs-libraries/src/chat/mcp.scopes.ts');
+const urlSecret = read('libraries/nestjs-libraries/src/chat/mcp.url-secret.ts');
+const startMcp = read('libraries/nestjs-libraries/src/chat/start.mcp.ts');
+const publicApi = read(
+  'apps/frontend/src/components/public-api/public.component.tsx'
+);
+const envExample = read('.env.example');
+const compose = read('docker-compose.yaml');
+
+const invariants = [
+  [
+    scopes.includes("'posts:publish'") &&
+      scopes.includes("'media:generate'") &&
+      scopes.includes('DEFAULT_MCP_SCOPES') &&
+      scopes.includes('OPT_IN_MCP_SCOPES') &&
+      scopes.includes('mcpAllowsImmediatePublish'),
+    'product scopes must default-deny publish and media generation',
+  ],
+  [
+    urlSecret.includes("env.NODE_ENV !== 'production'") &&
+      urlSecret.includes("env.ALLOW_MCP_URL_SECRETS === 'true'"),
+    'production must deny URL secrets unless explicitly enabled',
+  ],
+  [
+    startMcp.includes('areMcpUrlSecretsAllowed(process.env)') &&
+      startMcp.includes("error: 'url_secret_disabled'") &&
+      startMcp.includes('MCP_SCOPES'),
+    'MCP mounts must gate URL secrets and advertise granular scopes',
+  ],
+  [
+    !publicApi.includes('/mcp/${') &&
+      !publicApi.includes("method: 'header' | 'path'") &&
+      publicApi.includes('Bearer ${apiKey}') &&
+      publicApi.includes('headers: { Authorization: bearer }') &&
+      publicApi.includes('mcp_url_secrets_retired'),
+    'client instructions must be Bearer-only without URL-embedded secrets',
+  ],
+  [
+    envExample.includes('ALLOW_MCP_URL_SECRETS') &&
+      compose.includes('ALLOW_MCP_URL_SECRETS:'),
+    'the compatibility control must be documented and fail closed by default',
+  ],
+];
+
+for (const [condition, message] of invariants) assert.ok(condition, message);
+console.log(`MCP credentials audit passed (${invariants.length} invariants).`);

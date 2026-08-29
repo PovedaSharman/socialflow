@@ -27,64 +27,13 @@ type McpClient = (typeof mcpClients)[number];
 
 const getMcpConfig = (
   client: McpClient,
-  method: 'header' | 'path',
   mcpBase: string,
   apiKey: string
 ): { config: string; hint: string } => {
-  const urlWithKey = `${mcpBase}/mcp/${apiKey}`;
   const urlBase = `${mcpBase}/mcp`;
   const bearer = `Bearer ${apiKey}`;
 
   const json = (obj: object) => JSON.stringify(obj, null, 2);
-
-  if (method === 'path') {
-    switch (client) {
-      case 'Claude Code':
-        return {
-          config: `claude mcp add postiz --transport http "${urlWithKey}"`,
-          hint: 'Run this command in your terminal.',
-        };
-      case 'Cursor':
-        return {
-          config: json({ mcpServers: { postiz: { url: urlWithKey } } }),
-          hint: 'Add to .cursor/mcp.json in your project root.',
-        };
-      case 'VS Code / Copilot':
-        return {
-          config: json({
-            servers: { postiz: { type: 'http', url: urlWithKey } },
-          }),
-          hint: 'Add to .vscode/mcp.json in your project root.',
-        };
-      case 'Windsurf':
-        return {
-          config: json({
-            mcpServers: { postiz: { serverUrl: urlWithKey } },
-          }),
-          hint: 'Add to ~/.codeium/windsurf/mcp_config.json',
-        };
-      case 'Amp':
-        return {
-          config: `amp mcp add postiz ${urlWithKey}`,
-          hint: 'Run this command in your terminal.',
-        };
-      case 'Codex':
-        return {
-          config: `# ~/.codex/config.toml\n\n[mcp_servers.postiz]\nurl = "${urlWithKey}"`,
-          hint: 'Add to ~/.codex/config.toml',
-        };
-      case 'Gemini CLI':
-        return {
-          config: json({ mcpServers: { postiz: { url: urlWithKey } } }),
-          hint: 'Add to ~/.gemini/settings.json',
-        };
-      case 'Warp':
-        return {
-          config: json({ postiz: { url: urlWithKey } }),
-          hint: 'Settings > MCP Servers > + Add, then paste this config.',
-        };
-    }
-  }
 
   switch (client) {
     case 'Claude Code':
@@ -128,16 +77,12 @@ const getMcpConfig = (
       };
     case 'Amp':
       return {
-        config: json({
-          'amp.mcpServers': {
-            postiz: { url: urlBase, headers: { Authorization: bearer } },
-          },
-        }),
-        hint: 'Add to your Amp settings.json',
+        config: `amp mcp add postiz ${urlBase} --header "Authorization: ${bearer}"`,
+        hint: 'Run this command in your terminal.',
       };
     case 'Codex':
       return {
-        config: `# ~/.codex/config.toml\n\n[mcp_servers.postiz]\nurl = "${urlBase}"\nhttp_headers = { "Authorization" = "${bearer}" }`,
+        config: `# ~/.codex/config.toml\n\n[mcp_servers.postiz]\nurl = "${urlBase}"\nhttp_headers = { Authorization = "${bearer}" }`,
         hint: 'Add to ~/.codex/config.toml',
       };
     case 'Gemini CLI':
@@ -159,13 +104,7 @@ const getMcpConfig = (
   }
 };
 
-const CopyButton = ({
-  text,
-  label,
-}: {
-  text: string;
-  label: string;
-}) => {
+const CopyButton = ({ text, label }: { text: string; label: string }) => {
   const toaster = useToaster();
   return (
     <button
@@ -203,26 +142,17 @@ const McpSection = ({
 }) => {
   const t = useT();
   const [activeClient, setActiveClient] = useState<McpClient>('Claude Code');
-  const [method, setMethod] = useState<'header' | 'path'>('header');
   const [revealed, setRevealed] = useState(false);
 
-  const { config, hint } = getMcpConfig(
-    activeClient,
-    method,
-    mcpBase,
-    user.publicApi
-  );
-
-  const remoteUrl = `${mcpBase}/mcp/${user.publicApi}`;
+  const { config, hint } = getMcpConfig(activeClient, mcpBase, user.publicApi);
   const cliUrl = `${mcpBase}/mcp`;
 
   const maskedConfig = revealed
     ? config
-    : config.replace(new RegExp(user.publicApi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '*'.repeat(user.publicApi.length));
-
-  const maskedRemoteUrl = revealed
-    ? remoteUrl
-    : remoteUrl.replace(user.publicApi, '*'.repeat(user.publicApi.length));
+    : config.replace(
+        new RegExp(user.publicApi.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+        '*'.repeat(user.publicApi.length)
+      );
 
   return (
     <div className="bg-newBgColorInnerInner rounded-[12px] border border-newBorder overflow-hidden">
@@ -233,8 +163,8 @@ const McpSection = ({
           </div>
           <div className="text-[13px] text-customColor18 mt-[2px]">
             {t(
-              'connect_your_mcp_client_to_postiz_to_schedule_your_posts_faster',
-              'Connect Postiz MCP server to your client (Http streaming) to schedule your posts faster.'
+              'connect_your_mcp_client_with_bearer',
+              'Connect with streamable HTTP and an Authorization Bearer header. Credentials must never appear in the URL.'
             )}
           </div>
         </div>
@@ -244,71 +174,59 @@ const McpSection = ({
             href="https://docs.postiz.com/mcp/introduction"
             target="_blank"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
             {t('read_the_docs', 'Docs')}
           </a>
         </div>
       </div>
       <div className="p-[20px] flex flex-col gap-[16px]">
+        <p className="text-[12px] text-customColor18">
+          {t(
+            'mcp_url_secrets_retired',
+            'URL-embedded API keys are retired for new instructions and disabled in production unless an operator enables a temporary compatibility window.'
+          )}
+        </p>
         <div className="flex flex-col gap-[6px]">
           <div className="text-[13px] font-[600] text-customColor18">
-            {t('auth_method', 'Authentication')}
+            {t('mcp_client', 'Client')}
           </div>
-          <div className="flex gap-[6px]">
-            {(['header', 'path'] as const).map((m) => (
+          <div className="flex flex-wrap gap-[6px]">
+            {mcpClients.map((client) => (
               <button
-                key={m}
+                key={client}
                 type="button"
                 className={clsx(
                   'cursor-pointer px-[14px] h-[36px] text-[13px] font-[500] rounded-[8px] transition-colors',
-                  method === m
+                  activeClient === client
                     ? 'bg-[#612BD3] text-white'
                     : 'bg-btnSimple text-customColor18 hover:bg-boxHover hover:text-textColor'
                 )}
-                onClick={() => setMethod(m)}
+                onClick={() => setActiveClient(client)}
               >
-                {m === 'header'
-                  ? t('cli_claude_code_codex', 'CLI (Claude Code / Codex)')
-                  : t('remote_servers', 'Remote servers (ChatGPT, Claude)')}
+                {client}
               </button>
             ))}
           </div>
         </div>
-        {method === 'header' && (
-          <div className="flex flex-col gap-[6px]">
-            <div className="text-[13px] font-[600] text-customColor18">
-              {t('mcp_client', 'Client')}
-            </div>
-            <div className="flex flex-wrap gap-[6px]">
-              {mcpClients.map((client) => (
-                <button
-                  key={client}
-                  type="button"
-                  className={clsx(
-                    'cursor-pointer px-[14px] h-[36px] text-[13px] font-[500] rounded-[8px] transition-colors',
-                    activeClient === client
-                      ? 'bg-[#612BD3] text-white'
-                      : 'bg-btnSimple text-customColor18 hover:bg-boxHover hover:text-textColor'
-                  )}
-                  onClick={() => setActiveClient(client)}
-                >
-                  {client}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         <div className="flex flex-col gap-[8px]">
           <div className="text-[12px] text-customColor18 font-[500]">
-            {method === 'header'
-              ? hint
-              : t(
-                  'remote_server_url_hint',
-                  'Paste this URL into your remote MCP client (ChatGPT, Claude, etc.).'
-                )}
+            {hint}
           </div>
           <pre className="bg-newBgColorInner border border-newBorder rounded-[8px] p-[16px] text-[13px] whitespace-pre-wrap break-all overflow-x-auto leading-[1.6]">
-            {method === 'header' ? maskedConfig : maskedRemoteUrl}
+            {maskedConfig}
           </pre>
           <div className="flex gap-[8px]">
             <button
@@ -341,16 +259,8 @@ const McpSection = ({
               </svg>
               {revealed ? t('hide', 'Hide') : t('reveal', 'Reveal')}
             </button>
-            <CopyButton
-              text={method === 'header' ? config : remoteUrl}
-              label={t('copy', 'Copy')}
-            />
-            {method === 'header' && (
-              <CopyButton
-                text={cliUrl}
-                label={t('copy_url', 'Copy URL')}
-              />
-            )}
+            <CopyButton text={config} label={t('copy', 'Copy')} />
+            <CopyButton text={cliUrl} label={t('copy_url', 'Copy URL')} />
           </div>
         </div>
       </div>
@@ -432,7 +342,20 @@ const CliSection = ({ apiKey }: { apiKey: string }) => {
             href="https://docs.postiz.com/cli/introduction"
             target="_blank"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
             {t('read_the_docs', 'Docs')}
           </a>
         </div>
@@ -588,15 +511,41 @@ const PublicApiContent = () => {
               href="https://docs.postiz.com/public-api"
               target="_blank"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
-            {t('read_the_docs', 'Docs')}
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              {t('read_the_docs', 'Docs')}
             </a>
             <a
               className="cursor-pointer px-[16px] h-[36px] bg-[#612BD3] hover:bg-[#5520CB] text-white transition-colors rounded-[8px] text-[13px] font-[600] flex items-center gap-[6px]"
               href="https://www.npmjs.com/package/n8n-nodes-postiz"
               target="_blank"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" /></svg>
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
               {t('n8n_node', 'N8N Node')}
             </a>
           </div>
@@ -726,9 +675,7 @@ export const PublicComponent = () => {
             )}
             onClick={() => setSubTab(tab)}
           >
-            {tab === 'api'
-              ? t('access', 'Access')
-              : t('apps', 'Apps')}
+            {tab === 'api' ? t('access', 'Access') : t('apps', 'Apps')}
           </button>
         ))}
       </div>

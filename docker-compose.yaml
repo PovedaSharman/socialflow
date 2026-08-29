@@ -33,6 +33,7 @@ services:
       # === Social Media API Settings
       # Explicit production approval/configuration gate (comma-separated IDs).
       SOCIAL_PROVIDER_ALLOWLIST: ''
+      ALLOW_MCP_URL_SECRETS: ''
       X_URL: ''
       X_API_KEY: ''
       X_API_SECRET: ''

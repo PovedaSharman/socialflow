@@ -271,9 +271,12 @@ No production-readiness claim is made.
 - Files changed for the alt-text capability slice: provider interface, disclosure helper/specification, Bluesky/Mastodon/Tumblr/Slack/test adapters, integration manager and channel list, media settings disclosure, accessible-media and release-gate guides, account/tenant matrix/manifest and this progress record.
 - Verification for the alt-text capability slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB media-accessibility and account/tenant audits passed with 10 and 22 invariants respectively; `git diff --check` passed. Jest, TypeScript, browser/screen-reader checks and live-provider sandbox proof were not run and are not claimed.
 - Documented Milestone 4/5 disposable-host evidence requirements in `docs/RELEASE_HOST_EVIDENCE.md` and refreshed `docs/READINESS.md` so source audits and fail-closed runners are not mistaken for runtime evidence. No release-host gate was executed on this laptop.
+- Started Milestone 6 MCP hardening: product scope defaults deny `posts:publish` and `media:generate`, production denies URL-embedded `/mcp/:id` `/sse/:id` `/message/:id` unless `ALLOW_MCP_URL_SECRETS=true`, and the public API page now renders Bearer-only client instructions.
+- Files changed for this MCP slice: scope and URL-secret helpers/specifications, MCP mount gate, public API instructions, MCP credentials guide, environment/Compose templates, bounded MCP audit, root scripts manifest and this progress record.
+- Verification for this MCP slice: targeted Prettier completed under a 128 MB heap cap (`.env.example` has no inferred Prettier parser and was reviewed directly); `package.json` parsed under 64 MB; the 64 MB MCP credentials audit passed with 5 invariants; `git diff --check` passed. Jest, TypeScript, live MCP client connections and hashed credential persistence were not run and are not claimed.
 
 ### Milestone 5 next
 
 - Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
 - Obtain Milestone 4/5 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`; retain logs and update this file with commands, dates and artefact paths. Do not run those gates on the development laptop.
-- After release-host evidence is recorded, continue Milestone 6 scoped MCP/API credentials.
+- Continue Milestone 6: hashed multi-credential records with one-time secret display, revocation, tool-level scope enforcement, audit history and verified client connection proofs.

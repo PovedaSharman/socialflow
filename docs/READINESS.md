@@ -23,7 +23,8 @@ Assessment date: 29 August 2026
 - Provider OAuth sandboxes, alt-text transport proofs and production allowlist
   population.
 - Temporal publish histories for refresh, unknown and timeout outcomes.
-- Scoped MCP creation/use/revocation and immediate-publish default denial.
+- Scoped MCP create/use/revoke with hashed secrets, tool-level enforcement and
+  client connection proofs (`docs/MCP_CREDENTIALS.md`).
 - Stripe test checkout, portal, webhook replay/idempotency and hard usage
   limits.
 - GDPR export/deletion, audit completeness, backup restore and monitoring.
