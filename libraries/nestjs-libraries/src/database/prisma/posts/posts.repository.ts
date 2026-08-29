@@ -10,6 +10,10 @@ import {
   Post,
   State,
 } from '@prisma/client';
+import {
+  safePostErrorContext,
+  safePostErrorMessage,
+} from '@gitroom/nestjs-libraries/database/prisma/posts/post.error-history';
 import { GetPostsDto } from '@gitroom/nestjs-libraries/dtos/posts/get.posts.dto';
 import { GetPostsListDto } from '@gitroom/nestjs-libraries/dtos/posts/get.posts.list.dto';
 import dayjs from 'dayjs';
@@ -662,15 +666,14 @@ export class PostsRepository {
   }
 
   async changeState(id: string, state: State, err?: any, body?: any) {
+    const safeError = err ? safePostErrorMessage(err) : '';
     const update = await this._post.model.post.update({
       where: {
         id,
       },
       data: {
         state,
-        ...(err
-          ? { error: typeof err === 'string' ? err : JSON.stringify(err) }
-          : {}),
+        ...(safeError ? { error: safeError } : {}),
       },
       include: {
         integration: {
@@ -685,11 +688,11 @@ export class PostsRepository {
       try {
         await this._errors.model.errors.create({
           data: {
-            message: typeof err === 'string' ? err : JSON.stringify(err),
+            message: safeError,
             organizationId: update.organizationId,
             platform: update.integration.providerIdentifier,
             postId: update.id,
-            body: typeof body === 'string' ? body : JSON.stringify(body),
+            body: safePostErrorContext(body),
           },
         });
       } catch (err) {}
@@ -704,6 +707,7 @@ export class PostsRepository {
         postId: { in: postIds },
       },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     });
   }
 

@@ -14,6 +14,7 @@ const testFiles = [
   'libraries/helpers/src/auth/invitation.token.spec.ts',
   'libraries/nestjs-libraries/src/integrations/oauth.connect.transaction.spec.ts',
   'libraries/nestjs-libraries/src/integrations/social.provider.availability.spec.ts',
+  'libraries/nestjs-libraries/src/database/prisma/posts/post.error-history.spec.ts',
   'libraries/nestjs-libraries/src/database/prisma/integrations/integration.repository.tenant.integration.spec.ts',
   'libraries/nestjs-libraries/src/database/prisma/media/media.repository.tenant.integration.spec.ts',
   'libraries/nestjs-libraries/src/database/prisma/organizations/organization.repository.invitation.tenant.integration.spec.ts',

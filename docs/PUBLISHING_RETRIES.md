@@ -18,6 +18,14 @@ apply the key to the platform mutation. The local test provider is currently the
 only enabled adapter. An unaudited provider may still refresh its credential,
 but the workflow stops the current attempt rather than risking a duplicate.
 
+Retry history stores a redacted message of at most 1,000 characters and a
+content-free summary of at most 50 root/comment attempts. The summary retains
+post, integration and provider identifiers, state and attempt kind; it excludes
+post content, media, settings and integration credentials. Debug export reads
+at most the newest 100 history rows for the selected post group. Legacy rows
+created before this boundary may still contain full payloads and require a
+reviewed data-maintenance cleanup before production readiness is claimed.
+
 ## Unknown outcomes
 
 Irreversible publish and finalisation activities have one Temporal attempt. The

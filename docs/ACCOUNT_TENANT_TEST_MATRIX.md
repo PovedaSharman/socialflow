@@ -25,6 +25,7 @@ this workstation.
 | Social credentials            | Tenant-scoped internal read authenticates an encrypted envelope                      | Plaintext production row, unknown key, tampering, public projection or workflow-history exposure | `social-credential-encryption.service.spec.ts`, credential-safety audit                                                             |
 | OAuth callback binding        | Provider, tenant and initiating user resolve through one expiring transaction        | Wrong provider, inactive member, expired/replayed state or unsafe return destination             | `oauth.connect.transaction.spec.ts`, OAuth connection safety audit                                                                  |
 | Provider release gate         | Explicitly approved and fully configured production provider is discoverable         | Unlisted, partially configured or simulated production provider                                  | `social.provider.availability.spec.ts`, provider release-gate audit                                                                 |
+| Publish error history         | Bounded redacted messages and identifier-only attempt context                        | Credentials, full post/media payloads or unbounded retry rows                                    | `post.error-history.spec.ts`, publish-safety audit                                                                                  |
 
 ## Bounded local audit
 
@@ -65,7 +66,7 @@ pnpm test:account-tenant:release
 ```
 
 The runner starts one Jest process with `--runInBand`, a fixed 1 GB heap ceiling
-and an explicit 20-file manifest. It does not create or migrate a database.
+and an explicit 21-file manifest. It does not create or migrate a database.
 `.github/workflows/account-tenant-gate.yml` supplies a disposable PostgreSQL
 service, applies the schema, enforces a 20-minute job timeout and retains the
 gate log for 14 days. A workflow definition is not passing evidence; record the

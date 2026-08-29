@@ -32,6 +32,9 @@ const composer = read(
   'apps/frontend/src/components/new-launch/manage.modal.tsx'
 );
 const scheduleFlow = composer.slice(composer.indexOf('const schedule ='));
+const errorHistory = read(
+  'libraries/nestjs-libraries/src/database/prisma/posts/post.error-history.ts'
+);
 
 const requirements = [
   [
@@ -118,6 +121,28 @@ const requirements = [
       composer.includes("onClick={schedule('now')}") &&
       !/className="[^"]*hidden group-hover:flex[^"]*"/.test(composer),
     'Immediate publication must be a visible keyboard and touch control.',
+  ],
+  [
+    errorHistory.includes('MAX_ERROR_MESSAGE_LENGTH = 1_000') &&
+      errorHistory.includes('MAX_ATTEMPTS = 50') &&
+      errorHistory.includes("'Bearer [REDACTED]'") &&
+      errorHistory.includes("'$1[REDACTED]'"),
+    'Retry-history errors must be bounded and redact common credential forms.',
+  ],
+  [
+    errorHistory.includes('postId: bounded(attempt.id, 128)') &&
+      errorHistory.includes('providerIdentifier') &&
+      !errorHistory.includes('attempt.content') &&
+      !errorHistory.includes('integration.token'),
+    'Retry context must retain identifiers without post content or credentials.',
+  ],
+  [
+    postsRepository.includes('safePostErrorMessage(err)') &&
+      postsRepository.includes('body: safePostErrorContext(body)') &&
+      /getErrorsByPostIds\(postIds: string\[\]\)[\s\S]*?take: 100/.test(
+        postsRepository
+      ),
+    'Post state and history persistence must use safe bounded projections.',
   ],
 ];
 
