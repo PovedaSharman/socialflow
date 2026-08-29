@@ -34,7 +34,11 @@ export class ApiCredentialsController {
 
   @Delete('/:id')
   @CheckPolicies([AuthorizationActions.Create, Sections.ADMIN])
-  revoke(@GetOrgFromRequest() org: Organization, @Param('id') id: string) {
-    return this._apiCredentialService.revoke(org.id, id);
+  revoke(
+    @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
+    @Param('id') id: string
+  ) {
+    return this._apiCredentialService.revoke(org.id, id, user.id);
   }
 }

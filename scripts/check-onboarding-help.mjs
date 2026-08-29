@@ -15,9 +15,10 @@ const invariants = [
   [
     articles.includes("id: 'first-schedule'") &&
       articles.includes("id: 'mcp-credentials'") &&
+      articles.includes("id: 'privacy-export'") &&
       articles.includes('searchHelpArticles') &&
       articles.includes('British'),
-    'help articles must cover first schedule and MCP with British English guidance',
+    'help articles must cover first schedule, MCP and privacy with British English guidance',
   ],
   [
     centre.includes('htmlFor="help-search"') &&

@@ -6,10 +6,14 @@ import {
   resolveApiCredentialScopes,
 } from './api.credential.secret';
 import { isMcpScope } from '@gitroom/nestjs-libraries/chat/mcp.scopes';
+import { PrivacyRepository } from '@gitroom/nestjs-libraries/database/prisma/privacy/privacy.repository';
 
 @Injectable()
 export class ApiCredentialService {
-  constructor(private _apiCredentialRepository: ApiCredentialRepository) {}
+  constructor(
+    private _apiCredentialRepository: ApiCredentialRepository,
+    private _privacyRepository: PrivacyRepository
+  ) {}
 
   async create(
     organizationId: string,
@@ -51,6 +55,21 @@ export class ApiCredentialService {
       expiresAt,
     });
 
+    await this._privacyRepository.createAuditEvent({
+      organizationId,
+      actorUserId: createdByUserId,
+      action: 'api_credential.create',
+      targetType: 'api_credential',
+      targetId: row.id,
+      outcome: 'success',
+      source: 'website',
+      metadata: {
+        prefix: created.prefix,
+        scopes,
+        expiresAt: expiresAt?.toISOString() || null,
+      },
+    });
+
     return {
       ...apiCredentialPublicView(row),
       secret: created.secret,
@@ -64,7 +83,11 @@ export class ApiCredentialService {
     return rows.map(apiCredentialPublicView);
   }
 
-  async revoke(organizationId: string, id: string) {
+  async revoke(
+    organizationId: string,
+    id: string,
+    actorUserId?: string | null
+  ) {
     const result = await this._apiCredentialRepository.revoke(
       organizationId,
       id
@@ -72,6 +95,18 @@ export class ApiCredentialService {
     if (!result.count) {
       throw new BadRequestException('Credential not found or already revoked');
     }
+
+    await this._privacyRepository.createAuditEvent({
+      organizationId,
+      actorUserId: actorUserId || null,
+      action: 'api_credential.revoke',
+      targetType: 'api_credential',
+      targetId: id,
+      outcome: 'success',
+      source: 'website',
+      metadata: { revoked: true },
+    });
+
     return { id, revoked: true };
   }
 

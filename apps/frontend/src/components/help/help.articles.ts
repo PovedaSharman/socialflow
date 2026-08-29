@@ -78,6 +78,19 @@ export const helpArticles: HelpArticle[] = [
       'If the channel needs reconnecting, fix the connection before publishing again.',
     ].join('\n'),
   },
+  {
+    id: 'privacy-export',
+    title: 'Export data or request deletion',
+    summary:
+      'Organisation admins can export data and request deletion with re-authentication.',
+    tags: ['privacy', 'gdpr', 'audit'],
+    body: [
+      'Open Settings → Privacy and audit (organisation admins only).',
+      'Download a machine-readable organisation export. OAuth tokens and API secrets are excluded.',
+      'Record purpose-specific consent versions when marketing or optional processing changes.',
+      'Deletion requests require your password, are audited, and wait for an operator purge until legal retention rules are decided.',
+    ].join('\n'),
+  },
 ];
 
 export function searchHelpArticles(query: string) {

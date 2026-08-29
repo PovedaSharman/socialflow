@@ -14,6 +14,12 @@ const controller = read('apps/backend/src/api/routes/privacy.controller.ts');
 const service = read(
   'libraries/nestjs-libraries/src/database/prisma/privacy/privacy.service.ts'
 );
+const apiCredentialService = read(
+  'libraries/nestjs-libraries/src/database/prisma/api-credentials/api.credential.service.ts'
+);
+const apiCredentialController = read(
+  'apps/backend/src/api/routes/api-credentials.controller.ts'
+);
 const monitor = read('apps/backend/src/api/routes/monitor.controller.ts');
 const throttler = read(
   'libraries/nestjs-libraries/src/throttler/throttler.provider.ts'
@@ -26,6 +32,8 @@ const settings = read(
 );
 const privacyDoc = read('docs/PRIVACY.md');
 const opsDoc = read('docs/OPS_BACKUP_MONITORING.md');
+const releaseHost = read('docs/RELEASE_HOST_EVIDENCE.md');
+const readiness = read('docs/READINESS.md');
 
 const invariants = [
   [
@@ -71,10 +79,19 @@ const invariants = [
     'rate limits must cover anonymous auth by IP and authenticated org traffic',
   ],
   [
+    apiCredentialService.includes('api_credential.create') &&
+      apiCredentialService.includes('api_credential.revoke') &&
+      apiCredentialService.includes('createAuditEvent') &&
+      apiCredentialController.includes('user.id'),
+    'credential create and revoke must write sanitised audit events',
+  ],
+  [
     privacyDoc.includes('Implemented in source') &&
       opsDoc.includes('/monitor/ready') &&
-      opsDoc.includes('Backup and restore drill'),
-    'privacy and operations documentation must describe source controls without claiming production drills',
+      opsDoc.includes('Backup and restore drill') &&
+      releaseHost.includes('Milestones 6–9') &&
+      readiness.includes('not production-ready'),
+    'privacy, ops and readiness docs must separate source from release evidence',
   ],
 ];
 

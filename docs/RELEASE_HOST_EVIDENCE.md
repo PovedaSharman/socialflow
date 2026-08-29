@@ -1,4 +1,4 @@
-# Milestone 4/5 release-host evidence
+# Release-host evidence requirements
 
 Status: **not collected on the development laptop**  
 Last updated: 29 August 2026
@@ -9,7 +9,7 @@ suitably provisioned disposable host or CI runner only. Source-level audits and
 fail-closed runner guards already exist in-repository; they are not substitutes
 for the runtime evidence listed here.
 
-## Required commands
+## Required commands (Milestones 4–5)
 
 Retain logs, exit codes and dates. Do not paste secrets into the repository.
 
@@ -59,6 +59,30 @@ Evidence is complete only when all of the following are true:
 6. Browser accessibility and visual checks for the design-system and composer
    surfaces are retained separately from the source audits.
 
+## Milestones 6–9 — API, billing, help, privacy (release host)
+
+Also record on an approved host:
+
+1. Prisma migrate for `ApiCredential`, `AuditEvent` and `ConsentPreference`.
+2. Scoped MCP credential create / Bearer use / revoke with tool scope denials.
+3. Stripe test checkout, portal, webhook replay and hard usage-limit matrix.
+4. Help centre search and first-schedule onboarding browser pass.
+5. Privacy export download, consent record, deletion re-auth denial and success.
+6. `/monitor/live` and `/monitor/ready` against a running stack.
+7. A filled backup restore drill record (see `docs/OPS_BACKUP_MONITORING.md`).
+
+## Milestone 10 — Definition of Done evidence
+
+The product is complete for production claim only when
+`docs/READINESS.md` lists every item below as verified with artefacts, or as an
+external blocker with an owner:
+
+- Register → verify email → onboard → connect channel → schedule/publish
+- MCP credential path and Stripe test billing path
+- Security, accessibility and responsive gates
+- Deployed revision source offer and health probes
+- Legal/privacy and infrastructure decisions no longer undecided where claimed
+
 ## Explicitly out of scope on the laptop
 
 Do not attempt the following here:
@@ -67,6 +91,7 @@ Do not attempt the following here:
 - Unbounded Jest or database suites
 - Live Compose/Temporal/PostgreSQL/Redis stacks
 - Provider sandbox browsers or Stripe live/test dashboards
+- Prisma generate / db push
 - Any command that removes disposable-database or Temporal test guards
 
 ## Recording results
@@ -79,4 +104,5 @@ When a release host completes a gate, update `PROGRESS.md` and
 - artefact path or CI run URL without secrets
 - remaining failures, skipped suites and external blockers
 
-Until those updates exist, Milestone 4/5 runtime evidence remains pending.
+Until those updates exist, runtime evidence remains pending and the project must
+not be marked production-ready.
