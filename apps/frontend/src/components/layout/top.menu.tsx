@@ -282,6 +282,43 @@ export const useMenuItem = () => {
       requireBilling: true,
     },
     {
+      name: t('help', 'Help'),
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="20"
+          height="21"
+          viewBox="0 0 20 21"
+          fill="none"
+        >
+          <path
+            d="M10 18.8337C14.6024 18.8337 18.3333 15.1027 18.3333 10.5003C18.3333 5.89795 14.6024 2.16699 10 2.16699C5.39763 2.16699 1.66667 5.89795 1.66667 10.5003C1.66667 15.1027 5.39763 18.8337 10 18.8337Z"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M7.57501 7.99999C7.77093 7.44314 8.15764 6.97397 8.66666 6.67494C9.17568 6.37591 9.77411 6.26639 10.356 6.36564C10.9379 6.46489 11.4657 6.76648 11.8459 7.21696C12.2261 7.66743 12.4332 8.23684 12.4333 8.82499C12.4333 10.5 9.93334 11.3333 9.93334 11.3333M10 14.6667H10.0083"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      ),
+      path: '/help',
+      role: [
+        'OWNER',
+        'SUPERADMIN',
+        'ADMIN',
+        'APPROVER',
+        'EDITOR',
+        'VIEWER',
+        'USER',
+      ],
+    },
+    {
       name: t('settings', 'Settings'),
       icon: (
         <svg

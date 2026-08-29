@@ -291,6 +291,15 @@ No production-readiness claim is made.
 - Verification for the billing-safety slice: targeted Prettier completed under a 128 MB heap cap (`.env.example` reviewed directly); `package.json` parsed under 64 MB; the 64 MB billing-safety audit passed with 4 invariants; `git diff --check` passed. Stripe test fixtures, checkout/portal runtime and hard usage-limit proofs were not run and are not claimed.
 - Centralised hard usage limits: channel allowance resolves from plan configuration and purchased allotments (removed the paid-tier `-10` bypass), webhook and monthly post checks share `isWithinHardLimit`, and `SubscriptionException` now returns British-English `message` and `nextStep` guidance.
 - Verification for the usage-limit slice: targeted Prettier completed under a 128 MB heap cap; the 64 MB billing-safety audit passed with 5 invariants; `git diff --check` passed. Stripe test fixtures and live limit-matrix proofs were not run and are not claimed.
+- Added a searchable in-app help centre at `/help` with version-controlled articles for first schedule, OAuth, accessible media, MCP, billing limits and failed-post recovery, plus onboarding and email-catalogue documentation.
+- Verification for the onboarding/help slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB onboarding-help audit passed with 4 invariants; `git diff --check` passed. Browser search/link checks and first-run journey proofs were not run and are not claimed.
+
+### Milestone 5 next
+
+- Continue auditing remaining provider adapters for official alt-text fields; promote them only after source and sandbox evidence.
+- Obtain Milestone 4/5 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
+- On an approved host: Prisma generate/push for `ApiCredential`, MCP credential runtime proofs, then Stripe checkout/portal/limit matrix evidence.
+- Continue Milestone 9 admin/security/privacy after onboarding/help is checkpointed.
 
 ### Milestone 5 next
 
