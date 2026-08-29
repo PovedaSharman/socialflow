@@ -259,7 +259,14 @@ No production-readiness claim is made.
 - Made failed post cards show their bounded error rather than relying on a hover tooltip, link the edit button to that status for assistive technology, and give a visible recovery cue to review the post and check the platform before retrying.
 - Files changed for the failed-card recovery slice: calendar post card, mobile calendar guide/audit and this progress record.
 - Verification for the failed-card recovery slice: the 64 MB mobile calendar audit passed with 9 invariants. TypeScript, browser/screen-reader behavior and responsive visuals were not run and are not claimed.
+- Required useful alternative text for non-draft posts: every attached image or video in every root/comment item must have 1–1,000 trimmed characters before schedule or immediate publish; drafts may still omit descriptions so unfinished work is never lost.
+- Centralised the rule in `media.accessibility.ts`, enforced it in post validation and non-draft creation, and surfaced the same structured accessibility error from the posts controller and composer.
+- Media settings now use an associated label, required/max-length input, help text, character count and announced error; blank saves stop before upload or metadata requests. Media DTOs trim and bound descriptions server-side.
+- Added `docs/ACCESSIBLE_MEDIA.md`, a pure helper specification and a 64 MB `check:media-accessibility` audit. Included the helper suite in the guarded account/tenant release-host manifest (22 explicit files).
+- Files changed for the accessible-media slice: accessibility helper/specification, media DTOs, posts service/controller, media settings and composer, accessible-media guide, account/tenant matrix, root scripts/manifest, bounded media and account audits and this progress record.
+- Verification for the accessible-media slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB media-accessibility and account/tenant audits passed with 8 and 22 invariants respectively; `git diff --check` passed. Jest, TypeScript, browser/screen-reader checks and live-provider alt-text transport were not run and are not claimed.
 
 ### Milestone 5 next
 
-- Execute the guarded Temporal workflow, connection-health responsive gate, OAuth transaction units and provider sandbox matrix on the approved host; retain the evidence and add only verified provider identifiers to the production allowlist.
+- Audit every supported provider adapter for official alt-text transport; gate or disclose unsupported capabilities before production enablement.
+- Execute the guarded Temporal workflow, connection-health responsive gate, OAuth transaction units, account/tenant gate and provider sandbox matrix on the approved host; retain the evidence and add only verified provider identifiers to the production allowlist.

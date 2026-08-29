@@ -57,6 +57,7 @@
     "check:account-tenant-coverage": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-account-tenant-coverage.mjs",
     "check:connection-health": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-connection-health.mjs",
     "check:calendar-mobile": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-calendar-mobile-safety.mjs",
+    "check:media-accessibility": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-media-accessibility.mjs",
     "check:oauth-connection-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-oauth-connection-safety.mjs",
     "check:publish-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-publish-safety.mjs",
     "check:provider-release-gates": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-provider-release-gates.mjs",

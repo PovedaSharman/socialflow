@@ -16,6 +16,7 @@ import {
   CreationMethod,
   State,
 } from '@prisma/client';
+import { mediaAccessibilityError } from '@gitroom/nestjs-libraries/dtos/media/media.accessibility';
 import { GetPostsDto } from '@gitroom/nestjs-libraries/dtos/posts/get.posts.dto';
 import { GetPostsListDto } from '@gitroom/nestjs-libraries/dtos/posts/get.posts.list.dto';
 import { shuffle } from 'lodash';
@@ -791,7 +792,7 @@ export class PostsService {
       integration: { id: string };
       value: Array<{
         content?: string;
-        image?: Array<{ path: string; thumbnail?: string }>;
+        image?: Array<{ path: string; thumbnail?: string; alt?: string }>;
       }>;
       settings?: any;
     }>
@@ -824,6 +825,7 @@ export class PostsService {
 
         const settings = post.settings || {};
         const media = (post.value || []).map((p) => p.image || []);
+        const accessibilityError = mediaAccessibilityError(post.value);
 
         // Settings DTO validation — mirrors the client `form.trigger()`.
         let valid = true;
@@ -878,6 +880,7 @@ export class PostsService {
           emptyContent,
           tooLong,
           maximumCharacters,
+          accessibilityError,
         };
       })
     );
@@ -904,6 +907,15 @@ export class PostsService {
     body: CreatePostDto,
     creationMethod: CreationMethod
   ): Promise<any[]> {
+    if (body.type !== 'draft') {
+      for (const post of body.posts || []) {
+        const accessibilityError = mediaAccessibilityError(post.value);
+        if (accessibilityError) {
+          throw new BadRequestException(accessibilityError);
+        }
+      }
+    }
+
     const postList = [];
     for (const post of body.posts) {
       const provider = this._integrationManager.getSocialIntegration(

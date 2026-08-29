@@ -360,6 +360,17 @@ export const ManageModal: FC<AddEditModalProps> = (props) => {
 
         if (type !== 'draft') {
           for (const item of checkAllValid) {
+            if (item.accessibilityError) {
+              toaster.show(
+                `${capitalize(item.identifier.split('-')[0])} (${item.name}): ${
+                  item.accessibilityError
+                }`,
+                'warning'
+              );
+              focus(item.id, 'preview');
+              setLoading(false);
+              return;
+            }
             if (item.valid === false) {
               toaster.show(
                 `${capitalize(item.identifier.split('-')[0])} (${item.name}): ${

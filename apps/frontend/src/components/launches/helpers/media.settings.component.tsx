@@ -7,6 +7,7 @@ import { useFetch } from '@gitroom/helpers/utils/custom.fetch';
 import { hasExtension } from '@gitroom/helpers/utils/has.extension';
 import { useLaunchStore } from '@gitroom/frontend/components/new-launch/store';
 import { useVariables } from '@gitroom/react/helpers/variable.context';
+import { MEDIA_ALT_MAX_LENGTH } from '@gitroom/nestjs-libraries/dtos/media/media.accessibility';
 const postUrlEmitter = new EventEmitter();
 
 export const MediaSettingsLayout = () => {
@@ -312,6 +313,7 @@ export const MediaComponentInner: FC<{
   const [newThumbnail, setNewThumbnail] = useState<string | null>(null);
   const [isEditingThumbnail, setIsEditingThumbnail] = useState(false);
   const [altText, setAltText] = useState<string>(media?.alt || '');
+  const [altError, setAltError] = useState('');
   const [loading, setLoading] = useState(false);
   const [thumbnail, setThumbnail] = useState<string | null>(
     props.media?.thumbnail || null
@@ -328,6 +330,12 @@ export const MediaComponentInner: FC<{
   }, []);
 
   const save = useCallback(async () => {
+    const trimmedAlt = altText.trim();
+    if (!trimmedAlt) {
+      setAltError('Describe the image or video before saving.');
+      return;
+    }
+    setAltError('');
     setLoading(true);
     let path = thumbnail || '';
     if (newThumbnail) {
@@ -349,7 +357,7 @@ export const MediaComponentInner: FC<{
         method: 'POST',
         body: JSON.stringify({
           id: props.media.id,
-          alt: altText,
+          alt: trimmedAlt,
           thumbnail: path,
           thumbnailTimestamp: thumbnailTimestamp,
         }),
@@ -363,16 +371,42 @@ export const MediaComponentInner: FC<{
   return (
     <div className="mt-[10px] flex flex-col gap-[20px]">
       <div className="flex flex-col space-y-2">
-        <label className="text-sm text-textColor font-medium">
+        <label
+          htmlFor="media-alt-text"
+          className="text-sm text-textColor font-medium"
+        >
           Alt Text (for accessibility)
         </label>
         <input
+          id="media-alt-text"
           type="text"
           value={altText}
-          onChange={(e) => setAltText(e.target.value)}
+          required
+          maxLength={MEDIA_ALT_MAX_LENGTH}
+          aria-invalid={Boolean(altError)}
+          aria-describedby="media-alt-help media-alt-count media-alt-error"
+          onChange={(e) => {
+            setAltText(e.target.value);
+            if (altError) setAltError('');
+          }}
           placeholder="Describe the image/video content..."
           className="w-full px-3 py-2 bg-fifth border border-tableBorder rounded-lg text-textColor placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-forth focus:border-transparent"
         />
+        <div className="flex justify-between gap-[12px] text-[12px] text-textColor/70">
+          <span id="media-alt-help">
+            Describe essential visual information; do not repeat the caption.
+          </span>
+          <span id="media-alt-count" className="whitespace-nowrap">
+            {altText.length}/{MEDIA_ALT_MAX_LENGTH}
+          </span>
+        </div>
+        <div
+          id="media-alt-error"
+          role="alert"
+          className="min-h-[20px] text-sm text-red-500"
+        >
+          {altError}
+        </div>
       </div>
       {hasExtension(media?.path, 'mp4') && (
         <>

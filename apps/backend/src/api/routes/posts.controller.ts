@@ -251,6 +251,9 @@ export class PostsController {
 
     if (rawBody?.type !== 'draft') {
       for (const item of validation) {
+        if (item.accessibilityError) {
+          fail(item, item.accessibilityError);
+        }
         if (!item.valid) {
           fail(item, item.settingsError || 'Please fix your settings');
         }
