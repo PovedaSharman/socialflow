@@ -43,7 +43,7 @@ interface VariableContextInterface {
 const VariableContext = createContext({
   brandName: 'SocialFlow',
   brandShortName: 'SocialFlow',
-  brandPrimary: '#4F46E5',
+  brandPrimary: '#059669',
   supportUrl: '/help',
   sourceUrl: '',
   termsUrl: '/legal/terms',

@@ -62,6 +62,7 @@
     "check:billing-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-billing-safety.mjs",
     "check:onboarding-help": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-onboarding-help.mjs",
     "check:privacy-ops": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-privacy-ops.mjs",
+    "check:theme-palette": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-theme-palette.mjs",
     "check:oauth-connection-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-oauth-connection-safety.mjs",
     "check:publish-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-publish-safety.mjs",
     "check:provider-release-gates": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-provider-release-gates.mjs",

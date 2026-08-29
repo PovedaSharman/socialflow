@@ -194,7 +194,7 @@ export const PrivacyAdminComponent = () => {
         <button
           type="button"
           disabled={busy}
-          className="border border-tableBorder rounded-[6px] px-[12px] py-[8px] w-fit"
+          className="border border-subtleBorder bg-btnPrimary text-white rounded-[8px] px-[14px] py-[10px] w-fit disabled:opacity-60"
           onClick={exportData}
         >
           {t('privacy_export', 'Download organisation export')}
@@ -208,7 +208,7 @@ export const PrivacyAdminComponent = () => {
         </label>
         <input
           id="privacy-purpose"
-          className="bg-newBgColor border border-tableBorder rounded-[6px] px-[10px] py-[8px]"
+          className="bg-surface border border-subtleBorder rounded-[8px] px-[10px] py-[8px] text-content"
           value={purpose}
           onChange={(event) => setPurpose(event.target.value)}
         />
@@ -217,7 +217,7 @@ export const PrivacyAdminComponent = () => {
         </label>
         <input
           id="privacy-version"
-          className="bg-newBgColor border border-tableBorder rounded-[6px] px-[10px] py-[8px]"
+          className="bg-surface border border-subtleBorder rounded-[8px] px-[10px] py-[8px] text-content"
           value={version}
           onChange={(event) => setVersion(event.target.value)}
         />
@@ -267,7 +267,7 @@ export const PrivacyAdminComponent = () => {
           id="privacy-password"
           type="password"
           autoComplete="current-password"
-          className="bg-newBgColor border border-tableBorder rounded-[6px] px-[10px] py-[8px]"
+          className="bg-surface border border-subtleBorder rounded-[8px] px-[10px] py-[8px] text-content"
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />

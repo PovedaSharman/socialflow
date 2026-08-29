@@ -21,9 +21,7 @@ export const OnboardingModal: FC<OnboardingModalProps> = ({ onClose }) => {
 
   return (
     <div className="w-full min-h-full flex-1 p-[40px] flex relative">
-      <style>
-        {`#support-discord {display: none}`}
-      </style>
+      <style>{`#support-discord {display: none}`}</style>
       <div className="flex flex-1 bg-newBgColorInner rounded-[20px] flex-col relative">
         <button
           className="outline-none absolute end-[20px] top-[20px] mantine-UnstyledButton-root mantine-ActionIcon-root hover:bg-tableBorder cursor-pointer mantine-Modal-close mantine-1dcetaa"
@@ -214,7 +212,7 @@ const OnboardingStep1: FC<{ onNext: () => void; onSkip: () => void }> = ({
       <div className="flex justify-end pt-[24px] mt-[8px]">
         <button
           onClick={onNext}
-          className="group flex items-center gap-[12px] bg-gradient-to-r from-[#622aff] to-[#8b5cf6] hover:from-[#7c3aff] hover:to-[#9d6eff] text-white font-semibold px-[32px] py-[14px] rounded-[12px] text-[16px] transition-all shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40"
+          className="group flex items-center gap-[12px] bg-gradient-to-r from-[#059669] to-[#34d399] hover:from-[#047857] hover:to-[#6ee7b7] text-white font-semibold px-[32px] py-[14px] rounded-[12px] text-[16px] transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30"
         >
           {sortedIntegrations.length > 0
             ? t('continue', 'Continue')

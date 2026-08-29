@@ -9,7 +9,7 @@ export type BrandConfig = {
 };
 
 const cleanHexColour = (value: string | undefined) =>
-  /^#[0-9a-f]{6}$/i.test(value || '') ? value! : '#4F46E5';
+  /^#[0-9a-f]{6}$/i.test(value || '') ? value! : '#059669';
 
 /** The single replaceable product-brand contract. */
 export const brandConfig = (): BrandConfig => ({

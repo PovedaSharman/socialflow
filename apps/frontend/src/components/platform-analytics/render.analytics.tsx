@@ -35,10 +35,7 @@ const TrendIndicator: FC<{ value: number; average?: boolean }> = ({
         fill="none"
         className={isPositive ? '' : 'rotate-180'}
       >
-        <path
-          d="M6 2.5L10 7.5H2L6 2.5Z"
-          fill="currentColor"
-        />
+        <path d="M6 2.5L10 7.5H2L6 2.5Z" fill="currentColor" />
       </svg>
       <span>
         {displayValue}
@@ -53,7 +50,7 @@ const AnalyticsCard: FC<{
   total: string | number;
   index: number;
 }> = ({ item, total, index }) => {
-  const colorVariants = ['purple', 'green', 'blue'] as const;
+  const colorVariants = ['green', 'blue', 'green'] as const;
   const color = colorVariants[index % colorVariants.length];
 
   const hasDataPoints = item.data.length >= 1;
@@ -68,7 +65,7 @@ const AnalyticsCard: FC<{
           rounded-[12px]
           overflow-hidden
           transition-all duration-200
-          hover:border-[#612bd3]/50
+          hover:border-[#059669]/50
         `}
       >
         {/* Header */}
@@ -77,7 +74,7 @@ const AnalyticsCard: FC<{
             <div
               className={`
                 w-[8px] h-[8px] rounded-full
-                ${color === 'purple' ? 'bg-[#612bd3]' : ''}
+                ${color === 'purple' ? 'bg-[#059669]' : ''}
                 ${color === 'green' ? 'bg-[#32d583]' : ''}
                 ${color === 'blue' ? 'bg-[#1d9bf0]' : ''}
               `}
@@ -87,7 +84,10 @@ const AnalyticsCard: FC<{
             </span>
           </div>
           {item.percentageChange !== undefined && (
-            <TrendIndicator value={item.percentageChange} average={item.average} />
+            <TrendIndicator
+              value={item.percentageChange}
+              average={item.average}
+            />
           )}
         </div>
 
@@ -97,7 +97,11 @@ const AnalyticsCard: FC<{
             {/* Chart */}
             <div className="flex-1 px-[12px] py-[8px]">
               <div className="h-[120px] relative">
-                <ChartSocial data={item.data} color={color} key={`chart-${index}`} />
+                <ChartSocial
+                  data={item.data}
+                  color={color}
+                  key={`chart-${index}`}
+                />
               </div>
             </div>
 
@@ -126,7 +130,7 @@ const EmptyState: FC<{ onRefresh: () => void }> = ({ onRefresh }) => {
 
   return (
     <div className="col-span-full flex flex-col items-center justify-center py-[48px] px-[24px] bg-newTableHeader border border-newTableBorder rounded-[12px]">
-      <div className="w-[48px] h-[48px] mb-[16px] rounded-full bg-[#612bd3]/10 flex items-center justify-center">
+      <div className="w-[48px] h-[48px] mb-[16px] rounded-full bg-[#059669]/10 flex items-center justify-center">
         <svg
           width="24"
           height="24"
@@ -134,7 +138,7 @@ const EmptyState: FC<{ onRefresh: () => void }> = ({ onRefresh }) => {
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className="text-[#612bd3]"
+          className="text-[#059669]"
         >
           <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           <path d="M12 8v4l2 2" />
@@ -148,7 +152,7 @@ const EmptyState: FC<{ onRefresh: () => void }> = ({ onRefresh }) => {
       </p>
       <button
         onClick={onRefresh}
-        className="inline-flex items-center gap-[6px] px-[16px] py-[8px] text-[14px] font-medium text-white bg-[#612bd3] hover:bg-[#5023b8] rounded-[8px] transition-colors"
+        className="inline-flex items-center gap-[6px] px-[16px] py-[8px] text-[14px] font-medium text-white bg-[#059669] hover:bg-[#047857] rounded-[8px] transition-colors"
       >
         <svg
           width="16"
@@ -219,8 +223,10 @@ export const RenderAnalytics: FC<{
   const totals = useMemo(() => {
     return data?.map((p: AnalyticsDataItem) => {
       const value =
-        (p?.data.reduce((acc: number, curr: { total: number }) => acc + curr.total, 0) || 0) /
-        (p.average ? p.data.length : 1);
+        (p?.data.reduce(
+          (acc: number, curr: { total: number }) => acc + curr.total,
+          0
+        ) || 0) / (p.average ? p.data.length : 1);
       if (p.average) {
         return value.toFixed(2) + '%';
       }

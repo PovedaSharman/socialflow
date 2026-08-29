@@ -36,7 +36,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const brand = brandConfig();
   const cookieStore = await cookies();
   const language = cookieStore.get(cookieName)?.value || fallbackLng;
-  const mode = cookieStore.get('mode')?.value === 'light' ? 'light' : 'dark';
+  const mode = cookieStore.get('mode')?.value === 'dark' ? 'dark' : 'light';
   const Plausible = !!process.env.STRIPE_PUBLISHABLE_KEY
     ? PlausibleProvider
     : Fragment;

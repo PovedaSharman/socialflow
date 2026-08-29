@@ -12,7 +12,7 @@ export const subscribeToMode = (listener: (mode: string) => void) => {
 };
 
 const ModeComponent = () => {
-  const [mode, setMode] = useCookie('mode', 'dark');
+  const [mode, setMode] = useCookie('mode', 'light');
 
   const changeMode = useCallback(() => {
     modeEmitter.emit('mode', mode === 'dark' ? 'light' : 'dark');

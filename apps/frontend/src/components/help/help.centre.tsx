@@ -16,12 +16,12 @@ export const HelpCentre = () => {
     results.find((article) => article.id === activeId) || results[0];
 
   return (
-    <div className="flex flex-col gap-[16px]">
-      <div className="flex flex-col gap-[6px]">
-        <h1 className="text-[22px] font-[600]">
+    <div className="flex flex-col gap-[20px]">
+      <div className="flex flex-col gap-[8px]">
+        <h1 className="text-[24px] font-[600] tracking-[-0.02em] text-content">
           {t('help_centre', 'Help centre')}
         </h1>
-        <p className="text-[14px] text-customColor18">
+        <p className="text-[14px] text-muted max-w-[60ch]">
           {t(
             'help_centre_intro',
             'Search short guides for connecting channels, scheduling, accessibility, MCP and billing.'
@@ -33,7 +33,7 @@ export const HelpCentre = () => {
         className="flex flex-col gap-[6px] max-w-[480px]"
         htmlFor="help-search"
       >
-        <span className="text-[13px] font-[600] text-customColor18">
+        <span className="text-[13px] font-[600] text-muted">
           {t('search_help', 'Search help')}
         </span>
         <input
@@ -45,7 +45,7 @@ export const HelpCentre = () => {
             'search_help_placeholder',
             'Try “schedule”, “MCP”, or “billing”'
           )}
-          className="h-[44px] px-3 bg-newBgColorInner border border-newBorder rounded-[8px] text-textColor"
+          className="h-[44px] px-3 bg-surface border border-subtleBorder rounded-[8px] text-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-btnPrimary"
         />
       </label>
 
@@ -59,18 +59,16 @@ export const HelpCentre = () => {
               <button
                 type="button"
                 onClick={() => setActiveId(article.id)}
-                className={`w-full text-start cursor-pointer px-[14px] py-[12px] rounded-[8px] border transition-colors ${
+                className={`w-full text-start cursor-pointer px-[14px] py-[12px] rounded-[8px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-btnPrimary ${
                   active?.id === article.id
-                    ? 'bg-[#612BD3] text-white border-transparent'
-                    : 'bg-newBgColorInner border-newBorder hover:bg-boxHover'
+                    ? 'bg-btnPrimary text-white border-transparent'
+                    : 'bg-surface border-subtleBorder hover:bg-boxHover text-content'
                 }`}
               >
                 <div className="text-[14px] font-[600]">{article.title}</div>
                 <div
                   className={`text-[12px] mt-[4px] ${
-                    active?.id === article.id
-                      ? 'text-white/80'
-                      : 'text-customColor18'
+                    active?.id === article.id ? 'text-white/85' : 'text-muted'
                   }`}
                 >
                   {article.summary}
@@ -79,17 +77,19 @@ export const HelpCentre = () => {
             </li>
           ))}
           {!results.length ? (
-            <li className="text-[13px] text-customColor18 px-[4px]">
+            <li className="text-[13px] text-muted px-[4px]">
               {t('help_no_results', 'No articles match that search.')}
             </li>
           ) : null}
         </ul>
 
         {active ? (
-          <article className="bg-newBgColorInner border border-newBorder rounded-[12px] p-[20px] flex flex-col gap-[12px]">
-            <h2 className="text-[18px] font-[600]">{active.title}</h2>
-            <p className="text-[14px] text-customColor18">{active.summary}</p>
-            <pre className="whitespace-pre-wrap text-[14px] leading-[1.6] font-sans">
+          <article className="bg-surface border border-subtleBorder rounded-[12px] p-[24px] flex flex-col gap-[12px] shadow-sm">
+            <h2 className="text-[18px] font-[600] text-content">
+              {active.title}
+            </h2>
+            <p className="text-[14px] text-muted">{active.summary}</p>
+            <pre className="whitespace-pre-wrap text-[14px] leading-[1.65] font-sans text-content">
               {active.body}
             </pre>
           </article>

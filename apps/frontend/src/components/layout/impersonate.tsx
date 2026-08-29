@@ -32,13 +32,17 @@ interface Charge {
 
 const useCharges = () => {
   const fetch = useFetch();
-  return useSWR<Charge[]>('/billing/charges', async () => {
-    return (await fetch('/billing/charges')).json();
-  }, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    revalidateIfStale: false,
-  });
+  return useSWR<Charge[]>(
+    '/billing/charges',
+    async () => {
+      return (await fetch('/billing/charges')).json();
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      revalidateIfStale: false,
+    }
+  );
 };
 
 interface CouponInfo {
@@ -60,13 +64,17 @@ interface CouponInfo {
 
 const useCouponInfo = () => {
   const fetch = useFetch();
-  return useSWR<CouponInfo>('/billing/coupon-info', async () => {
-    return (await fetch('/billing/coupon-info')).json();
-  }, {
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
-    revalidateIfStale: false,
-  });
+  return useSWR<CouponInfo>(
+    '/billing/coupon-info',
+    async () => {
+      return (await fetch('/billing/coupon-info')).json();
+    },
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      revalidateIfStale: false,
+    }
+  );
 };
 
 const ApplyCouponModal: FC<{ close: () => void }> = ({ close }) => {
@@ -174,8 +182,7 @@ const ApplyCouponModal: FC<{ close: () => void }> = ({ close }) => {
       const json = await response.json().catch(() => ({}));
       if (!response.ok || !json.applied) {
         toast.show(
-          json.reason ||
-            t('apply_coupon_failed', 'Could not apply the coupon'),
+          json.reason || t('apply_coupon_failed', 'Could not apply the coupon'),
           'warning'
         );
         return;
@@ -225,7 +232,10 @@ const ApplyCouponModal: FC<{ close: () => void }> = ({ close }) => {
               {!info.coupons.length && t('none', 'None')}
             </div>
             {info.coupons.map((coupon, index) => (
-              <div key={index} className="ps-[10px] flex items-center gap-[10px]">
+              <div
+                key={index}
+                className="ps-[10px] flex items-center gap-[10px]"
+              >
                 <div>
                   -{' '}
                   {coupon.type === 'percentage'
@@ -485,7 +495,11 @@ const ChargesModal: FC<{ close: () => void }> = ({ close }) => {
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
                         className="inline-flex items-center justify-center w-[28px] h-[28px] rounded-[4px] hover:bg-tableBorder transition-colors"
-                        title={charge.invoice_pdf ? t('download_invoice', 'Download Invoice') : t('view_receipt', 'View Receipt')}
+                        title={
+                          charge.invoice_pdf
+                            ? t('download_invoice', 'Download Invoice')
+                            : t('view_receipt', 'View Receipt')
+                        }
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -669,8 +683,12 @@ const AddAnnouncementModal: FC<{ close: () => void }> = ({ close }) => {
             <div
               key={opt.value}
               onClick={() => setColor(opt.value)}
-              className={`flex-1 text-center py-[8px] rounded-[8px] text-white text-[13px] cursor-pointer transition-opacity ${opt.className} ${
-                color === opt.value ? 'opacity-100 ring-2 ring-white' : 'opacity-40'
+              className={`flex-1 text-center py-[8px] rounded-[8px] text-white text-[13px] cursor-pointer transition-opacity ${
+                opt.className
+              } ${
+                color === opt.value
+                  ? 'opacity-100 ring-2 ring-white'
+                  : 'opacity-40'
               }`}
             >
               {opt.label}
@@ -823,7 +841,7 @@ const ViewStats = () => {
   }, []);
   return (
     <div
-      className="px-[10px] rounded-[4px] bg-purple-700 text-white cursor-pointer whitespace-nowrap"
+      className="px-[10px] rounded-[4px] bg-emerald-700 text-white cursor-pointer whitespace-nowrap"
       onClick={handleClick}
     >
       {t('view_stats', 'View Stats')}
@@ -941,7 +959,10 @@ const SwitchUser = () => {
     } catch {
       setSwitching(false);
       toaster.show(
-        t('switch_user_failed', 'The user switch failed and nothing was changed'),
+        t(
+          'switch_user_failed',
+          'The user switch failed and nothing was changed'
+        ),
         'warning'
       );
     }
@@ -952,7 +973,10 @@ const SwitchUser = () => {
       <div className="flex-1 min-w-[220px]">
         <Input
           autoComplete="off"
-          placeholder={t('select_user_to_switch_to', 'Select user to switch to')}
+          placeholder={t(
+            'select_user_to_switch_to',
+            'Select user to switch to'
+          )}
           name="switchUser"
           disableForm={true}
           label=""
