@@ -27,7 +27,7 @@ const escapeHtml = (value: string) =>
         '>': '&gt;',
         '"': '&quot;',
         "'": '&#39;',
-      })[character]!
+      }[character]!)
   );
 
 @Injectable()
@@ -53,21 +53,33 @@ export class OrganizationService {
     return this._organizationRepository.getCount();
   }
 
-  async createMaxUser(id: string, name: string, saasName: string, email: string) {
-    return this._organizationRepository.createMaxUser(id, name, saasName, email);
+  async createMaxUser(
+    id: string,
+    name: string,
+    saasName: string,
+    email: string
+  ) {
+    return this._organizationRepository.createMaxUser(
+      id,
+      name,
+      saasName,
+      email
+    );
   }
 
-  addUserToOrg(
-    userId: string,
-    id: string,
-    orgId: string,
-    role: Role
-  ) {
+  addUserToOrg(userId: string, id: string, orgId: string, role: Role) {
     return this._organizationRepository.addUserToOrg(userId, id, orgId, role);
   }
 
   getOrgById(id: string) {
     return this._organizationRepository.getOrgById(id);
+  }
+
+  hasActiveMembership(userId: string, organizationId: string) {
+    return this._organizationRepository.hasActiveMembership(
+      userId,
+      organizationId
+    );
   }
 
   getOrgByApiKey(api: string) {
@@ -98,7 +110,11 @@ export class OrganizationService {
     return this._organizationRepository.getOrgByCustomerId(customerId);
   }
 
-  async inviteTeamMember(org: Organization, user: User, body: AddTeamMemberDto) {
+  async inviteTeamMember(
+    org: Organization,
+    user: User,
+    body: AddTeamMemberDto
+  ) {
     const email = body.email.trim().toLowerCase();
     const token = createInvitationToken();
     const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
@@ -114,9 +130,7 @@ export class OrganizationService {
     inviteUrl.searchParams.set('org', token);
     const url = inviteUrl.toString();
     if (body.sendEmail) {
-      const inviter = user.name
-        ? `${user.name} (${user.email})`
-        : user.email;
+      const inviter = user.name ? `${user.name} (${user.email})` : user.email;
       await this._notificationsService.sendEmail(
         email,
         `${user.name || user.email} invited you to join "${org.name}"`,
@@ -160,11 +174,10 @@ export class OrganizationService {
   }
 
   async revokeTeamInvitation(organizationId: string, invitationId: string) {
-    const result =
-      await this._organizationRepository.revokeTeamInvitation(
-        organizationId,
-        invitationId
-      );
+    const result = await this._organizationRepository.revokeTeamInvitation(
+      organizationId,
+      invitationId
+    );
     if (result.count !== 1) {
       throw new HttpException('Invitation not found or no longer active', 404);
     }

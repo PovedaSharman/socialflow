@@ -44,7 +44,7 @@ export class SocialFlowTestProvider
 
   async generateAuthUrl() {
     return {
-      url: 'socialflow-test://connect',
+      url: 'local-only',
       codeVerifier: 'local-only',
       state: 'local-only',
     };

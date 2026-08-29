@@ -1,11 +1,14 @@
 import { Body, Controller, Param, Post, Res } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { AuthService } from '@gitroom/helpers/auth/auth.service';
-import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
 import { IntegrationManager } from '@gitroom/nestjs-libraries/integrations/integration.manager';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/posts.service';
+import {
+  createOAuthConnectTransaction,
+  hardenOAuthState,
+} from '@gitroom/nestjs-libraries/integrations/oauth.connect.transaction';
 
 @ApiTags('Enterprise')
 @Controller('/enterprise')
@@ -75,17 +78,20 @@ export class EnterpriseController {
         load.provider
       );
 
-      const { codeVerifier, state, url } =
-        await integrationProvider.generateAuthUrl();
+      const generatedAuthUrl = await integrationProvider.generateAuthUrl();
+      const { codeVerifier } = generatedAuthUrl;
+      const { state, url } = hardenOAuthState(generatedAuthUrl);
 
-      if (load.refreshId) {
-        await ioRedis.set(`refresh:${state}`, load.refreshId, 'EX', 3600);
-      }
-
-      await ioRedis.set(`webhookUrl:${state}`, load.webhookUrl, 'EX', 3600);
-      await ioRedis.set(`redirect:${state}`, load.redirectUrl, 'EX', 3600);
-      await ioRedis.set(`organization:${state}`, org.id, 'EX', 3600);
-      await ioRedis.set(`login:${state}`, codeVerifier, 'EX', 3600);
+      await createOAuthConnectTransaction(state, {
+        version: 1,
+        provider: load.provider,
+        organizationId: org.id,
+        codeVerifier,
+        refreshId: load.refreshId,
+        redirectUrl: load.redirectUrl,
+        webhookUrl: load.webhookUrl,
+        flow: 'enterprise',
+      });
 
       return url;
     } catch (err) {}

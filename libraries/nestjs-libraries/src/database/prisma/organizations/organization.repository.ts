@@ -211,6 +211,19 @@ export class OrganizationRepository {
     });
   }
 
+  async hasActiveMembership(userId: string, organizationId: string) {
+    return Boolean(
+      await this._userOrg.model.userOrganization.findFirst({
+        where: {
+          userId,
+          organizationId,
+          disabled: false,
+        },
+        select: { id: true },
+      })
+    );
+  }
+
   getUsersByEmail(email: string) {
     return this._user.model.user.findMany({
       where: {
@@ -345,12 +358,7 @@ export class OrganizationRepository {
     });
   }
 
-  async addUserToOrg(
-    userId: string,
-    id: string,
-    orgId: string,
-    role: Role
-  ) {
+  async addUserToOrg(userId: string, id: string, orgId: string, role: Role) {
     const checkIfInviteExists = await this._user.model.user.findFirst({
       where: {
         inviteId: id,

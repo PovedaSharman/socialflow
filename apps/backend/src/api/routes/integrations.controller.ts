@@ -8,7 +8,6 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
-import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
 import { IntegrationManager } from '@gitroom/nestjs-libraries/integrations/integration.manager';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import { GetOrgFromRequest } from '@gitroom/nestjs-libraries/user/org.from.request';
@@ -33,6 +32,10 @@ import {
 } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 import { uniqBy } from 'lodash';
 import { RefreshIntegrationService } from '@gitroom/nestjs-libraries/integrations/refresh.integration.service';
+import {
+  createOAuthConnectTransaction,
+  hardenOAuthState,
+} from '@gitroom/nestjs-libraries/integrations/oauth.connect.transaction';
 
 @ApiTags('Integrations')
 @Controller('/integrations')
@@ -204,6 +207,7 @@ export class IntegrationsController {
     @Query('externalUrl') externalUrl: string,
     @Query('redirectUrl') redirectUrl: string,
     @Query('onboarding') onboarding: string,
+    @GetUserFromRequest() user: User,
     @GetOrgFromRequest() org: Organization
   ) {
     if (
@@ -229,29 +233,26 @@ export class IntegrationsController {
           }
         : undefined;
 
-      const { codeVerifier, state, url } =
-        await integrationProvider.generateAuthUrl(getExternalUrl);
-
-      if (refresh) {
-        await ioRedis.set(`refresh:${state}`, refresh, 'EX', 3600);
-      }
-
-      if (onboarding === 'true') {
-        await ioRedis.set(`onboarding:${state}`, 'true', 'EX', 3600);
-      }
-
-      if (redirectUrl) {
-        await ioRedis.set(`redirect:${state}`, redirectUrl, 'EX', 3600);
-      }
-
-      await ioRedis.set(`organization:${state}`, org.id, 'EX', 3600);
-      await ioRedis.set(`login:${state}`, codeVerifier, 'EX', 3600);
-      await ioRedis.set(
-        `external:${state}`,
-        JSON.stringify(getExternalUrl),
-        'EX',
-        3600
+      const generatedAuthUrl = await integrationProvider.generateAuthUrl(
+        getExternalUrl
       );
+      const { codeVerifier } = generatedAuthUrl;
+      const { state, url } = hardenOAuthState(generatedAuthUrl);
+
+      await createOAuthConnectTransaction(state, {
+        version: 1,
+        provider: integration,
+        organizationId: org.id,
+        initiatedByUserId: user.id,
+        codeVerifier: integrationProvider.customFields ? 'none' : codeVerifier,
+        externalDetails: getExternalUrl
+          ? JSON.stringify(getExternalUrl)
+          : undefined,
+        refreshId: refresh || undefined,
+        onboarding: onboarding === 'true',
+        redirectUrl: redirectUrl || undefined,
+        flow: 'user',
+      });
 
       return { url };
     } catch (err) {

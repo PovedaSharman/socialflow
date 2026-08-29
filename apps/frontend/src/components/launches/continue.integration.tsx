@@ -17,6 +17,7 @@ interface TwoStepState {
   onboarding: boolean;
   pages: any[];
   returnURL?: string;
+  publicContinuationToken?: string;
 }
 
 interface SuccessState {
@@ -154,6 +155,7 @@ export const ContinueIntegration: FC<{
         pages,
         returnURL,
         extensionToken,
+        publicContinuationToken,
       } = await data.json();
       const onboarding = resOnboarding || searchParams.onboarding === 'true';
 
@@ -188,6 +190,7 @@ export const ContinueIntegration: FC<{
           onboarding,
           pages: pages || [],
           returnURL,
+          publicContinuationToken,
         });
         return;
       }
@@ -216,7 +219,11 @@ export const ContinueIntegration: FC<{
 
         const response = await fetch(endpoint, {
           method: 'POST',
-          body: JSON.stringify({ ...modifiedParams, ...data }),
+          body: JSON.stringify({
+            ...modifiedParams,
+            ...data,
+            publicContinuationToken: twoStepState.publicContinuationToken,
+          }),
         });
 
         if (

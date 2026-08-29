@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 28 August 2026
+Last updated: 29 August 2026
 
 ## Current implementation milestone: 5 — content and OAuth
 
@@ -220,7 +220,14 @@ No production-readiness claim is made.
 - Added pure health classification specifications, `docs/CONNECTION_HEALTH.md` and a 64 MB five-invariant connection-health audit covering state logic, secret projection, keyboard/touch affordances and responsive release checks.
 - Files changed for the connection-health slice: health helper/specification, integration repository/controller, calendar integration type, channel sidebar UI, connection-health guide, root scripts manifest, bounded health audit and this progress record.
 - Verification for the connection-health slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB connection-health, social-credential, account/tenant and resource-safety audits passed with 5, 10, 22 and 19 invariants respectively; `git diff --check` passed. Jest, TypeScript, runtime, keyboard, contrast and responsive visual checks were not run and are not claimed.
+- Replaced fragmented OAuth callback keys with one provider-scoped, ten-minute transaction that cannot overwrite an outstanding state and is atomically consumed before credential exchange or integration mutation.
+- Bound authenticated initiation to the exact organisation and user, and recheck that the initiating membership remains active at callback time. Enterprise initiation is explicitly distinguished and remains bound to the organisation authorised by its signed request.
+- Hardened ordinary OAuth query/fragment state and custom-form nonces to 256-bit randomness at the initiation boundary while preserving platform-issued OAuth 1.0 request tokens. The local-only test provider now follows the same nonce contract.
+- Removed reusable OAuth state from the public page/company selection path. Enterprise two-step connections now use a separate random, tenant/provider/integration-bound continuation token that is consumed once after tenant-scoped metadata validation.
+- Added pure transaction specifications, `docs/OAUTH_CONNECTION_SECURITY.md` and a 64 MB OAuth connection audit covering transaction expiry/collision/replay, state hardening, tenant/user/provider binding and client continuation handling.
+- Files changed for the OAuth binding slice: authenticated/enterprise initiation routes, public callback and two-step route, frontend continuation client, OAuth transaction helper/specification, active-membership repository/service check, Redis test double, local test provider, OAuth security guide, root scripts manifest, bounded audit and this progress record.
+- Verification for the OAuth binding slice: targeted Prettier completed under a 128 MB heap cap; `package.json` parsed under 64 MB; the 64 MB OAuth, social-credential, account/tenant and resource-safety audits passed with 18, 10, 22 and 19 invariants respectively; `git diff --check` passed. Jest, TypeScript, Redis runtime, browser flows and live provider OAuth exchanges were not run and are not claimed.
 
 ### Milestone 5 next
 
-- Execute the guarded Temporal workflow and connection-health responsive gates on the approved host, retain their evidence, and audit OAuth state/PKCE binding plus callback tenant/user isolation for every enabled provider.
+- Execute the guarded Temporal workflow, connection-health responsive gate and OAuth transaction unit/provider sandbox matrix on the approved host, retain their evidence, then feature-gate every provider whose configuration, scopes, PKCE support or approval status has not been verified.

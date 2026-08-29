@@ -7,7 +7,6 @@ import {
   Post,
   UseFilters,
 } from '@nestjs/common';
-import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
 import { ConnectIntegrationDto } from '@gitroom/nestjs-libraries/dtos/integrations/connect.integration.dto';
 import { IntegrationManager } from '@gitroom/nestjs-libraries/integrations/integration.manager';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
@@ -24,6 +23,11 @@ import {
 import { RefreshIntegrationService } from '@gitroom/nestjs-libraries/integrations/refresh.integration.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { getSsrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
+import {
+  consumeOAuthConnectTransaction,
+  consumePublicProviderContinuation,
+  createPublicProviderContinuation,
+} from '@gitroom/nestjs-libraries/integrations/oauth.connect.transaction';
 
 @ApiTags('Integrations')
 @Controller('/integrations')
@@ -58,41 +62,39 @@ export class NoAuthIntegrationsController {
     const integrationProvider =
       this._integrationManager.getSocialIntegration(integration);
 
-    const getCodeVerifier = integrationProvider.customFields
-      ? 'none'
-      : await ioRedis.get(`login:${body.state}`);
-    if (!getCodeVerifier) {
-      throw new Error('Invalid state');
+    const transaction = await consumeOAuthConnectTransaction(
+      integration,
+      body.state
+    );
+    if (!transaction) {
+      throw new HttpException('Invalid or expired state', 400);
     }
 
-    const organization = await ioRedis.get(`organization:${body.state}`);
-    if (!organization) {
-      throw new Error('Organization not found');
+    if (
+      transaction.flow === 'user' &&
+      (!transaction.initiatedByUserId ||
+        !(await this._organizationService.hasActiveMembership(
+          transaction.initiatedByUserId,
+          transaction.organizationId
+        )))
+    ) {
+      throw new HttpException(
+        'Connection initiator is no longer authorized',
+        403
+      );
     }
 
-    const org = await this._organizationService.getOrgById(organization);
-
-    if (!integrationProvider.customFields) {
-      await ioRedis.del(`login:${body.state}`);
+    const org = await this._organizationService.getOrgById(
+      transaction.organizationId
+    );
+    if (!org) {
+      throw new HttpException('Organization not found', 404);
     }
 
-    const details = integrationProvider.externalUrl
-      ? await ioRedis.get(`external:${body.state}`)
-      : undefined;
-
-    if (details) {
-      await ioRedis.del(`external:${body.state}`);
-    }
-
-    const refresh = await ioRedis.get(`refresh:${body.state}`);
-    if (refresh) {
-      await ioRedis.del(`refresh:${body.state}`);
-    }
-
-    const onboarding = await ioRedis.get(`onboarding:${body.state}`);
-    if (onboarding) {
-      await ioRedis.del(`onboarding:${body.state}`);
-    }
+    const getCodeVerifier = transaction.codeVerifier;
+    const details = transaction.externalDetails;
+    const refresh = transaction.refreshId;
+    const onboarding = transaction.onboarding;
 
     const {
       error,
@@ -111,7 +113,7 @@ export class NoAuthIntegrationsController {
           {
             code: body.code,
             codeVerifier: getCodeVerifier,
-            refresh: body.refresh,
+            refresh,
           },
           details ? JSON.parse(details) : undefined
         );
@@ -136,7 +138,7 @@ export class NoAuthIntegrationsController {
               refresh,
               auth.accessToken
             );
-            return res({ ...newAuth, refreshToken: body.refresh });
+            return res({ ...newAuth, refreshToken: refresh });
           } catch (err: any) {
             return res({
               error: err.message,
@@ -225,7 +227,7 @@ export class NoAuthIntegrationsController {
         expiresIn,
         username,
         refresh ? false : integrationProvider.isBetweenSteps,
-        body.refresh,
+        refresh,
         +body.timezone,
         details
           ? AuthService.fixedEncryption(details)
@@ -267,7 +269,7 @@ export class NoAuthIntegrationsController {
       }
     }
 
-    const webhookUrl = await ioRedis.get(`webhookUrl:${body.state}`);
+    const webhookUrl = transaction.webhookUrl;
     if (webhookUrl) {
       try {
         await fetch(webhookUrl, {
@@ -282,14 +284,21 @@ export class NoAuthIntegrationsController {
           dispatcher: getSsrfSafeDispatcher(),
         });
       } catch (err) {}
-
-      await ioRedis.del(`webhookUrl:${body.state}`);
     }
 
-    const returnURL = await ioRedis.get(`redirect:${body.state}`);
-    if (returnURL) {
-      await ioRedis.del(`redirect:${body.state}`);
-    }
+    const returnURL = transaction.redirectUrl;
+
+    const publicContinuationToken =
+      transaction.flow === 'enterprise' &&
+      integrationProvider.isBetweenSteps &&
+      !refresh
+        ? await createPublicProviderContinuation({
+            version: 1,
+            provider: integration,
+            organizationId: org.id,
+            integrationId: createUpdate.id,
+          })
+        : undefined;
 
     const extensionToken = integrationProvider.isChromeExtension
       ? AuthService.signJWT({
@@ -312,27 +321,42 @@ export class NoAuthIntegrationsController {
 
     return {
       ...safeIntegration,
-      onboarding: onboarding === 'true',
+      onboarding: onboarding === true,
       pages,
       ...(returnURL ? { returnURL } : {}),
       ...(extensionToken ? { extensionToken } : {}),
+      ...(publicContinuationToken ? { publicContinuationToken } : {}),
     };
   }
 
   @Post('/public/provider/:id/connect')
   async saveProviderPage(@Param('id') id: string, @Body() body: any) {
-    if (!body.state) {
-      throw new Error('Invalid state');
+    const continuation = await consumePublicProviderContinuation(
+      body.publicContinuationToken
+    );
+    if (!continuation || continuation.integrationId !== id) {
+      throw new HttpException('Invalid or expired continuation', 400);
     }
 
-    const organization = await ioRedis.get(`organization:${body.state}`);
-    if (!organization) {
-      throw new Error('Organization not found');
+    const integration =
+      await this._integrationService.getIntegrationMetadataById(
+        continuation.organizationId,
+        id
+      );
+    if (
+      !integration ||
+      integration.providerIdentifier !== continuation.provider ||
+      !integration.inBetweenSteps ||
+      integration.deletedAt
+    ) {
+      throw new HttpException('Integration not found', 404);
     }
 
-    const org = await this._organizationService.getOrgById(organization);
-
-    return this._integrationService.saveProviderPage(org.id, id, body);
+    return this._integrationService.saveProviderPage(
+      continuation.organizationId,
+      id,
+      body
+    );
   }
 
   @Post('/extension-refresh')
