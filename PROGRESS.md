@@ -247,6 +247,10 @@ No production-readiness claim is made.
 - Added pure specifications for credential redaction, content exclusion and attempt bounds; added the suite to the guarded release manifest and documented that legacy full-payload rows still require maintenance cleanup before production readiness.
 - Files changed for the publish-error slice: safe error-history helper/specification, post repository persistence/query, publishing guide, publish/account audits, release-host manifest/matrix and this progress record.
 - Verification for the publish-error slice: the 64 MB publish-safety and account/tenant audits passed with 15 and 22 invariants respectively. Jest, TypeScript, database runtime and legacy-row cleanup were not run and are not claimed.
+- Added a dry-run-first legacy error-history cleanup that selects IDs only, performs no payload read, contains no scan/retry loop and applies at most 100 sequential updates per invocation. Apply mode requires a second explicit acknowledgement and reports the remaining legacy count for a separately reviewed batch.
+- Added 128 MB-capped package commands and expanded the publishing guide/audit with the exact maintenance procedure and resource invariants. The cleanup command was not executed against any database.
+- Files changed for the legacy-cleanup slice: bounded maintenance script/package commands, publishing guide, publish-safety audit and this progress record.
+- Verification for the legacy-cleanup slice: `package.json` parsed under 64 MB and the 64 MB publish-safety audit passed with 16 invariants. TypeScript, Prisma/database runtime and apply mode were not run and are not claimed.
 
 ### Milestone 5 next
 

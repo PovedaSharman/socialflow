@@ -64,6 +64,8 @@
     "check:social-credential-safety": "cross-env NODE_OPTIONS=--max-old-space-size=64 node ./scripts/check-social-credential-safety.mjs",
     "credentials:migrate:dry-run": "cross-env NODE_OPTIONS=--max-old-space-size=256 TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node --transpile-only scripts/migrate-social-credentials.ts",
     "credentials:migrate": "cross-env NODE_OPTIONS=--max-old-space-size=256 TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' SOCIAL_CREDENTIAL_MIGRATION_APPLY=true ts-node --transpile-only scripts/migrate-social-credentials.ts",
+    "errors:cleanup:dry-run": "cross-env NODE_OPTIONS=--max-old-space-size=128 TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ts-node --transpile-only scripts/cleanup-legacy-post-errors.ts",
+    "errors:cleanup": "cross-env NODE_OPTIONS=--max-old-space-size=128 TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' ERROR_HISTORY_CLEANUP_APPLY=true ts-node --transpile-only scripts/cleanup-legacy-post-errors.ts",
     "test:a11y": "cross-env NODE_OPTIONS=--max-old-space-size=1024 playwright test --config ./playwright.config.ts"
   },
   "dependencies": {

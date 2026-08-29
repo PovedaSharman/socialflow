@@ -26,6 +26,28 @@ at most the newest 100 history rows for the selected post group. Legacy rows
 created before this boundary may still contain full payloads and require a
 reviewed data-maintenance cleanup before production readiness is claimed.
 
+The cleanup command reads IDs only and processes one fixed batch of at most 100
+rows per invocation. It never loads legacy payloads and has no scan/retry loop.
+First review a dry run:
+
+```bash
+ERROR_HISTORY_CLEANUP_BATCH_SIZE=50 pnpm errors:cleanup:dry-run
+```
+
+Then apply one reviewed batch on a backed-up maintenance database/host:
+
+```bash
+ALLOW_ERROR_HISTORY_CLEANUP=true \
+ERROR_HISTORY_CLEANUP_BATCH_SIZE=50 \
+pnpm errors:cleanup
+```
+
+Applied rows receive a generic legacy message and a versioned empty attempt
+summary; the related post receives safe recovery guidance in
+place of its legacy error text. The command reports the remaining legacy count;
+invoke another fixed batch only after reviewing the prior result. This cleanup
+has not been run on the workstation or a production database.
+
 ## Unknown outcomes
 
 Irreversible publish and finalisation activities have one Temporal attempt. The

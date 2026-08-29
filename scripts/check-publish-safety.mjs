@@ -35,6 +35,7 @@ const scheduleFlow = composer.slice(composer.indexOf('const schedule ='));
 const errorHistory = read(
   'libraries/nestjs-libraries/src/database/prisma/posts/post.error-history.ts'
 );
+const legacyErrorCleanup = read('scripts/cleanup-legacy-post-errors.ts');
 
 const requirements = [
   [
@@ -143,6 +144,15 @@ const requirements = [
         postsRepository
       ),
     'Post state and history persistence must use safe bounded projections.',
+  ],
+  [
+    legacyErrorCleanup.includes('MAX_BATCH_SIZE = 100') &&
+      legacyErrorCleanup.includes('take: requestedBatchSize') &&
+      legacyErrorCleanup.includes('select: { id: true, postId: true }') &&
+      legacyErrorCleanup.includes('where: { id: row.postId }') &&
+      legacyErrorCleanup.includes('ALLOW_ERROR_HISTORY_CLEANUP') &&
+      !legacyErrorCleanup.includes('while ('),
+    'Legacy cleanup must be explicitly authorised, payload-free and bounded without a scan loop.',
   ],
 ];
 
