@@ -8,6 +8,15 @@ const safety = read(
   'libraries/nestjs-libraries/src/services/stripe.webhook.safety.ts'
 );
 const controller = read('apps/backend/src/api/routes/stripe.controller.ts');
+const usage = read(
+  'libraries/nestjs-libraries/src/database/prisma/subscriptions/usage.limit.ts'
+);
+const permissions = read(
+  'apps/backend/src/services/auth/permissions/permissions.service.ts'
+);
+const exception = read(
+  'apps/backend/src/services/auth/permissions/permission.exception.class.ts'
+);
 const envExample = read('.env.example');
 
 const invariants = [
@@ -33,6 +42,17 @@ const invariants = [
     envExample.includes('ALLOW_STRIPE_LIVE_MODE') &&
       envExample.includes('STRIPE_SECRET_KEY'),
     'billing controls must be documented in the environment template',
+  ],
+  [
+    usage.includes('resolveChannelLimit') &&
+      usage.includes('isWithinHardLimit') &&
+      usage.includes('nextStep') &&
+      !permissions.includes('channel: tier === ') &&
+      permissions.includes('resolveChannelLimit(') &&
+      permissions.includes('isWithinHardLimit(') &&
+      exception.includes('usageLimitDenial(') &&
+      exception.includes('nextStep: denial.nextStep'),
+    'hard limits must use plan configuration and explain the next step',
   ],
 ];
 

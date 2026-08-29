@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { usageLimitDenial } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/usage.limit';
 
 export enum Sections {
   CHANNEL = 'channel',
@@ -25,7 +26,16 @@ export enum AuthorizationActions {
 
 export class SubscriptionException extends HttpException {
   constructor(message: { section: Sections; action: AuthorizationActions }) {
-    super(message, HttpStatus.PAYMENT_REQUIRED);
+    const denial = usageLimitDenial(message.section, message.action);
+    super(
+      {
+        section: denial.section,
+        action: denial.action,
+        message: denial.message,
+        nextStep: denial.nextStep,
+      },
+      HttpStatus.PAYMENT_REQUIRED
+    );
   }
 }
 

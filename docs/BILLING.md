@@ -1,8 +1,8 @@
 # Billing and Stripe
 
-Status: **partial** — webhook replay protection and test-mode production gate
-are in source. Hard usage-limit enforcement proofs, checkout/portal fixtures and
-live-mode approval remain pending.
+Status: **partial** — webhook replay protection, test-mode production gate and
+hard usage-limit denials with next-step guidance are in source. Checkout/portal
+fixtures and live Stripe proofs remain pending on an approved host.
 
 ## Required end state
 
@@ -22,6 +22,12 @@ live-mode approval remain pending.
   unless live mode is attested.
 - The `/stripe` webhook controller refuses unconfigured modes with HTTP 503 and
   acknowledges duplicate event ids without re-running handlers.
+- `usage.limit.ts` resolves channel allowance from plan configuration and
+  purchased allotments, enforces hard comparisons, and supplies British-English
+  denial messages with an explicit next step. `SubscriptionException` (HTTP 402)
+  returns `message` and `nextStep` for clients.
+- Channel, webhook and monthly post checks use the same hard-limit helper. Video
+  generation continues to use credit balances and raises the same exception shape.
 
 ## Operator notes
 
@@ -32,5 +38,5 @@ publishable key and signing secrets from the Stripe test dashboard only.
 pnpm check:billing-safety
 ```
 
-Checkout, portal, replay/idempotency runtime proofs and hard limit matrix
-evidence remain pending on an approved host.
+Checkout, portal, replay/idempotency runtime proofs and the full limit matrix
+against Stripe test fixtures remain pending on an approved host.

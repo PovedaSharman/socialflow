@@ -14,6 +14,10 @@ import {
   canManageOrganization,
   OrganizationRole,
 } from './organization.role';
+import {
+  isWithinHardLimit,
+  resolveChannelLimit,
+} from '@gitroom/nestjs-libraries/database/prisma/subscriptions/usage.limit';
 
 export type AppAbility = Ability<[AuthorizationActions, Sections]>;
 
@@ -60,12 +64,12 @@ export class PermissionsService {
       subscription?.subscriptionTier ||
       (!process.env.STRIPE_PUBLISHABLE_KEY ? 'PRO' : 'FREE');
 
-    const { channel, ...all } = pricing[tier];
+    const plan = pricing[tier];
     return {
       subscription,
       options: {
-        ...all,
-        ...{ channel: tier === 'FREE' ? channel : -10 },
+        ...plan,
+        channel: resolveChannelLimit(plan.channel, subscription?.totalChannels),
       },
     };
   }
@@ -106,7 +110,7 @@ export class PermissionsService {
       });
     }
 
-    const { subscription, options } = await this.getPackageOptions(orgId);
+    const { options } = await this.getPackageOptions(orgId);
     for (const [action, section] of requestedPermission) {
       if (!roleCanAccess(permission, action, section)) {
         continue;
@@ -139,10 +143,7 @@ export class PermissionsService {
           await this._integrationService.getIntegrationsList(orgId)
         ).filter((f) => !f.refreshNeeded).length;
 
-        if (
-          (options.channel && options.channel > totalChannels) ||
-          (subscription?.totalChannels || 0) > totalChannels
-        ) {
+        if (isWithinHardLimit(totalChannels, options.channel || 0)) {
           can(action, section);
           continue;
         }
@@ -150,7 +151,7 @@ export class PermissionsService {
 
       if (section === Sections.WEBHOOKS) {
         const totalWebhooks = await this._webhooksService.getTotal(orgId);
-        if (totalWebhooks < options.webhooks) {
+        if (isWithinHardLimit(totalWebhooks, options.webhooks || 0)) {
           can(AuthorizationActions.Create, section);
           continue;
         }
@@ -170,7 +171,7 @@ export class PermissionsService {
           checkFrom.toDate()
         );
 
-        if (count < options.posts_per_month) {
+        if (isWithinHardLimit(count, options.posts_per_month || 0)) {
           can(action, section);
           continue;
         }
