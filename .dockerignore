@@ -21,3 +21,10 @@ dist
 .git
 .github
 reports
+.env
+.env.*
+!.env.example
+.claude
+.codex
+coverage
+artifacts

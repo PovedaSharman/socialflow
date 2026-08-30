@@ -1,0 +1,31 @@
+{
+  admin off
+  email {$ACME_EMAIL}
+}
+
+{$STAGING_HOSTNAME} {
+  encode zstd gzip
+
+  handle_path /uploads/* {
+    root * /uploads
+    header {
+      X-Content-Type-Options nosniff
+      Content-Security-Policy "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'none'; script-src 'none'; frame-ancestors 'none'; sandbox"
+    }
+    file_server
+  }
+
+  handle_path /api/* {
+    reverse_proxy backend:3000
+  }
+
+  handle {
+    reverse_proxy frontend:4200
+  }
+
+  header {
+    Referrer-Policy strict-origin-when-cross-origin
+    X-Content-Type-Options nosniff
+    X-Frame-Options DENY
+  }
+}

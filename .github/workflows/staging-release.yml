@@ -1,0 +1,169 @@
+name: SocialFlow staging release
+
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      public_url:
+        description: Public HTTPS staging URL compiled into the frontend
+        required: true
+        type: string
+      publish_image:
+        description: Publish the reviewed ARM64 image to GHCR
+        required: true
+        default: false
+        type: boolean
+
+concurrency:
+  group: staging-release-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  source-gates:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.1
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run bounded static release checks
+        shell: bash
+        run: |
+          set -euo pipefail
+          export NODE_OPTIONS=--max-old-space-size=64
+          for script in scripts/check-*.mjs; do node "$script"; done
+          git diff --check
+
+      - name: Run focused regression tests serially
+        run: >-
+          NODE_OPTIONS=--max-old-space-size=1024 pnpm exec jest --runInBand
+          --coverage=false
+          libraries/nestjs-libraries/src/public-api/public.api.scopes.spec.ts
+          libraries/nestjs-libraries/src/services/stripe.webhook.safety.spec.ts
+          libraries/nestjs-libraries/src/upload/bounded.remote.buffer.spec.ts
+          libraries/nestjs-libraries/src/database/prisma/media/storage.quota.spec.ts
+          libraries/nestjs-libraries/src/database/prisma/media/storage.reservation.spec.ts
+
+      - name: Type-check serially
+        run: pnpm typecheck
+
+  runtime-gates:
+    needs: source-gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://socialflow:socialflow-test-only@127.0.0.1:5432/socialflow_test
+      REDIS_URL: redis://127.0.0.1:6379
+      TEMPORAL_ADDRESS: 127.0.0.1:7233
+      TEMPORAL_NAMESPACE: socialflow-release-test
+      RUN_DATABASE_INTEGRATION_TESTS: 'true'
+      ALLOW_DISPOSABLE_DATABASE_TESTS: 'true'
+      ALLOW_DISPOSABLE_DATABASE_BOOTSTRAP: 'true'
+      RUN_TEMPORAL_INTEGRATION_TESTS: 'true'
+      ALLOW_TEMPORAL_TEST_HISTORY: 'true'
+      TEMPORAL_TEST_ARTIFACT_DIR: artifacts/temporal-post-safety
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.6.1
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: pnpm
+
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start disposable dependencies
+        run: docker compose -f deploy/ci/docker-compose.release.yml up -d --wait
+
+      - name: Bootstrap clean database and prove migration status
+        run: pnpm prisma-bootstrap-disposable
+
+      - name: Run account and tenant release gate
+        run: pnpm test:account-tenant:release
+
+      - name: Create disposable Temporal namespace
+        run: >-
+          docker compose -f deploy/ci/docker-compose.release.yml exec -T temporal
+          tctl --address 127.0.0.1:7233 namespace register
+          --retention 1 socialflow-release-test
+
+      - name: Run Temporal publish release gate
+        run: pnpm test:publish-workflow:release
+
+      - name: Retain bounded release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence-${{ github.run_id }}
+          path: artifacts/temporal-post-safety
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Show service logs after failure
+        if: failure()
+        run: docker compose -f deploy/ci/docker-compose.release.yml logs --tail=200
+
+      - name: Stop disposable dependencies
+        if: always()
+        run: docker compose -f deploy/ci/docker-compose.release.yml down -v
+
+  arm64-image:
+    needs: runtime-gates
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve image name
+        id: image
+        shell: bash
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Authenticate to GHCR
+        if: github.event_name == 'workflow_dispatch' && inputs.publish_image
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build reviewed ARM64 image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.staging
+          platforms: linux/arm64
+          push: ${{ github.event_name == 'workflow_dispatch' && inputs.publish_image }}
+          tags: ${{ steps.image.outputs.name }}:staging-${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_VERSION=${{ github.sha }}
+            STAGING_PUBLIC_URL=${{ inputs.public_url || 'https://staging.invalid' }}
+          provenance: false
+          sbom: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
