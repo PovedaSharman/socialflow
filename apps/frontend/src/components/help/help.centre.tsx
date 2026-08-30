@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useT } from '@gitroom/react/translation/get.transation.service.client';
 import {
   helpArticles,
@@ -9,11 +10,28 @@ import {
 
 export const HelpCentre = () => {
   const t = useT();
+  const searchParams = useSearchParams();
+  const articleParam = searchParams.get('article') || '';
   const [query, setQuery] = useState('');
-  const [activeId, setActiveId] = useState(helpArticles[0]?.id || '');
+  const [activeId, setActiveId] = useState(
+    articleParam || helpArticles[0]?.id || ''
+  );
   const results = useMemo(() => searchHelpArticles(query), [query]);
   const active =
-    results.find((article) => article.id === activeId) || results[0];
+    results.find((article) => article.id === activeId) ||
+    helpArticles.find((article) => article.id === activeId) ||
+    results[0];
+
+  useEffect(() => {
+    if (!articleParam) {
+      return;
+    }
+    const match = helpArticles.find((article) => article.id === articleParam);
+    if (match) {
+      setActiveId(match.id);
+      setQuery('');
+    }
+  }, [articleParam]);
 
   return (
     <div className="flex flex-col gap-[20px]">
@@ -59,7 +77,7 @@ export const HelpCentre = () => {
               <button
                 type="button"
                 onClick={() => setActiveId(article.id)}
-                className={`w-full text-start cursor-pointer px-[14px] py-[12px] rounded-[8px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-btnPrimary ${
+                className={`w-full text-start cursor-pointer px-[14px] py-[12px] rounded-[8px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-btnPrimary min-h-[44px] ${
                   active?.id === article.id
                     ? 'bg-btnPrimary text-white border-transparent'
                     : 'bg-surface border-subtleBorder hover:bg-boxHover text-content'
@@ -84,7 +102,7 @@ export const HelpCentre = () => {
         </ul>
 
         {active ? (
-          <article className="bg-surface border border-subtleBorder rounded-[12px] p-[24px] flex flex-col gap-[12px] shadow-sm">
+          <article className="bg-surface border border-subtleBorder rounded-[12px] p-[24px] flex flex-col gap-[12px]">
             <h2 className="text-[18px] font-[600] text-content">
               {active.title}
             </h2>

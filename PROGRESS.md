@@ -326,6 +326,10 @@ No production-readiness claim is made.
   `description` now uses `MediaContent.alt` instead of a placeholder index label.
   Verification: media-accessibility audit (10 invariants) under 64 MB. Sandbox
   proof remains pending before production allowlisting.
+- Added a dismissible Calendar **Getting started** checklist (per-organisation
+  `localStorage`), Help `?article=` deep links, and an FAQ help article.
+  Verification: onboarding-help audit (4 invariants) under 64 MB. Browser proof
+  remains pending.
 - Stripe webhook retry-safe claims, public API scopes and WCAG primary contrast
   (`#047857`) are in source from prior Phase 1 commits; Jest specs for those
   slices remain unexecuted here.

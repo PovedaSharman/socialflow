@@ -11,5 +11,14 @@ Non-technical first-run path:
    connection test.
 7. Open Help when stuck; search for schedule, MCP or billing.
 
-The existing onboarding modal covers channel connection. Help centre articles
-provide recovery for later steps without requiring a new modal for every case.
+## In-product checklist
+
+Calendar shows a dismissible **Getting started** checklist per organisation.
+Progress is stored in browser `localStorage` under
+`sf-onboarding-checklist:<orgId>` so it survives reloads without a new API.
+Connecting an enabled channel auto-completes the channel step. Each step links
+to the matching Help article (`/help?article=…`).
+
+The existing onboarding modal still covers channel connection. Help centre
+articles and the FAQ entry provide recovery for later steps without requiring a
+new modal for every case.

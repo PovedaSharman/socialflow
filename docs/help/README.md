@@ -12,6 +12,13 @@ help centre. Edit both when changing customer guidance.
 - mcp-credentials — Use MCP and API credentials safely
 - billing-limits — Understand plans and limits
 - failed-posts — Recover a failed post
+- privacy-export — Export data or request deletion
+- faq — Frequently asked questions
+- connect-channel — Connect a social channel
+- accessible-media — Add accessible media descriptions
+- mcp-credentials — Use MCP and API credentials safely
+- billing-limits — Understand plans and limits
+- failed-posts — Recover a failed post
 
 ## Email catalogue
 

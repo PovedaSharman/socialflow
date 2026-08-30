@@ -10,22 +10,30 @@ const page = read('apps/frontend/src/app/(app)/(site)/help/page.tsx');
 const menu = read('apps/frontend/src/components/layout/top.menu.tsx');
 const onboarding = read('docs/ONBOARDING.md');
 const helpReadme = read('docs/help/README.md');
+const checklist = read(
+  'apps/frontend/src/components/onboarding/onboarding.checklist.tsx'
+);
+const launches = read(
+  'apps/frontend/src/components/launches/launches.component.tsx'
+);
 
 const invariants = [
   [
     articles.includes("id: 'first-schedule'") &&
       articles.includes("id: 'mcp-credentials'") &&
       articles.includes("id: 'privacy-export'") &&
+      articles.includes("id: 'faq'") &&
       articles.includes('searchHelpArticles') &&
       articles.includes('British'),
-    'help articles must cover first schedule, MCP and privacy with British English guidance',
+    'help articles must cover first schedule, MCP, privacy and FAQ with British English guidance',
   ],
   [
     centre.includes('htmlFor="help-search"') &&
       centre.includes('id="help-search"') &&
       centre.includes('type="search"') &&
-      centre.includes('searchHelpArticles(query)'),
-    'help centre must provide a labelled searchable catalogue',
+      centre.includes('searchHelpArticles(query)') &&
+      centre.includes("searchParams.get('article')"),
+    'help centre must provide a labelled searchable catalogue and deep links',
   ],
   [
     page.includes('HelpCentre') &&
@@ -35,9 +43,13 @@ const invariants = [
   ],
   [
     onboarding.includes('Schedule the first post') &&
+      onboarding.includes('sf-onboarding-checklist') &&
+      checklist.includes('OnboardingChecklist') &&
+      checklist.includes('sf-onboarding-checklist:') &&
+      launches.includes('OnboardingChecklist') &&
       helpReadme.includes('Email catalogue') &&
       helpReadme.includes('Registration verification'),
-    'onboarding and email catalogue documentation must exist',
+    'onboarding checklist, email catalogue and help docs must exist',
   ],
 ];
 

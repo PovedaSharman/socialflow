@@ -92,6 +92,19 @@ export const helpArticles: HelpArticle[] = [
       'Deletion requests require your password, are audited, and wait for an operator purge until legal retention rules are decided.',
     ].join('\n'),
   },
+  {
+    id: 'faq',
+    title: 'Frequently asked questions',
+    summary: 'Short answers for common first-week questions.',
+    tags: ['faq', 'onboarding', 'billing', 'security'],
+    body: [
+      'Why can I not paste a social token? SocialFlow only connects through official OAuth or provider-supported flows so secrets stay out of chat logs and screenshots.',
+      'Why was immediate publishing blocked? Immediate publish is opt-in, needs confirmation, and requires posts:publish on API/MCP credentials.',
+      'What happens if a post fails? Open the failed calendar card, read the safe error, fix the content or connection, then retry.',
+      'How do storage limits work? New media needs a trusted byte length. Unknown historical sizes (fileSize 0) are not treated as free capacity when billing is enabled.',
+      'Is SocialFlow production-ready? Only after release-host evidence in docs/READINESS.md is complete. Source presence alone is not enough.',
+    ].join('\n'),
+  },
 ];
 
 export function searchHelpArticles(query: string) {
