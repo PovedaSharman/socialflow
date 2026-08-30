@@ -317,14 +317,19 @@ No production-readiness claim is made.
   audit writes as best-effort so primary actions are not flipped. Verification:
   privacy-ops audit (8 invariants) under 64 MB; targeted Prettier under 128 MB.
   Jest specs updated but not executed.
+- Restored `DESIGN_SYSTEM.md` with interaction states, keyboard/focus, forms,
+  charts, reduced motion, responsive shell, showcase route, WCAG/viewport matrix
+  and source-vs-runtime distinction, while keeping the accessible green tokens.
 - Stripe webhook retry-safe claims, public API scopes and WCAG primary contrast
   (`#047857`) are in source from prior Phase 1 commits; Jest specs for those
   slices remain unexecuted here.
 
 ### Next (source vs release host)
 
-- Finish Phase 1.7 DESIGN_SYSTEM restore before new product features.
-- Obtain Milestone 4–10 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
+- Phase 1 source repairs above are in Git; obtain Milestone 4–10 runtime evidence
+  only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
 - On an approved host: `pnpm prisma-migrate-deploy` for the control-plane
   migration; MCP/Stripe/privacy/browser proofs.
 - Keep `docs/READINESS.md` Definition of Done honest; do not claim production readiness without off-host evidence.
+- Continue Phase 2 product gaps only after treating inflated “Source done”
+  claims as pending where runtime evidence is still missing.

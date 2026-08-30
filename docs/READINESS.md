@@ -33,6 +33,9 @@ Assessment date: 30 August 2026
   (`docs/OPS_BACKUP_MONITORING.md`).
 - Storage quota source controls: trusted sizes, Redis reservation, advisory-lock
   insert checks and `check:storage-quota` (runtime concurrency pending).
+- Restored design-system documentation covering interaction, keyboard, forms,
+  charts, motion, responsive shell, showcase route and WCAG/viewport matrix
+  (runtime axe/Playwright still pending).
 
 ## Not yet verified (requires approved release host or external systems)
 

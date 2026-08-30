@@ -75,8 +75,17 @@ const invariants = [
   [
     design.includes(lightPrimary) &&
       design.toLowerCase().includes('4.5:1') &&
-      design.includes('light-first'),
-    'design system must document the accessible green primary',
+      design.includes('light-first') &&
+      design.includes('## Interaction states') &&
+      design.includes('## Keyboard and focus') &&
+      design.includes('## Forms and error semantics') &&
+      design.includes('## Charts and data visualisation') &&
+      design.includes('prefers-reduced-motion') &&
+      design.includes('## Responsive shell') &&
+      design.includes('/design-system') &&
+      design.includes('## WCAG and viewport test matrix') &&
+      design.includes('Implemented source vs verified runtime'),
+    'design system must document accessible green primary and restored a11y sections',
   ],
   [
     mode.includes("useCookie('mode', 'light')") &&
