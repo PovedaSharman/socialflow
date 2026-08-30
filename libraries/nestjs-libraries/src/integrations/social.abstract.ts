@@ -4,6 +4,7 @@ import { PendingCheckResponse } from '@gitroom/nestjs-libraries/integrations/soc
 import { ApplicationFailure } from '@temporalio/activity';
 import { readOrFetch } from '@gitroom/helpers/utils/read.or.fetch';
 import { getSsrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
+import { readBoundedResponseBuffer } from '@gitroom/nestjs-libraries/upload/bounded.remote.buffer';
 import sharp from 'sharp';
 import { createReadStream, statSync } from 'fs';
 import { Readable } from 'stream';
@@ -233,7 +234,7 @@ export abstract class SocialAbstract {
           `Media server did not honor the range request (status ${response.status})`
         );
       }
-      return Buffer.from(await response.arrayBuffer());
+      return readBoundedResponseBuffer(response, end - start + 1);
     }
 
     return new Promise((resolve, reject) => {

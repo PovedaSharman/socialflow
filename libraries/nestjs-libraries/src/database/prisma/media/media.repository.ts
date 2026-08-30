@@ -51,6 +51,16 @@ export class MediaRepository {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${org}))`;
 
       if (limitBytes !== null) {
+        const unknownSizeCount = await tx.media.count({
+          where: {
+            organizationId: org,
+            deletedAt: null,
+            fileSize: 0,
+          },
+        });
+        if (unknownSizeCount > 0) {
+          throw new Error('storage_quota_historical_sizes_unknown');
+        }
         const aggregate = await tx.media.aggregate({
           where: {
             organizationId: org,
@@ -94,6 +104,16 @@ export class MediaRepository {
   }
 
   async sumOrganizationFileSize(org: string) {
+    const unknownSizeCount = await this._media.model.media.count({
+      where: {
+        organizationId: org,
+        deletedAt: null,
+        fileSize: 0,
+      },
+    });
+    if (unknownSizeCount > 0) {
+      throw new Error('storage_quota_historical_sizes_unknown');
+    }
     const result = await this._media.model.media.aggregate({
       where: {
         organizationId: org,

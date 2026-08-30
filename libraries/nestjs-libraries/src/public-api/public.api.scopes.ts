@@ -65,10 +65,15 @@ export function requiredScopeForPublicRequest(input: {
     return requiredScopeForPostType(input.body?.type);
   }
 
-  if (
-    (method === 'DELETE' && path.startsWith('/posts/')) ||
-    (method === 'PUT' && /^\/posts\/[^/]+\/(status|release-id)$/.test(path))
-  ) {
+  if (method === 'DELETE' && path.startsWith('/posts/')) {
+    return 'posts:draft';
+  }
+
+  if (method === 'PUT' && /^\/posts\/[^/]+\/status$/.test(path)) {
+    return requiredScopeForPostType(input.body?.status);
+  }
+
+  if (method === 'PUT' && /^\/posts\/[^/]+\/release-id$/.test(path)) {
     return 'posts:draft';
   }
 

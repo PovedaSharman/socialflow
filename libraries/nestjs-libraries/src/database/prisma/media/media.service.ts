@@ -138,7 +138,12 @@ export class MediaService {
       throw err;
     } finally {
       if (reserved) {
-        await releaseStorageReservation(org, trusted);
+        try {
+          await releaseStorageReservation(org, trusted);
+        } catch {
+          // The database insert may already be committed. A reservation has a
+          // TTL, so cleanup failure must not turn success into a duplicate retry.
+        }
       }
     }
   }

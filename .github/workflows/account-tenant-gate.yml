@@ -33,6 +33,7 @@ jobs:
       DATABASE_URL: postgresql://socialflow:socialflow-test-only@127.0.0.1:5432/socialflow_tenant_test
       RUN_DATABASE_INTEGRATION_TESTS: 'true'
       ALLOW_DISPOSABLE_DATABASE_TESTS: 'true'
+      ALLOW_DISPOSABLE_DATABASE_BOOTSTRAP: 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -50,7 +51,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Prepare disposable database
-        run: NODE_OPTIONS=--max-old-space-size=512 pnpm exec prisma db push --schema libraries/nestjs-libraries/src/database/prisma/schema.prisma
+        run: pnpm prisma-bootstrap-disposable
 
       - name: Run account and tenant gate
         shell: bash

@@ -113,15 +113,18 @@ const invariants = [
   ],
   [
     authContext.includes('missingMcpScope') &&
-      authContext.includes("ui === 'true'") &&
-      scheduleTool.includes('missingMcpScope(requiredScope') &&
+      authContext.includes("if (ui === 'true')") &&
+      scheduleTool.includes('enforceMcpScopeAudit(') &&
+      scheduleTool.includes('requiredScope,') &&
       scheduleTool.includes("'posts:publish'") &&
       scheduleTool.includes('recordMcpAudit') &&
-      imageTool.includes("missingMcpScope('media:generate'"),
+      imageTool.includes('enforceMcpScopeAudit(') &&
+      imageTool.includes("'media:generate'"),
     'MCP tools must enforce scopes with UI sessions exempt',
   ],
   [
-    auditTool.includes("missingMcpScope('audit:read'") &&
+    auditTool.includes('enforceMcpScopeAudit(') &&
+      auditTool.includes("'audit:read'") &&
       toolList.includes('AuditListTool') &&
       startMcpBudget.includes('gateMcpBudget') &&
       pricing.includes('mcp_calls_per_month') &&

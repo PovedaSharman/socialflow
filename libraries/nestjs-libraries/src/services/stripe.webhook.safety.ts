@@ -1,11 +1,12 @@
 import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
+import { randomUUID } from 'node:crypto';
 
 const KEY_PREFIX = 'stripe:webhook:event:';
 const COMPLETED_TTL_SECONDS = 60 * 60 * 24 * 7; // seven days
 const PROCESSING_LEASE_SECONDS = 120;
 
 export type StripeWebhookClaim =
-  | { status: 'claimed' }
+  | { status: 'claimed'; token: string }
   | { status: 'duplicate_completed' }
   | { status: 'in_progress' };
 
@@ -21,11 +22,7 @@ function parseState(raw: string | null) {
     return { kind: 'completed' as const };
   }
   if (raw.startsWith('processing:')) {
-    const expiresAt = Number(raw.slice('processing:'.length));
-    return {
-      kind: 'processing' as const,
-      expiresAt: Number.isFinite(expiresAt) ? expiresAt : 0,
-    };
+    return { kind: 'processing' as const };
   }
   // Legacy NX marker treated as completed so prior successful claims stay idempotent.
   return { kind: 'completed' as const };
@@ -38,8 +35,9 @@ function parseState(raw: string | null) {
  */
 export async function beginStripeWebhookProcessing(
   eventId: string,
-  nowMs = Date.now(),
-  leaseSeconds = PROCESSING_LEASE_SECONDS
+  _nowMs = Date.now(),
+  leaseSeconds = PROCESSING_LEASE_SECONDS,
+  ownerToken = randomUUID()
 ): Promise<StripeWebhookClaim> {
   const id = String(eventId || '').trim();
   if (!id) {
@@ -47,8 +45,7 @@ export async function beginStripeWebhookProcessing(
   }
 
   const key = stripeWebhookEventKey(id);
-  const expiresAt = nowMs + leaseSeconds * 1000;
-  const processingValue = `processing:${expiresAt}`;
+  const processingValue = `processing:${ownerToken}`;
 
   // Pure SET NX first — fastest path for a never-seen event.
   const created = await ioRedis.set(
@@ -59,7 +56,7 @@ export async function beginStripeWebhookProcessing(
     'NX'
   );
   if (created === 'OK') {
-    return { status: 'claimed' };
+    return { status: 'claimed', token: ownerToken };
   }
 
   const existing = parseState(await ioRedis.get(key));
@@ -71,65 +68,64 @@ export async function beginStripeWebhookProcessing(
       leaseSeconds,
       'NX'
     );
-    return retry === 'OK' ? { status: 'claimed' } : { status: 'in_progress' };
+    return retry === 'OK'
+      ? { status: 'claimed', token: ownerToken }
+      : { status: 'in_progress' };
   }
 
   if (existing.kind === 'completed') {
     return { status: 'duplicate_completed' };
   }
 
-  if (existing.kind === 'processing' && existing.expiresAt > nowMs) {
-    return { status: 'in_progress' };
-  }
-
-  // Expired processing lease: reclaim with compare-and-set via GET + SET XX only
-  // when the value is still the expired processing token.
-  const current = await ioRedis.get(key);
-  const currentState = parseState(current);
-  if (currentState?.kind === 'completed') {
-    return { status: 'duplicate_completed' };
-  }
-  if (currentState?.kind === 'processing' && currentState.expiresAt > nowMs) {
-    return { status: 'in_progress' };
-  }
-
-  // Delete expired marker then NX claim. Concurrent reclaimers serialize here.
-  if (current && current === (await ioRedis.get(key))) {
-    await ioRedis.del(key);
-  }
-  const reclaimed = await ioRedis.set(
-    key,
-    processingValue,
-    'EX',
-    leaseSeconds,
-    'NX'
-  );
-  return reclaimed === 'OK' ? { status: 'claimed' } : { status: 'in_progress' };
+  // Redis expires the processing key atomically. Never delete a claim here:
+  // doing so after GET would allow an expired worker to remove a newer owner.
+  return { status: 'in_progress' };
 }
 
-export async function completeStripeWebhookProcessing(eventId: string) {
-  const id = String(eventId || '').trim();
-  if (!id) {
-    return;
-  }
-  await ioRedis.set(
-    stripeWebhookEventKey(id),
-    'completed',
-    'EX',
-    COMPLETED_TTL_SECONDS
-  );
-}
-
-export async function releaseStripeWebhookProcessing(eventId: string) {
+export async function completeStripeWebhookProcessing(
+  eventId: string,
+  ownerToken: string
+) {
   const id = String(eventId || '').trim();
   if (!id) {
     return;
   }
   const key = stripeWebhookEventKey(id);
-  const current = await ioRedis.get(key);
-  if (parseState(current)?.kind === 'processing') {
-    await ioRedis.del(key);
+  return Number(
+    await ioRedis.eval(
+      `if redis.call('GET', KEYS[1]) == ARGV[1] then
+         redis.call('SET', KEYS[1], 'completed', 'EX', ARGV[2])
+         return 1
+       end
+       return 0`,
+      1,
+      key,
+      `processing:${ownerToken}`,
+      COMPLETED_TTL_SECONDS
+    )
+  );
+}
+
+export async function releaseStripeWebhookProcessing(
+  eventId: string,
+  ownerToken: string
+) {
+  const id = String(eventId || '').trim();
+  if (!id) {
+    return;
   }
+  const key = stripeWebhookEventKey(id);
+  return Number(
+    await ioRedis.eval(
+      `if redis.call('GET', KEYS[1]) == ARGV[1] then
+         return redis.call('DEL', KEYS[1])
+       end
+       return 0`,
+      1,
+      key,
+      `processing:${ownerToken}`
+    )
+  );
 }
 
 /** @deprecated Use beginStripeWebhookProcessing — kept for audit string checks. */

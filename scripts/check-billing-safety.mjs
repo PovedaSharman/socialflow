@@ -43,8 +43,16 @@ const invariants = [
   ],
   [
     controller.includes('beginStripeWebhookProcessing(event.id)') &&
-      controller.includes('completeStripeWebhookProcessing(event.id)') &&
-      controller.includes('releaseStripeWebhookProcessing(event.id)') &&
+      controller.includes(
+        'completeStripeWebhookProcessing(event.id, claim.token)'
+      ) &&
+      controller.includes(
+        'releaseStripeWebhookProcessing(event.id, claim.token)'
+      ) &&
+      controller.includes(
+        'Stripe webhook handling is still in progress'
+      ) &&
+      controller.includes('503') &&
       controller.includes('await this._stripeService') &&
       controller.includes('isStripeBillingConfigured(process.env)') &&
       controller.includes('duplicate: true'),

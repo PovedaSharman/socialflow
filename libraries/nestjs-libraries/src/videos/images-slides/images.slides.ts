@@ -9,6 +9,7 @@ import { chunk } from 'lodash';
 import Transloadit from 'transloadit';
 import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
 import { Readable } from 'stream';
+import { readBoundedResponseBuffer } from '@gitroom/nestjs-libraries/upload/bounded.remote.buffer';
 import { parseBuffer } from 'music-metadata';
 import { stringifySync } from 'subtitle';
 
@@ -30,7 +31,8 @@ async function getAudioDuration(buffer: Buffer): Promise<number> {
 
 class ImagesSlidesParams {
   @JSONSchema({
-    description: 'Elevenlabs voice id, use a special tool to get it, this is a required filed',
+    description:
+      'Elevenlabs voice id, use a special tool to get it, this is a required filed',
   })
   @IsString()
   voice: string;
@@ -45,7 +47,8 @@ class ImagesSlidesParams {
 @Video({
   identifier: 'image-text-slides',
   title: 'Image Text Slides',
-  description: 'Generate videos slides from images and text, Don\'t break down the slides, provide only the first slide information',
+  description:
+    "Generate videos slides from images and text, Don't break down the slides, provide only the first slide information",
   placement: 'text-to-image',
   tools: [{ functionName: 'loadVoices', output: 'voice id' }],
   dto: ImagesSlidesParams,
@@ -92,26 +95,28 @@ export class ImagesSlides extends VideoAbstract<ImagesSlidesParams> {
 
         all.push(
           new Promise(async (res) => {
-            const buffer = Buffer.from(
-              await (
-                await limit(() =>
-                  fetch(
-                    `https://api.elevenlabs.io/v1/text-to-speech/${customParams.voice}?output_format=mp3_44100_128`,
-                    {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'xi-api-key': process.env.ELEVENSLABS_API_KEY || '',
-                      },
-                      body: JSON.stringify({
-                        text: current.voiceText,
-                        model_id: 'eleven_multilingual_v2',
-                      }),
-                    }
-                  )
-                )
-              ).arrayBuffer()
+            const response = await limit(() =>
+              fetch(
+                `https://api.elevenlabs.io/v1/text-to-speech/${customParams.voice}?output_format=mp3_44100_128`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'xi-api-key': process.env.ELEVENSLABS_API_KEY || '',
+                  },
+                  body: JSON.stringify({
+                    text: current.voiceText,
+                    model_id: 'eleven_multilingual_v2',
+                  }),
+                }
+              )
             );
+            if (!response.ok) {
+              throw new Error(
+                `Text-to-speech request failed (${response.status}).`
+              );
+            }
+            const buffer = await readBoundedResponseBuffer(response);
 
             const { path } = await this.storage.uploadFile({
               buffer,

@@ -46,6 +46,7 @@ const invariants = [
       onboarding.includes('sf-onboarding-checklist') &&
       checklist.includes('OnboardingChecklist') &&
       checklist.includes('sf-onboarding-checklist:') &&
+      checklist.includes('restart_checklist') &&
       launches.includes('OnboardingChecklist') &&
       helpReadme.includes('Email catalogue') &&
       helpReadme.includes('Registration verification'),

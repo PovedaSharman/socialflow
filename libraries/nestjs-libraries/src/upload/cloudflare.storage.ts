@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  S3Client,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
 import 'multer';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import mime from 'mime-types';
@@ -10,6 +14,10 @@ import { isSafePublicHttpsUrl } from '@gitroom/nestjs-libraries/dtos/webhooks/we
 import { ssrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
 import { parseDataUrl } from '@gitroom/nestjs-libraries/upload/data.url';
 import { fromBuffer } from 'file-type';
+import {
+  readBoundedResponseBuffer,
+  remoteMediaMaxBytes,
+} from './bounded.remote.buffer';
 
 const ALLOWED_MIME_TYPES = new Set<string>([
   'image/jpeg',
@@ -90,7 +98,10 @@ class CloudflareStorage implements IUploadProvider {
         // @ts-ignore — undici option, not in lib.dom fetch types
         dispatcher: ssrfSafeDispatcher,
       });
-      body = Buffer.from(await loadImage.arrayBuffer());
+      if (!loadImage.ok) {
+        throw new Error(`Remote media fetch failed (${loadImage.status}).`);
+      }
+      body = await readBoundedResponseBuffer(loadImage, remoteMediaMaxBytes());
     }
     const detected = await fromBuffer(body);
     if (!detected || !ALLOWED_MIME_TYPES.has(detected.mime)) {
@@ -155,12 +166,16 @@ class CloudflareStorage implements IUploadProvider {
 
   // Implement the removeFile method from IUploadProvider
   async removeFile(filePath: string): Promise<void> {
-    // const fileName = filePath.split('/').pop(); // Extract the filename from the path
-    // const command = new DeleteObjectCommand({
-    //   Bucket: this._bucketName,
-    //   Key: fileName,
-    // });
-    // await this._client.send(command);
+    const pathname = new URL(filePath, this._uploadUrl).pathname;
+    const key = decodeURIComponent(
+      pathname.split('/').filter(Boolean).pop() || ''
+    );
+    if (!key || key.includes('/') || key.includes('\\')) {
+      throw new Error('Invalid object key.');
+    }
+    await this._client.send(
+      new DeleteObjectCommand({ Bucket: this._bucketName, Key: key })
+    );
   }
 }
 

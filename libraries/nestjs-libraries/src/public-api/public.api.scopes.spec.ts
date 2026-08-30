@@ -47,6 +47,27 @@ describe('public API scopes', () => {
         path: '/public/v1/posts/abc',
       })
     ).toBe('posts:draft');
+    expect(
+      requiredScopeForPublicRequest({
+        method: 'PUT',
+        path: '/public/v1/posts/abc/status',
+        body: { status: 'draft' },
+      })
+    ).toBe('posts:draft');
+    expect(
+      requiredScopeForPublicRequest({
+        method: 'PUT',
+        path: '/public/v1/posts/abc/status',
+        body: { status: 'schedule' },
+      })
+    ).toBe('posts:schedule');
+    expect(
+      requiredScopeForPublicRequest({
+        method: 'PUT',
+        path: '/public/v1/posts/abc/status',
+        body: { status: 'unknown' },
+      })
+    ).toBeUndefined();
   });
 
   it('denies read-only credentials for writes, uploads, generation and deletion', () => {
@@ -64,6 +85,22 @@ describe('public API scopes', () => {
         auth: readOnly,
       }).allowed
     ).toBe(false);
+
+    expect(
+      evaluatePublicApiScope({
+        method: 'PUT',
+        path: '/public/v1/posts/x/status',
+        body: { status: 'schedule' },
+        auth: {
+          organizationId: 'org-a',
+          mcpScopes: ['posts:draft'],
+        },
+      })
+    ).toMatchObject({
+      allowed: false,
+      required: 'posts:schedule',
+      reason: 'missing_scope',
+    });
 
     expect(
       evaluatePublicApiScope({

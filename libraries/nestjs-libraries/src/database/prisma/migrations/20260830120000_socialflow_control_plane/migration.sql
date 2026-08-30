@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS "ApiCredential" (
     "name" TEXT NOT NULL,
     "prefix" TEXT NOT NULL,
     "secretHash" TEXT NOT NULL,
-    "scopes" TEXT[],
+    "scopes" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     "expiresAt" TIMESTAMP(3),
     "lastUsedAt" TIMESTAMP(3),
     "revokedAt" TIMESTAMP(3),

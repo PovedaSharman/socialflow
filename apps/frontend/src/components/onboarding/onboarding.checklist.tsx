@@ -109,8 +109,24 @@ export const OnboardingChecklist: FC = () => {
     persist({ ...state, dismissed: true });
   }, [persist, state]);
 
-  if (!ready || !orgId || state.dismissed) {
+  const restart = useCallback(() => {
+    persist(defaultState());
+  }, [persist]);
+
+  if (!ready || !orgId) {
     return null;
+  }
+
+  if (state.dismissed) {
+    return (
+      <button
+        type="button"
+        className="self-start text-[13px] underline text-content min-h-[44px] px-[8px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-btnPrimary"
+        onClick={restart}
+      >
+        {t('restart_checklist', 'Restart getting started')}
+      </button>
+    );
   }
 
   const steps: Array<{

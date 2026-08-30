@@ -45,7 +45,9 @@ const invariants = [
   [
     mediaRepository.includes('pg_advisory_xact_lock') &&
       mediaRepository.includes('saveFileAtomic') &&
-      mediaRepository.includes('fitsStorageQuota'),
+      mediaRepository.includes('fitsStorageQuota') &&
+      mediaRepository.includes('storage_quota_historical_sizes_unknown') &&
+      mediaRepository.includes('fileSize: 0'),
     'PostgreSQL must re-check quota under an organisation advisory lock',
   ],
   [

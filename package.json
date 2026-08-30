@@ -46,6 +46,7 @@
     "prisma-generate": "pnpm dlx prisma@6.5.0 generate --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-migrate-deploy": "pnpm dlx prisma@6.5.0 migrate deploy --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-migrate-status": "pnpm dlx prisma@6.5.0 migrate status --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
+    "prisma-bootstrap-disposable": "bash ./scripts/bootstrap-disposable-database.sh",
     "prisma-db-push": "pnpm dlx prisma@6.5.0 db push --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-db-pull": "pnpm dlx prisma@6.5.0 db pull --schema ./libraries/nestjs-libraries/src/database/prisma/schema.prisma",
     "prisma-reset": "cd ./libraries/nestjs-libraries/src/database/prisma && pnpm dlx prisma@6.5.0 db push --force-reset && pnpx prisma@6.5.0 db push",

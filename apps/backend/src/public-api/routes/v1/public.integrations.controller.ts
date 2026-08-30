@@ -40,6 +40,10 @@ import { GetNotificationsDto } from '@gitroom/nestjs-libraries/dtos/notification
 import { Readable } from 'stream';
 import { ssrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
 import { fromBuffer } from 'file-type';
+import {
+  readBoundedResponseBuffer,
+  remoteMediaMaxBytes,
+} from '@gitroom/nestjs-libraries/upload/bounded.remote.buffer';
 
 const PUBLIC_API_ALLOWED_MIME = new Set<string>([
   'image/jpeg',
@@ -63,10 +67,12 @@ import { PostValidationException } from '@gitroom/backend/api/routes/posts.valid
 import { timer } from '@gitroom/helpers/utils/timer';
 import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
 import { PublicApiScopeGuard } from '@gitroom/backend/public-api/public.api.scope.guard';
+import { PublicApiAuditInterceptor } from '@gitroom/backend/public-api/public.api.audit.interceptor';
 
 @ApiTags('Public API')
 @Controller('/public/v1')
 @UseGuards(PublicApiScopeGuard)
+@UseInterceptors(PublicApiAuditInterceptor)
 export class PublicIntegrationsController {
   private storage = UploadFactory.createStorage();
 
@@ -126,13 +132,21 @@ export class PublicIntegrationsController {
     // Content-Length may be absent or wrong, so we re-check the real size after
     // download too. The type isn't known yet (sniffed below), so the pre-check
     // uses the largest allowed cap (video).
-    const maxDownloadSize = getMaxSize('video/mp4');
+    const maxDownloadSize = Math.min(
+      getMaxSize('video/mp4'),
+      remoteMediaMaxBytes()
+    );
     const declaredSize = Number(response.headers.get('content-length'));
     if (declaredSize && declaredSize > maxDownloadSize) {
       throw new HttpException({ msg: 'File is too large.' }, 400);
     }
 
-    const buffer = Buffer.from(await response.arrayBuffer());
+    let buffer: Buffer;
+    try {
+      buffer = await readBoundedResponseBuffer(response, maxDownloadSize);
+    } catch {
+      throw new HttpException({ msg: 'File is too large.' }, 400);
+    }
     const detected = await fromBuffer(buffer);
     if (!detected || !PUBLIC_API_ALLOWED_MIME.has(detected.mime)) {
       throw new HttpException({ msg: 'Unsupported file type.' }, 400);

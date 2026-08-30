@@ -11,6 +11,7 @@ import { CodesService } from '@gitroom/nestjs-libraries/services/codes.service';
 import { PublicIntegrationsController } from '@gitroom/backend/public-api/routes/v1/public.integrations.controller';
 import { PublicAuthMiddleware } from '@gitroom/backend/services/auth/public.auth.middleware';
 import { PublicApiScopeGuard } from '@gitroom/backend/public-api/public.api.scope.guard';
+import { PublicApiAuditInterceptor } from '@gitroom/backend/public-api/public.api.audit.interceptor';
 
 const authenticatedController = [PublicIntegrationsController];
 @Module({
@@ -26,6 +27,7 @@ const authenticatedController = [PublicIntegrationsController];
     CodesService,
     IntegrationManager,
     PublicApiScopeGuard,
+    PublicApiAuditInterceptor,
   ],
   get exports() {
     return [...this.imports, ...this.providers];

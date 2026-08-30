@@ -40,7 +40,10 @@ export class StripeController {
       return { ok: true, duplicate: true };
     }
     if (claim.status === 'in_progress') {
-      return { ok: true, duplicate: true, inProgress: true };
+      throw new HttpException(
+        'Stripe webhook handling is still in progress',
+        503
+      );
     }
 
     // Maybe it comes from another stripe webhook
@@ -50,7 +53,7 @@ export class StripeController {
       event?.data?.object?.metadata?.service !== 'gitroom' &&
       event.type !== 'invoice.payment_succeeded'
     ) {
-      await completeStripeWebhookProcessing(event.id);
+      await completeStripeWebhookProcessing(event.id, claim.token);
       return { ok: true };
     }
 
@@ -73,10 +76,10 @@ export class StripeController {
           result = { ok: true };
           break;
       }
-      await completeStripeWebhookProcessing(event.id);
+      await completeStripeWebhookProcessing(event.id, claim.token);
       return result;
     } catch (e) {
-      await releaseStripeWebhookProcessing(event.id);
+      await releaseStripeWebhookProcessing(event.id, claim.token);
       throw new HttpException('Stripe webhook handling failed', 500);
     }
   }

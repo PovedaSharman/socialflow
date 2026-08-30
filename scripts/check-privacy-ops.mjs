@@ -50,6 +50,12 @@ const privacyDoc = read('docs/PRIVACY.md');
 const opsDoc = read('docs/OPS_BACKUP_MONITORING.md');
 const releaseHost = read('docs/RELEASE_HOST_EVIDENCE.md');
 const readiness = read('docs/READINESS.md');
+const publicGuard = read(
+  'apps/backend/src/public-api/public.api.scope.guard.ts'
+);
+const publicAudit = read(
+  'apps/backend/src/public-api/public.api.audit.interceptor.ts'
+);
 
 const invariants = [
   [
@@ -114,6 +120,12 @@ const invariants = [
       schedulePost.includes('mcp.posts.write') &&
       privacyRepo.includes('audit_event_write_failed'),
     'MCP reads, writes and generation must audit allow/deny/fail best-effort',
+  ],
+  [
+    publicGuard.includes("outcome: 'denied'") &&
+      publicAudit.includes("record('success')") &&
+      publicAudit.includes("record('failed', error)"),
+    'public API audit outcomes must be recorded after allow, deny or failure is known',
   ],
   [
     privacyDoc.includes('Implemented in source') &&

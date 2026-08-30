@@ -1,9 +1,14 @@
 import { IUploadProvider } from './upload.interface';
 import { mkdirSync, unlink, writeFileSync } from 'fs';
+import { resolve, sep } from 'path';
 import { isSafePublicHttpsUrl } from '@gitroom/nestjs-libraries/dtos/webhooks/webhook.url.validator';
 import { ssrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
 import { parseDataUrl } from '@gitroom/nestjs-libraries/upload/data.url';
 import { fromBuffer } from 'file-type';
+import {
+  readBoundedResponseBuffer,
+  remoteMediaMaxBytes,
+} from './bounded.remote.buffer';
 
 const LOCAL_STORAGE_ALLOWED_MIME = new Set<string>([
   'image/jpeg',
@@ -36,7 +41,10 @@ export class LocalStorage implements IUploadProvider {
         // @ts-ignore — undici option, not in lib.dom fetch types
         dispatcher: ssrfSafeDispatcher,
       });
-      body = Buffer.from(await loadImage.arrayBuffer());
+      if (!loadImage.ok) {
+        throw new Error(`Remote media fetch failed (${loadImage.status}).`);
+      }
+      body = await readBoundedResponseBuffer(loadImage, remoteMediaMaxBytes());
     }
 
     // Never trust the claimed mime/extension (data URL header, remote
@@ -113,10 +121,25 @@ export class LocalStorage implements IUploadProvider {
   }
 
   async removeFile(filePath: string): Promise<void> {
-    // Logic to remove the file from the filesystem goes here
+    const root = resolve(this.uploadDirectory);
+    let pathname: string;
+    try {
+      pathname = new URL(filePath).pathname;
+    } catch {
+      pathname = filePath;
+    }
+    const relative = decodeURIComponent(pathname).replace(/^\/uploads\/?/, '');
+    const target = resolve(root, relative);
+    if (target !== root && !target.startsWith(`${root}${sep}`)) {
+      throw new Error('Invalid local upload path.');
+    }
     return new Promise((resolve, reject) => {
-      unlink(filePath, (err) => {
+      unlink(target, (err) => {
         if (err) {
+          if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+            resolve();
+            return;
+          }
           reject(err);
         } else {
           resolve();

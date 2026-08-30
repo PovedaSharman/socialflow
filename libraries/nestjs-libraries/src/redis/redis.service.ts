@@ -27,6 +27,23 @@ class MockRedis {
     return 1;
   }
 
+  async eval(
+    script: string,
+    _numberOfKeys: number,
+    key: string,
+    ...args: any[]
+  ) {
+    if (this.data.get(key) !== args[0]) {
+      return 0;
+    }
+    if (script.includes("'completed'")) {
+      this.data.set(key, 'completed');
+      return 1;
+    }
+    this.data.delete(key);
+    return 1;
+  }
+
   // Add other Redis methods as needed for your tests
 }
 

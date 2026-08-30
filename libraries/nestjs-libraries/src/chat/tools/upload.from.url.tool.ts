@@ -9,6 +9,10 @@ import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
 import { ssrfSafeDispatcher } from '@gitroom/nestjs-libraries/dtos/webhooks/ssrf.safe.dispatcher';
 import { Readable } from 'stream';
 import { fromBuffer } from 'file-type';
+import {
+  readBoundedResponseBuffer,
+  remoteMediaMaxBytes,
+} from '@gitroom/nestjs-libraries/upload/bounded.remote.buffer';
 
 // Same allow-list as the public API /upload-from-url route.
 const ALLOWED_MIME = new Set<string>([
@@ -80,7 +84,10 @@ so the attachment passes the upload-domain validation. Returns the hosted media 
           // memory. Content-Length may be absent or wrong, so we re-check the
           // real size after download too. The type isn't known yet (sniffed
           // below), so the pre-check uses the largest allowed cap (video).
-          const maxDownloadSize = getMaxSize('video/mp4');
+          const maxDownloadSize = Math.min(
+            getMaxSize('video/mp4'),
+            remoteMediaMaxBytes()
+          );
           const declaredSize = Number(response.headers.get('content-length'));
           if (declaredSize && declaredSize > maxDownloadSize) {
             return {
@@ -88,7 +95,10 @@ so the attachment passes the upload-domain validation. Returns the hosted media 
             };
           }
 
-          const buffer = Buffer.from(await response.arrayBuffer());
+          const buffer = await readBoundedResponseBuffer(
+            response,
+            maxDownloadSize
+          );
           const detected = await fromBuffer(buffer);
           if (!detected || !ALLOWED_MIME.has(detected.mime)) {
             return { error: 'Unsupported file type.' };

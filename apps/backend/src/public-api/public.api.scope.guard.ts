@@ -27,15 +27,16 @@ export class PublicApiScopeGuard implements CanActivate {
           }
         : null,
     });
+    request.publicApiScopeDecision = decision;
 
-    if (org?.id) {
+    if (org?.id && !decision.allowed) {
       await this._privacyRepository.createAuditEvent({
         organizationId: org.id,
         actorUserId: null,
         action: 'api.request',
         targetType: 'public_api',
         targetId: decision.required || null,
-        outcome: decision.allowed ? 'success' : 'denied',
+        outcome: 'denied',
         source: 'api',
         requestId: request.headers?.['x-request-id'] || null,
         metadata: {

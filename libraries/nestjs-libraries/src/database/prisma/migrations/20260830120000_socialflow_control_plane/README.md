@@ -11,6 +11,11 @@ pnpm prisma-migrate-deploy
 
 Never use `prisma db push --accept-data-loss` in production.
 
+For a completely empty disposable test/staging database, use the guarded
+`pnpm prisma-bootstrap-disposable` procedure in `docs/SCHEMA_APPLY.md`. The
+repository does not contain upstream historical migrations, so this additive
+migration alone is intentionally not a clean-database bootstrap.
+
 ## What this migration does
 
 - Ensures `Media.fileSize` exists (`INTEGER NOT NULL DEFAULT 0`).
