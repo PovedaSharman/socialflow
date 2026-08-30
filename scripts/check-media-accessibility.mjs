@@ -41,6 +41,9 @@ const tumblr = read(
 const slack = read(
   'libraries/nestjs-libraries/src/integrations/social/slack.provider.ts'
 );
+const discord = read(
+  'libraries/nestjs-libraries/src/integrations/social/discord.provider.ts'
+);
 const testProvider = read(
   'libraries/nestjs-libraries/src/integrations/social/socialflow.test.provider.ts'
 );
@@ -113,6 +116,8 @@ const invariants = [
       tumblr.includes('alt_text: item.alt') &&
       slack.includes("mediaAlternativeText = 'official-api'") &&
       slack.includes("alt_text: m.alt?.trim() || 'Media'") &&
+      discord.includes("mediaAlternativeText = 'official-api'") &&
+      discord.includes('description: p.alt?.trim()') &&
       testProvider.includes("mediaAlternativeText = 'official-api'"),
     'source-verified official-api adapters must declare and transmit alternative text',
   ],

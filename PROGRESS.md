@@ -320,6 +320,12 @@ No production-readiness claim is made.
 - Restored `DESIGN_SYSTEM.md` with interaction states, keyboard/focus, forms,
   charts, reduced motion, responsive shell, showcase route, WCAG/viewport matrix
   and source-vs-runtime distinction, while keeping the accessible green tokens.
+- Downgraded milestones 6–9 in `IMPLEMENTATION_PLAN.md` from “Source done” to
+  “Partial source / gate pending” after Phase 1 review findings.
+- Declared Discord as an official-API alt-text transmitter: attachment
+  `description` now uses `MediaContent.alt` instead of a placeholder index label.
+  Verification: media-accessibility audit (10 invariants) under 64 MB. Sandbox
+  proof remains pending before production allowlisting.
 - Stripe webhook retry-safe claims, public API scopes and WCAG primary contrast
   (`#047857`) are in source from prior Phase 1 commits; Jest specs for those
   slices remain unexecuted here.

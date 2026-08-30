@@ -31,6 +31,7 @@ Source-verified transmitters in this repository:
 | `mastodon` / `mastodon-custom` | Mastodon media `description`       |
 | `tumblr`                       | Tumblr image block `alt_text`      |
 | `slack`                        | Slack image block `alt_text`       |
+| `discord`                      | Discord attachment `description`   |
 | `socialflow-test`              | Local simulation (no outbound API) |
 
 All other adapters remain undisclosed transmitters until an official-API audit

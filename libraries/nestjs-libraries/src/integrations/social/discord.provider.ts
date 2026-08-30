@@ -18,6 +18,7 @@ export class DiscordProvider extends SocialAbstract implements SocialProvider {
   name = 'Discord';
   isBetweenSteps = false;
   editor = 'markdown' as const;
+  mediaAlternativeText = 'official-api' as const;
   scopes = ['identify', 'guilds'];
   maxLength() {
     return 1980;
@@ -156,7 +157,8 @@ export class DiscordProvider extends SocialAbstract implements SocialProvider {
           }),
           attachments: media?.map((p, index) => ({
             id: index,
-            description: `Picture ${index}`,
+            // Discord attachment `description` is the official alt-text field.
+            description: p.alt?.trim() || undefined,
             filename: p.path.split('/').pop(),
           })),
         })

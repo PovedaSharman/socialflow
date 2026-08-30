@@ -2,18 +2,22 @@
 
 The plan uses evidence gates. Inherited Postiz behaviour is **available**, not **verified**, until its milestone gate passes.
 
-| Milestone               | Work                                                                                                             | Verification gate                                                                | Status       |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------ |
-| 1. Import and audit     | Import stable upstream without nesting, record architecture/capabilities/gaps/licence, establish docs and remote | Clean baseline identified; upstream tag and commit recorded; audit docs reviewed | Complete     |
-| 2. Local environment    | Node 22, pnpm, PostgreSQL, Redis, Temporal, storage and mail test path; safe seed/test provider                  | Fresh checkout can install, migrate, seed and start from documented commands     | Complete     |
-| 3. Design system        | Central branding, tokens, primitives, responsive shell, themes, component showcase                               | Automated WCAG checks plus visual review at 360/768/1024/1440                    | Gate pending |
-| 4. Auth and tenancy     | Account lifecycle, roles, invitations, tenant guards, encrypted tokens                                           | Cross-tenant matrix and account lifecycle integration tests pass                 | In progress  |
-| 5. Content and OAuth    | Composer, approvals, calendar, media, retries, connection health and test provider                               | User schedules with documented test provider; retry produces one publish         | In progress  |
-| 6. MCP and API          | Hashed scoped credentials, Bearer-only streamable HTTP, audit and client instructions                            | Create/use/revoke credential tests; default immediate publish denial             | Source done / gate pending |
-| 7. Billing and usage    | Stripe test checkout/portal/webhooks, plan config, atomic quotas, cost caps                                      | Signed replay-safe webhook fixtures and limit boundary tests pass                | Source done / gate pending |
-| 8. Onboarding and help  | Checklist, contextual recovery, MDX help/FAQ, email catalogue                                                    | New non-technical user completes first schedule; search and links tested         | Source done / gate pending |
-| 9. Admin and operations | Audit viewer, privacy export/deletion, consent, rate limits, logs, health, backup/monitoring docs                | Security tests, restore drill record and operational smoke tests pass            | Source done / gate pending |
-| 10. Release validation  | Full CI/build/accessibility/security/responsive/deployment review                                                | Readiness report lists evidence and all external blockers                        | In progress                 |
+| Milestone               | Work                                                                                                             | Verification gate                                                                | Status                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------- |
+| 1. Import and audit     | Import stable upstream without nesting, record architecture/capabilities/gaps/licence, establish docs and remote | Clean baseline identified; upstream tag and commit recorded; audit docs reviewed | Complete                      |
+| 2. Local environment    | Node 22, pnpm, PostgreSQL, Redis, Temporal, storage and mail test path; safe seed/test provider                  | Fresh checkout can install, migrate, seed and start from documented commands     | Complete                      |
+| 3. Design system        | Central branding, tokens, primitives, responsive shell, themes, component showcase                               | Automated WCAG checks plus visual review at 360/768/1024/1440                    | Gate pending                  |
+| 4. Auth and tenancy     | Account lifecycle, roles, invitations, tenant guards, encrypted tokens                                           | Cross-tenant matrix and account lifecycle integration tests pass                 | In progress                   |
+| 5. Content and OAuth    | Composer, approvals, calendar, media, retries, connection health and test provider                               | User schedules with documented test provider; retry produces one publish         | In progress                   |
+| 6. MCP and API          | Hashed scoped credentials, Bearer-only streamable HTTP, audit and client instructions                            | Create/use/revoke credential tests; default immediate publish denial             | Partial source / gate pending |
+| 7. Billing and usage    | Stripe test checkout/portal/webhooks, plan config, atomic quotas, cost caps                                      | Signed replay-safe webhook fixtures and limit boundary tests pass                | Partial source / gate pending |
+| 8. Onboarding and help  | Checklist, contextual recovery, MDX help/FAQ, email catalogue                                                    | New non-technical user completes first schedule; search and links tested         | Partial source / gate pending |
+| 9. Admin and operations | Audit viewer, privacy export/deletion, consent, rate limits, logs, health, backup/monitoring docs                | Security tests, restore drill record and operational smoke tests pass            | Partial source / gate pending |
+| 10. Release validation  | Full CI/build/accessibility/security/responsive/deployment review                                                | Readiness report lists evidence and all external blockers                        | In progress                   |
+
+Phase 1 review repairs (scopes, Stripe webhook claims, storage quotas, contrast,
+migrations, audit HMAC, design-system docs) closed inflated “Source done”
+claims for milestones 6–9 until release-host evidence exists.
 
 ## Working rules
 
