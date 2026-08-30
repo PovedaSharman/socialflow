@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHmac } from 'node:crypto';
 
 export type AuditEventInput = {
   organizationId: string;
@@ -21,17 +21,31 @@ const blockedMetadataKeys = [
   'secret',
   'authorization',
   'apiKey',
+  'apikey',
   'content',
   'message',
   'body',
+  'prompt',
+  'bearer',
 ];
 
-export function hashAuditIp(ip: string | null | undefined) {
+/**
+ * Pseudonymise client IPs with HMAC-SHA256.
+ * Without `AUDIT_IP_HMAC_KEY`, returns null (never falls back to unsalted hashing).
+ */
+export function hashAuditIp(
+  ip: string | null | undefined,
+  hmacKey: string | null | undefined = process.env.AUDIT_IP_HMAC_KEY
+) {
   const value = String(ip || '').trim();
   if (!value) {
     return null;
   }
-  return createHash('sha256').update(value).digest('hex');
+  const key = String(hmacKey || '').trim();
+  if (!key) {
+    return null;
+  }
+  return createHmac('sha256', key).update(value).digest('hex');
 }
 
 export function sanitizeAuditMetadata(
@@ -62,3 +76,11 @@ export function sanitizeAuditMetadata(
   }
   return Object.keys(safe).length ? safe : null;
 }
+
+/**
+ * Reliability policy: audit persistence failures must not convert a successful
+ * (or intentionally denied) primary action into an ambiguous client failure.
+ * Callers should await `safeCreateAuditEvent` and ignore a null return.
+ */
+export const AUDIT_WRITE_RELIABILITY_POLICY =
+  'Audit writes are best-effort. Primary allow/deny/fail outcomes proceed even when AuditEvent persistence fails; operators must monitor audit_event_write_failed signals separately.';

@@ -3,14 +3,19 @@ import { createTool } from '@mastra/core/tools';
 import { Injectable } from '@nestjs/common';
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import z from 'zod';
+import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
+import { PrivacyRepository } from '@gitroom/nestjs-libraries/database/prisma/privacy/privacy.repository';
 import {
-  checkAuth,
-  missingMcpScope,
-} from '@gitroom/nestjs-libraries/chat/auth.context';
+  enforceMcpScopeAudit,
+  recordMcpAudit,
+} from '@gitroom/nestjs-libraries/chat/mcp.audit';
 
 @Injectable()
 export class IntegrationListTool implements AgentToolInterface {
-  constructor(private _integrationService: IntegrationService) {}
+  constructor(
+    private _integrationService: IntegrationService,
+    private _privacyRepository: PrivacyRepository
+  ) {}
   name = 'integrationList';
 
   run() {
@@ -46,7 +51,13 @@ export class IntegrationListTool implements AgentToolInterface {
       }),
       execute: async (inputData, context) => {
         checkAuth(inputData, context);
-        const scopeError = missingMcpScope('channels:read', context);
+        const scopeError = await enforceMcpScopeAudit(
+          this._privacyRepository,
+          context,
+          'channels:read',
+          'mcp.channels.read',
+          'integration'
+        );
         if (scopeError) {
           throw new Error(scopeError);
         }
@@ -54,29 +65,34 @@ export class IntegrationListTool implements AgentToolInterface {
           (context?.requestContext as any)?.get('organization') as string
         ).id;
 
-        return {
-          output: (
-            await this._integrationService.getIntegrationsList(organizationId)
-          )
-            .filter(
-              (p) => !inputData.group || p.customer?.id === inputData.group
-            )
-            .map((p) => ({
-              name: p.name,
-              id: p.id,
-              disabled: p.disabled,
-              picture: p.picture || '/no-picture.jpg',
-              platform: p.providerIdentifier,
-              display: p.profile,
-              type: p.type,
-              customer: p.customer
-                ? {
-                    id: p.customer.id,
-                    name: p.customer.name,
-                  }
-                : undefined,
-            })),
-        };
+        const output = (
+          await this._integrationService.getIntegrationsList(organizationId)
+        )
+          .filter((p) => !inputData.group || p.customer?.id === inputData.group)
+          .map((p) => ({
+            name: p.name,
+            id: p.id,
+            disabled: p.disabled,
+            picture: p.picture || '/no-picture.jpg',
+            platform: p.providerIdentifier,
+            display: p.profile,
+            type: p.type,
+            customer: p.customer
+              ? {
+                  id: p.customer.id,
+                  name: p.customer.name,
+                }
+              : undefined,
+          }));
+
+        await recordMcpAudit(this._privacyRepository, context, {
+          action: 'mcp.channels.read',
+          targetType: 'integration',
+          outcome: 'success',
+          metadata: { count: output.length },
+        });
+
+        return { output };
       },
     });
   }

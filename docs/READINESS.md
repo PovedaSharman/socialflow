@@ -26,8 +26,9 @@ Assessment date: 30 August 2026
   billing safety, onboarding/help, privacy/ops). See `PROGRESS.md`.
 - Fail-closed release-host runners and CI workflow definitions for account/
   tenant and Temporal publish gates. Definitions are not passing evidence.
-- Privacy/ops source controls: audit sanitisation, consent/export/deletion
-  request APIs, credential create/revoke audits, settings UI, `/monitor/live` +
+- Privacy/ops source controls: HMAC IP hashing (`AUDIT_IP_HMAC_KEY`), sanitised
+  metadata, best-effort audit writes, credential/API/MCP/website coverage,
+  consent/export/deletion request APIs, settings UI, `/monitor/live` +
   `/monitor/ready`, auth IP throttling, backup/monitoring runbook
   (`docs/OPS_BACKUP_MONITORING.md`).
 - Storage quota source controls: trusted sizes, Redis reservation, advisory-lock

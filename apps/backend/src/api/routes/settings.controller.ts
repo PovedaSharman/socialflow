@@ -16,14 +16,15 @@ import { AddTeamMemberDto } from '@gitroom/nestjs-libraries/dtos/settings/add.te
 import { AdminAddTeamMemberDto } from '@gitroom/nestjs-libraries/dtos/settings/admin.add.team.member.dto';
 import { ShortlinkPreferenceDto } from '@gitroom/nestjs-libraries/dtos/settings/shortlink-preference.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { AuthorizationActions, Sections } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import {
+  AuthorizationActions,
+  Sections,
+} from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 
 @ApiTags('Settings')
 @Controller('/settings')
 export class SettingsController {
-  constructor(
-    private _organizationService: OrganizationService
-  ) {}
+  constructor(private _organizationService: OrganizationService) {}
 
   @Get('/team')
   @CheckPolicies(
@@ -57,9 +58,10 @@ export class SettingsController {
   @CheckPolicies([AuthorizationActions.Create, Sections.ADMIN])
   revokeTeamInvitation(
     @GetOrgFromRequest() org: Organization,
+    @GetUserFromRequest() user: User,
     @Param('id') id: string
   ) {
-    return this._organizationService.revokeTeamInvitation(org.id, id);
+    return this._organizationService.revokeTeamInvitation(org.id, id, user.id);
   }
 
   @Post('/team/add')

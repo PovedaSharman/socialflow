@@ -18,21 +18,27 @@ export class PrivacyRepository {
     private _userOrganization: PrismaRepository<'userOrganization'>
   ) {}
 
-  createAuditEvent(input: AuditEventInput) {
-    return this._auditEvent.model.auditEvent.create({
-      data: {
-        organizationId: input.organizationId,
-        actorUserId: input.actorUserId || null,
-        action: input.action,
-        targetType: input.targetType,
-        targetId: input.targetId || null,
-        outcome: input.outcome,
-        source: input.source,
-        requestId: input.requestId || null,
-        metadata: sanitizeAuditMetadata(input.metadata) as object | undefined,
-        ipHash: hashAuditIp(input.ip),
-      },
-    });
+  async createAuditEvent(input: AuditEventInput) {
+    try {
+      return await this._auditEvent.model.auditEvent.create({
+        data: {
+          organizationId: input.organizationId,
+          actorUserId: input.actorUserId || null,
+          action: input.action,
+          targetType: input.targetType,
+          targetId: input.targetId || null,
+          outcome: input.outcome,
+          source: input.source,
+          requestId: input.requestId || null,
+          metadata: sanitizeAuditMetadata(input.metadata) as object | undefined,
+          ipHash: hashAuditIp(input.ip),
+        },
+      });
+    } catch {
+      // Best-effort: never fail the primary action because audit persistence failed.
+      console.error('audit_event_write_failed');
+      return null;
+    }
   }
 
   listAuditEvents(organizationId: string, take = 100) {

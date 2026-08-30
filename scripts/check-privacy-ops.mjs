@@ -20,6 +20,22 @@ const apiCredentialService = read(
 const apiCredentialController = read(
   'apps/backend/src/api/routes/api-credentials.controller.ts'
 );
+const mcpAudit = read('libraries/nestjs-libraries/src/chat/mcp.audit.ts');
+const integrationList = read(
+  'libraries/nestjs-libraries/src/chat/tools/integration.list.tool.ts'
+);
+const generateImage = read(
+  'libraries/nestjs-libraries/src/chat/tools/generate.image.tool.ts'
+);
+const generateVideo = read(
+  'libraries/nestjs-libraries/src/chat/tools/generate.video.tool.ts'
+);
+const schedulePost = read(
+  'libraries/nestjs-libraries/src/chat/tools/integration.schedule.post.ts'
+);
+const privacyRepo = read(
+  'libraries/nestjs-libraries/src/database/prisma/privacy/privacy.repository.ts'
+);
 const monitor = read('apps/backend/src/api/routes/monitor.controller.ts');
 const throttler = read(
   'libraries/nestjs-libraries/src/throttler/throttler.provider.ts'
@@ -42,9 +58,13 @@ const invariants = [
       schema.includes('ipHash') &&
       sanitize.includes('sanitizeAuditMetadata') &&
       sanitize.includes('hashAuditIp') &&
+      sanitize.includes('createHmac') &&
+      sanitize.includes('AUDIT_IP_HMAC_KEY') &&
+      sanitize.includes('AUDIT_WRITE_RELIABILITY_POLICY') &&
       sanitize.includes("'password'") &&
-      sanitize.includes("'content'"),
-    'audit storage must hash IPs and drop secret/content metadata',
+      sanitize.includes("'content'") &&
+      sanitize.includes("'prompt'"),
+    'audit storage must HMAC-hash IPs and drop secret/content metadata',
   ],
   [
     controller.includes("@Controller('/user/privacy')") &&
@@ -81,9 +101,19 @@ const invariants = [
   [
     apiCredentialService.includes('api_credential.create') &&
       apiCredentialService.includes('api_credential.revoke') &&
+      apiCredentialService.includes('api_credential.use') &&
       apiCredentialService.includes('createAuditEvent') &&
       apiCredentialController.includes('user.id'),
-    'credential create and revoke must write sanitised audit events',
+    'credential create, use and revoke must write sanitised audit events',
+  ],
+  [
+    mcpAudit.includes('enforceMcpScopeAudit') &&
+      integrationList.includes('mcp.channels.read') &&
+      generateImage.includes('mcp.media.generate') &&
+      generateVideo.includes('mcp.media.generate') &&
+      schedulePost.includes('mcp.posts.write') &&
+      privacyRepo.includes('audit_event_write_failed'),
+    'MCP reads, writes and generation must audit allow/deny/fail best-effort',
   ],
   [
     privacyDoc.includes('Implemented in source') &&

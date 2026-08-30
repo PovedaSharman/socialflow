@@ -4,6 +4,8 @@ import {
 } from '@gitroom/nestjs-libraries/chat/async.storage';
 import { PrivacyRepository } from '@gitroom/nestjs-libraries/database/prisma/privacy/privacy.repository';
 import { AuditEventInput } from '@gitroom/nestjs-libraries/database/prisma/privacy/audit.event';
+import { missingMcpScope } from '@gitroom/nestjs-libraries/chat/auth.context';
+import { McpScope } from '@gitroom/nestjs-libraries/chat/mcp.scopes';
 
 export type McpOrgContext = {
   id: string;
@@ -52,4 +54,28 @@ export async function recordMcpAudit(
       ...(org?.apiCredentialId ? { apiCredentialId: org.apiCredentialId } : {}),
     },
   });
+}
+
+/**
+ * Enforce an MCP scope and record allowed/denied outcomes without secrets.
+ * Returns an error string when denied; callers should throw or return it.
+ */
+export async function enforceMcpScopeAudit(
+  privacyRepository: PrivacyRepository,
+  context: any,
+  required: McpScope,
+  action: string,
+  targetType: string
+): Promise<string | undefined> {
+  const scopeError = missingMcpScope(required, context);
+  if (scopeError) {
+    await recordMcpAudit(privacyRepository, context, {
+      action,
+      targetType,
+      outcome: 'denied',
+      metadata: { reason: 'missing_scope', required },
+    });
+    return scopeError;
+  }
+  return undefined;
 }

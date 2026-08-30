@@ -2,26 +2,21 @@ import { AgentToolInterface } from '@gitroom/nestjs-libraries/chat/agent.tool.in
 import { createTool } from '@mastra/core/tools';
 import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
-import {
-  IntegrationManager,
-  socialIntegrationList,
-} from '@gitroom/nestjs-libraries/integrations/integration.manager';
-import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
-import { RefreshToken } from '@gitroom/nestjs-libraries/integrations/social.abstract';
-import { timer } from '@gitroom/helpers/utils/timer';
 import { MediaService } from '@gitroom/nestjs-libraries/database/prisma/media/media.service';
-import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { VideoManager } from '@gitroom/nestjs-libraries/videos/video.manager';
+import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
+import { PrivacyRepository } from '@gitroom/nestjs-libraries/database/prisma/privacy/privacy.repository';
 import {
-  checkAuth,
-  missingMcpScope,
-} from '@gitroom/nestjs-libraries/chat/auth.context';
+  enforceMcpScopeAudit,
+  recordMcpAudit,
+} from '@gitroom/nestjs-libraries/chat/mcp.audit';
 
 @Injectable()
 export class GenerateVideoTool implements AgentToolInterface {
   constructor(
     private _mediaService: MediaService,
-    private _videoManager: VideoManager
+    private _videoManager: VideoManager,
+    private _privacyRepository: PrivacyRepository
   ) {}
   name = 'generateVideoTool';
 
@@ -62,31 +57,55 @@ export class GenerateVideoTool implements AgentToolInterface {
       }),
       execute: async (inputData, context) => {
         checkAuth(inputData, context);
-        const scopeError = missingMcpScope('media:generate', context);
+        const scopeError = await enforceMcpScopeAudit(
+          this._privacyRepository,
+          context,
+          'media:generate',
+          'mcp.media.generate',
+          'media'
+        );
         if (scopeError) {
           throw new Error(scopeError);
         }
         const org = JSON.parse(
           (context?.requestContext as any)?.get('organization') as string
         );
-        const value = await this._mediaService.generateVideo(org, {
-          type: inputData.identifier,
-          output: inputData.output,
-          customParams: inputData.customParams.reduce(
-            (
-              all: Record<string, any>,
-              current: { key: string; value: any }
-            ) => ({
-              ...all,
-              [current.key]: current.value,
-            }),
-            {} as Record<string, any>
-          ),
-        });
+        try {
+          const value = await this._mediaService.generateVideo(org, {
+            type: inputData.identifier,
+            output: inputData.output,
+            customParams: inputData.customParams.reduce(
+              (
+                all: Record<string, any>,
+                current: { key: string; value: any }
+              ) => ({
+                ...all,
+                [current.key]: current.value,
+              }),
+              {} as Record<string, any>
+            ),
+          });
 
-        return {
-          url: value.path,
-        };
+          await recordMcpAudit(this._privacyRepository, context, {
+            action: 'mcp.media.generate',
+            targetType: 'media',
+            targetId: value.id,
+            outcome: 'success',
+            metadata: { kind: 'video', identifier: inputData.identifier },
+          });
+
+          return {
+            url: value.path,
+          };
+        } catch (err) {
+          await recordMcpAudit(this._privacyRepository, context, {
+            action: 'mcp.media.generate',
+            targetType: 'media',
+            outcome: 'failed',
+            metadata: { kind: 'video', identifier: inputData.identifier },
+          });
+          throw err;
+        }
       },
     });
   }

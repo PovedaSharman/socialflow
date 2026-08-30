@@ -312,16 +312,18 @@ No production-readiness claim is made.
   Verification: `check:storage-quota` (7 invariants) under 64 MB; targeted
   Prettier under 128 MB. Jest specs added but not executed; Redis/DB concurrency
   proofs remain pending off-host.
-- Downgraded earlier claims that soft `fileSize` aggregation alone closed storage
-  quotas; atomic reservation and trusted sizes are now in source (runtime pending).
+- Activity auditing now HMAC-pseudonymises IPs with `AUDIT_IP_HMAC_KEY` (no
+  unsalted fallback), expands MCP/API/credential/website coverage, and treats
+  audit writes as best-effort so primary actions are not flipped. Verification:
+  privacy-ops audit (8 invariants) under 64 MB; targeted Prettier under 128 MB.
+  Jest specs updated but not executed.
 - Stripe webhook retry-safe claims, public API scopes and WCAG primary contrast
   (`#047857`) are in source from prior Phase 1 commits; Jest specs for those
   slices remain unexecuted here.
 
 ### Next (source vs release host)
 
-- Finish Phase 1.6–1.7 source repairs (audit HMAC coverage, DESIGN_SYSTEM
-  restore) before new product features.
+- Finish Phase 1.7 DESIGN_SYSTEM restore before new product features.
 - Obtain Milestone 4–10 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
 - On an approved host: `pnpm prisma-migrate-deploy` for the control-plane
   migration; MCP/Stripe/privacy/browser proofs.

@@ -16,6 +16,7 @@ import {
   canManageTeam,
   roleRank,
 } from '@gitroom/helpers/auth/organization.role';
+import { PrivacyRepository } from '@gitroom/nestjs-libraries/database/prisma/privacy/privacy.repository';
 
 const escapeHtml = (value: string) =>
   value.replace(
@@ -34,7 +35,8 @@ const escapeHtml = (value: string) =>
 export class OrganizationService {
   constructor(
     private _organizationRepository: OrganizationRepository,
-    private _notificationsService: NotificationService
+    private _notificationsService: NotificationService,
+    private _privacyRepository: PrivacyRepository
   ) {}
   async createOrgAndUser(
     body: Omit<CreateOrgUserDto, 'providerToken'> & { providerId?: string },
@@ -173,14 +175,37 @@ export class OrganizationService {
     return this._organizationRepository.listTeamInvitations(organizationId);
   }
 
-  async revokeTeamInvitation(organizationId: string, invitationId: string) {
+  async revokeTeamInvitation(
+    organizationId: string,
+    invitationId: string,
+    actorUserId?: string | null
+  ) {
     const result = await this._organizationRepository.revokeTeamInvitation(
       organizationId,
       invitationId
     );
     if (result.count !== 1) {
+      await this._privacyRepository.createAuditEvent({
+        organizationId,
+        actorUserId: actorUserId || null,
+        action: 'team.invitation.revoke',
+        targetType: 'invitation',
+        targetId: invitationId,
+        outcome: 'failed',
+        source: 'website',
+        metadata: { reason: 'not_found_or_inactive' },
+      });
       throw new HttpException('Invitation not found or no longer active', 404);
     }
+    await this._privacyRepository.createAuditEvent({
+      organizationId,
+      actorUserId: actorUserId || null,
+      action: 'team.invitation.revoke',
+      targetType: 'invitation',
+      targetId: invitationId,
+      outcome: 'success',
+      source: 'website',
+    });
     return { revoked: true };
   }
 

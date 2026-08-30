@@ -4,16 +4,21 @@ import { z } from 'zod';
 import { Injectable } from '@nestjs/common';
 import { MediaService } from '@gitroom/nestjs-libraries/database/prisma/media/media.service';
 import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
+import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
+import { PrivacyRepository } from '@gitroom/nestjs-libraries/database/prisma/privacy/privacy.repository';
 import {
-  checkAuth,
-  missingMcpScope,
-} from '@gitroom/nestjs-libraries/chat/auth.context';
+  enforceMcpScopeAudit,
+  recordMcpAudit,
+} from '@gitroom/nestjs-libraries/chat/mcp.audit';
 
 @Injectable()
 export class GenerateImageTool implements AgentToolInterface {
   private storage = UploadFactory.createStorage();
 
-  constructor(private _mediaService: MediaService) {}
+  constructor(
+    private _mediaService: MediaService,
+    private _privacyRepository: PrivacyRepository
+  ) {}
   name = 'generateImageTool';
 
   run() {
@@ -41,29 +46,55 @@ export class GenerateImageTool implements AgentToolInterface {
       }),
       execute: async (inputData, context) => {
         checkAuth(inputData, context);
-        const scopeError = missingMcpScope('media:generate', context);
+        const scopeError = await enforceMcpScopeAudit(
+          this._privacyRepository,
+          context,
+          'media:generate',
+          'mcp.media.generate',
+          'media'
+        );
         if (scopeError) {
           throw new Error(scopeError);
         }
         const org = JSON.parse(
           (context?.requestContext as any)?.get('organization') as string
         );
-        const image = await this._mediaService.generateImage(
-          inputData.prompt,
-          org
-        );
+        try {
+          const image = await this._mediaService.generateImage(
+            inputData.prompt,
+            org
+          );
 
-        const dataUrl = 'data:image/png;base64,' + image;
-        const knownSize = Buffer.from(image, 'base64').length;
-        const file = await this.storage.uploadSimple(dataUrl);
+          const dataUrl = 'data:image/png;base64,' + image;
+          const knownSize = Buffer.from(image, 'base64').length;
+          const file = await this.storage.uploadSimple(dataUrl);
 
-        return this._mediaService.saveFile(
-          org.id,
-          file.split('/').pop()!,
-          file,
-          undefined,
-          knownSize
-        );
+          const saved = await this._mediaService.saveFile(
+            org.id,
+            file.split('/').pop()!,
+            file,
+            undefined,
+            knownSize
+          );
+
+          await recordMcpAudit(this._privacyRepository, context, {
+            action: 'mcp.media.generate',
+            targetType: 'media',
+            targetId: saved.id,
+            outcome: 'success',
+            metadata: { kind: 'image' },
+          });
+
+          return saved;
+        } catch (err) {
+          await recordMcpAudit(this._privacyRepository, context, {
+            action: 'mcp.media.generate',
+            targetType: 'media',
+            outcome: 'failed',
+            metadata: { kind: 'image' },
+          });
+          throw err;
+        }
       },
     });
   }

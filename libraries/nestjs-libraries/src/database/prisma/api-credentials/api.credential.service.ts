@@ -123,6 +123,17 @@ export class ApiCredentialService {
       credential.id
     );
 
+    await this._privacyRepository.createAuditEvent({
+      organizationId: credential.organizationId,
+      actorUserId: null,
+      action: 'api_credential.use',
+      targetType: 'api_credential',
+      targetId: credential.id,
+      outcome: 'success',
+      source: 'api',
+      metadata: { prefix: credential.prefix },
+    });
+
     return {
       organization: credential.organization,
       scopes: credential.scopes,

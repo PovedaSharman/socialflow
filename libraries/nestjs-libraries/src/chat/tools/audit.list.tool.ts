@@ -2,12 +2,10 @@ import { AgentToolInterface } from '@gitroom/nestjs-libraries/chat/agent.tool.in
 import { createTool } from '@mastra/core/tools';
 import { Injectable } from '@nestjs/common';
 import z from 'zod';
-import {
-  checkAuth,
-  missingMcpScope,
-} from '@gitroom/nestjs-libraries/chat/auth.context';
+import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
 import { PrivacyRepository } from '@gitroom/nestjs-libraries/database/prisma/privacy/privacy.repository';
 import {
+  enforceMcpScopeAudit,
   readMcpOrganization,
   recordMcpAudit,
 } from '@gitroom/nestjs-libraries/chat/mcp.audit';
@@ -56,14 +54,14 @@ export class AuditListTool implements AgentToolInterface {
       }),
       execute: async (inputData, context) => {
         checkAuth(inputData, context);
-        const scopeError = missingMcpScope('audit:read', context);
+        const scopeError = await enforceMcpScopeAudit(
+          this._privacyRepository,
+          context,
+          'audit:read',
+          'mcp.audit.list',
+          'audit'
+        );
         if (scopeError) {
-          await recordMcpAudit(this._privacyRepository, context, {
-            action: 'mcp.audit.list',
-            targetType: 'audit',
-            outcome: 'denied',
-            metadata: { reason: 'missing_scope' },
-          });
           return { output: [], errors: scopeError };
         }
 

@@ -29,28 +29,24 @@ export class PublicApiScopeGuard implements CanActivate {
     });
 
     if (org?.id) {
-      try {
-        await this._privacyRepository.createAuditEvent({
-          organizationId: org.id,
-          actorUserId: null,
-          action: 'api.request',
-          targetType: 'public_api',
-          targetId: decision.required || null,
-          outcome: decision.allowed ? 'success' : 'denied',
-          source: 'api',
-          requestId: request.headers?.['x-request-id'] || null,
-          metadata: {
-            action: decision.action,
-            required: decision.required || null,
-            reason: decision.reason || null,
-            authKind: org.authKind || null,
-            apiCredentialId: org.apiCredentialId || null,
-          },
-          ip: request.ip,
-        });
-      } catch {
-        // Auditing must not flip allow/deny; failures are swallowed by policy.
-      }
+      await this._privacyRepository.createAuditEvent({
+        organizationId: org.id,
+        actorUserId: null,
+        action: 'api.request',
+        targetType: 'public_api',
+        targetId: decision.required || null,
+        outcome: decision.allowed ? 'success' : 'denied',
+        source: 'api',
+        requestId: request.headers?.['x-request-id'] || null,
+        metadata: {
+          action: decision.action,
+          required: decision.required || null,
+          reason: decision.reason || null,
+          authKind: org.authKind || null,
+          apiCredentialId: org.apiCredentialId || null,
+        },
+        ip: request.ip,
+      });
     }
 
     if (!decision.allowed) {

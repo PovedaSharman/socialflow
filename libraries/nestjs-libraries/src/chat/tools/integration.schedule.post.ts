@@ -7,16 +7,16 @@ import { PostsService } from '@gitroom/nestjs-libraries/database/prisma/posts/po
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import { AllProvidersSettings } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/all.providers.settings';
 import { Integration } from '@prisma/client';
-import {
-  checkAuth,
-  missingMcpScope,
-} from '@gitroom/nestjs-libraries/chat/auth.context';
+import { checkAuth } from '@gitroom/nestjs-libraries/chat/auth.context';
 import {
   ValidUrlExtension,
   ValidUrlPath,
 } from '@gitroom/helpers/utils/valid.url.path';
 import { PrivacyRepository } from '@gitroom/nestjs-libraries/database/prisma/privacy/privacy.repository';
-import { recordMcpAudit } from '@gitroom/nestjs-libraries/chat/mcp.audit';
+import {
+  enforceMcpScopeAudit,
+  recordMcpAudit,
+} from '@gitroom/nestjs-libraries/chat/mcp.audit';
 
 const validUrlExtension = new ValidUrlExtension();
 const validUrlPath = new ValidUrlPath();
@@ -147,14 +147,14 @@ If the tools return errors, you would need to rerun it with the right parameters
             )
           ? 'posts:schedule'
           : 'posts:draft';
-        const scopeError = missingMcpScope(requiredScope, context);
+        const scopeError = await enforceMcpScopeAudit(
+          this._privacyRepository,
+          context,
+          requiredScope,
+          'mcp.posts.write',
+          'post'
+        );
         if (scopeError) {
-          await recordMcpAudit(this._privacyRepository, context, {
-            action: 'mcp.posts.write',
-            targetType: 'post',
-            outcome: 'denied',
-            metadata: { reason: 'missing_scope', requiredScope },
-          });
           return { errors: scopeError };
         }
         const organizationId = JSON.parse(
