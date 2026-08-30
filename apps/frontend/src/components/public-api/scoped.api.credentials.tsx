@@ -156,7 +156,7 @@ export const ScopedApiCredentialsSection = () => {
               type="button"
               disabled={creating}
               onClick={createCredential}
-              className="cursor-pointer px-[16px] h-[44px] bg-[#059669] hover:bg-[#047857] disabled:opacity-60 text-white transition-colors rounded-[8px] text-[13px] font-[600]"
+              className="cursor-pointer px-[16px] h-[44px] bg-[#047857] hover:bg-[#065F46] disabled:opacity-60 text-white transition-colors rounded-[8px] text-[13px] font-[600]"
             >
               {creating
                 ? t('creating', 'Creating…')

@@ -212,7 +212,7 @@ const OnboardingStep1: FC<{ onNext: () => void; onSkip: () => void }> = ({
       <div className="flex justify-end pt-[24px] mt-[8px]">
         <button
           onClick={onNext}
-          className="group flex items-center gap-[12px] bg-gradient-to-r from-[#059669] to-[#34d399] hover:from-[#047857] hover:to-[#6ee7b7] text-white font-semibold px-[32px] py-[14px] rounded-[12px] text-[16px] transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30"
+          className="group flex items-center gap-[12px] bg-gradient-to-r from-[#047857] to-[#34d399] hover:from-[#065F46] hover:to-[#6ee7b7] text-white font-semibold px-[32px] py-[14px] rounded-[12px] text-[16px] transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30"
         >
           {sortedIntegrations.length > 0
             ? t('continue', 'Continue')
@@ -296,7 +296,7 @@ const OnboardingStep2: FC<{ onBack: () => void; onFinish: () => void }> = ({
         </button>
         <button
           onClick={onFinish}
-          className="group flex items-center gap-[12px] bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#34d399] hover:to-[#10b981] text-white font-semibold px-[32px] py-[14px] rounded-[12px] text-[16px] transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
+          className="group flex items-center gap-[12px] bg-gradient-to-r from-[#10b981] to-[#047857] hover:from-[#34d399] hover:to-[#10b981] text-white font-semibold px-[32px] py-[14px] rounded-[12px] text-[16px] transition-all shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40"
         >
           {t('get_started', 'Get Started')}
           <svg

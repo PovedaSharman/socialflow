@@ -35,7 +35,7 @@ export default async function AuthLayout({
           className="pointer-events-none absolute inset-0 opacity-[0.55]"
           style={{
             background:
-              'radial-gradient(ellipse at 70% 20%, rgba(5, 150, 105, 0.14), transparent 55%), radial-gradient(ellipse at 20% 80%, rgba(5, 150, 105, 0.08), transparent 50%), linear-gradient(180deg, #fbfcfb 0%, #f4f6f5 100%)',
+              'radial-gradient(ellipse at 70% 20%, rgba(4, 120, 87, 0.14), transparent 55%), radial-gradient(ellipse at 20% 80%, rgba(4, 120, 87, 0.08), transparent 50%), linear-gradient(180deg, #fbfcfb 0%, #f4f6f5 100%)',
           }}
         />
         <div className="relative z-[1] text-center text-content">
