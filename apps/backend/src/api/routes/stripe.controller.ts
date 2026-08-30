@@ -8,8 +8,10 @@ import {
 import { StripeService } from '@gitroom/nestjs-libraries/services/stripe.service';
 import { ApiTags } from '@nestjs/swagger';
 import {
-  claimStripeWebhookEvent,
+  beginStripeWebhookProcessing,
+  completeStripeWebhookProcessing,
   isStripeBillingConfigured,
+  releaseStripeWebhookProcessing,
 } from '@gitroom/nestjs-libraries/services/stripe.webhook.safety';
 
 @ApiTags('Stripe')
@@ -33,9 +35,12 @@ export class StripeController {
       process.env.STRIPE_SIGNING_KEY
     );
 
-    const claimed = await claimStripeWebhookEvent(event.id);
-    if (!claimed) {
+    const claim = await beginStripeWebhookProcessing(event.id);
+    if (claim.status === 'duplicate_completed') {
       return { ok: true, duplicate: true };
+    }
+    if (claim.status === 'in_progress') {
+      return { ok: true, duplicate: true, inProgress: true };
     }
 
     // Maybe it comes from another stripe webhook
@@ -45,24 +50,34 @@ export class StripeController {
       event?.data?.object?.metadata?.service !== 'gitroom' &&
       event.type !== 'invoice.payment_succeeded'
     ) {
+      await completeStripeWebhookProcessing(event.id);
       return { ok: true };
     }
 
     try {
+      let result: unknown = { ok: true };
       switch (event.type) {
         case 'invoice.payment_succeeded':
-          return this._stripeService.paymentSucceeded(event);
+          result = await this._stripeService.paymentSucceeded(event);
+          break;
         case 'customer.subscription.created':
-          return this._stripeService.createSubscription(event);
+          result = await this._stripeService.createSubscription(event);
+          break;
         case 'customer.subscription.updated':
-          return this._stripeService.updateSubscription(event);
+          result = await this._stripeService.updateSubscription(event);
+          break;
         case 'customer.subscription.deleted':
-          return this._stripeService.deleteSubscription(event);
+          result = await this._stripeService.deleteSubscription(event);
+          break;
         default:
-          return { ok: true };
+          result = { ok: true };
+          break;
       }
+      await completeStripeWebhookProcessing(event.id);
+      return result;
     } catch (e) {
-      throw new HttpException(e, 500);
+      await releaseStripeWebhookProcessing(event.id);
+      throw new HttpException('Stripe webhook handling failed', 500);
     }
   }
 }

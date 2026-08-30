@@ -16,12 +16,14 @@ fixtures and live Stripe proofs remain pending on an approved host.
 
 ## Current source controls
 
-- `claimStripeWebhookEvent` stores each processed event id in Redis with NX and
-  a seven-day TTL so duplicate Stripe deliveries short-circuit safely.
-- `isStripeBillingConfigured` accepts only `sk_test_` secrets in production
-  unless live mode is attested.
-- The `/stripe` webhook controller refuses unconfigured modes with HTTP 503 and
-  acknowledges duplicate event ids without re-running handlers.
+- Webhook idempotency uses a Redis state machine: a short `processing:` lease
+  claims the event, `completed` is written only after the handler finishes, and
+  failures release the lease so Stripe retries can run again. Concurrent
+  deliveries while a lease is active are acknowledged as in-progress duplicates.
+- `isStripeBillingConfigured` accepts only `sk_test_` secrets unless
+  `ALLOW_STRIPE_LIVE_MODE=true` is set (every environment).
+- The `/stripe` webhook controller refuses unconfigured modes with HTTP 503,
+  awaits handlers inside a try/catch, and never logs event payloads or secrets.
 - `usage.limit.ts` resolves channel allowance from plan configuration and
   purchased allotments, enforces hard comparisons, and supplies British-English
   denial messages with an explicit next step. `SubscriptionException` (HTTP 402)

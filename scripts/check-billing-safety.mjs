@@ -29,8 +29,11 @@ const invariants = [
   [
     safety.includes("KEY_PREFIX = 'stripe:webhook:event:'") &&
       safety.includes("'NX'") &&
-      safety.includes('claimStripeWebhookEvent'),
-    'webhook events must be claimed once with Redis NX',
+      safety.includes('beginStripeWebhookProcessing') &&
+      safety.includes('completeStripeWebhookProcessing') &&
+      safety.includes('releaseStripeWebhookProcessing') &&
+      safety.includes('processing:'),
+    'webhook events must use a processing lease and complete only after success',
   ],
   [
     safety.includes("startsWith('sk_test_')") &&
@@ -39,10 +42,13 @@ const invariants = [
     'production must stay on Stripe test mode until live mode is attested',
   ],
   [
-    controller.includes('claimStripeWebhookEvent(event.id)') &&
+    controller.includes('beginStripeWebhookProcessing(event.id)') &&
+      controller.includes('completeStripeWebhookProcessing(event.id)') &&
+      controller.includes('releaseStripeWebhookProcessing(event.id)') &&
+      controller.includes('await this._stripeService') &&
       controller.includes('isStripeBillingConfigured(process.env)') &&
       controller.includes('duplicate: true'),
-    'the webhook controller must gate mode and ignore duplicate events',
+    'the webhook controller must await handlers and only complete after success',
   ],
   [
     envExample.includes('ALLOW_STRIPE_LIVE_MODE') &&
