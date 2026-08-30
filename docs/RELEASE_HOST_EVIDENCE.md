@@ -1,6 +1,6 @@
 # Release-host evidence requirements
 
-Status: **not collected on the development laptop**  
+Status: **not collected on the development laptop**
 Last updated: 29 August 2026
 
 This workstation must not run Jest, TypeScript builds, Temporal workers,
