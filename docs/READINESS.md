@@ -1,7 +1,7 @@
 # Release readiness report
 
 Status: **not production-ready**  
-Assessment date: 29 August 2026
+Assessment date: 30 August 2026
 
 ## Definition of Done (must all be evidenced)
 
@@ -38,7 +38,10 @@ See `docs/RELEASE_HOST_EVIDENCE.md` for commands and recording rules. Summary:
 - Milestone 4/5 runtime gates and Temporal publish histories.
 - Full-service startup and registration-to-onboarding on the current RC.
 - Provider OAuth sandboxes and production allowlist population.
-- Prisma migrate for `ApiCredential`, `AuditEvent` and `ConsentPreference`.
+- `pnpm prisma-migrate-deploy` for migration
+  `20260830120000_socialflow_control_plane` (`ApiCredential`, `AuditEvent`,
+  `ConsentPreference`, `Media.fileSize`). Migration SQL is in source; apply is
+  pending off-host.
 - Live MCP and Stripe test matrices.
 - GDPR browser proof, restore drill record and monitoring destinations.
 - WCAG AA automation, keyboard/responsive review and current production builds.

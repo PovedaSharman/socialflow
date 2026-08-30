@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 29 August 2026
+Last updated: 30 August 2026
 
 ## Current implementation milestone: 5 — content and OAuth
 
@@ -298,8 +298,24 @@ No production-readiness claim is made.
 - Rethemed the product to a light-first white/grey canvas with emerald green accent (`#059669`), retired indigo/purple brand defaults, defaulted the theme cookie to light, and replaced hardcoded purple CTA hexes. Verification: theme-palette audit under 64 MB.
 - Enforced fail-closed public REST scope checks via `PublicApiScopeGuard` (post type → draft/schedule/publish, uploads, generation, deletion) with audited allow/deny and documented legacy credential defaults. Verification: MCP credentials audit (10 invariants) under 64 MB. Jest specs added but not executed on this laptop.
 
+### Phase 1 review repairs (in progress)
+
+- Added reviewed Prisma migration `20260830120000_socialflow_control_plane` for
+  `ApiCredential`, `AuditEvent`, `ConsentPreference` and `Media.fileSize`, with
+  rollback/backfill notes. Root scripts now expose `prisma-migrate-deploy` /
+  `prisma-migrate-status`; production docs forbid `db push --accept-data-loss`.
+  Migration was **not** executed on this laptop.
+- Downgraded earlier claims that soft `fileSize` aggregation alone closed storage
+  quotas; atomic reservation and trusted sizes remain Phase 1.3 work.
+- Stripe webhook retry-safe claims, public API scopes and WCAG primary contrast
+  (`#047857`) are in source from prior Phase 1 commits; Jest specs for those
+  slices remain unexecuted here.
+
 ### Next (source vs release host)
 
+- Finish Phase 1.3–1.7 source repairs (storage quotas, audit HMAC coverage,
+  DESIGN_SYSTEM restore) before new product features.
 - Obtain Milestone 4–10 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
-- On an approved host: Prisma generate/schema apply for `ApiCredential`, `AuditEvent` and `ConsentPreference`; MCP/Stripe/privacy/browser proofs.
+- On an approved host: `pnpm prisma-migrate-deploy` for the control-plane
+  migration; MCP/Stripe/privacy/browser proofs.
 - Keep `docs/READINESS.md` Definition of Done honest; do not claim production readiness without off-host evidence.

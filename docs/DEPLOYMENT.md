@@ -11,7 +11,7 @@ This is a target runbook. It is not evidence of a completed deployment.
 - S3-compatible private object storage with controlled public delivery
 - TLS-terminating ingress for frontend and backend
 
-Build the frontend, backend and orchestrator from the same Git commit. Run Prisma migrations as a one-off release job before traffic shift. Do not run `prisma db push --accept-data-loss` in production.
+Build the frontend, backend and orchestrator from the same Git commit. Apply reviewed Prisma migrations with `pnpm prisma-migrate-deploy` (or `prisma migrate deploy` against the same schema path) as a one-off release job before traffic shift. Do not run `prisma db push --accept-data-loss` in production. See [SCHEMA_APPLY.md](SCHEMA_APPLY.md).
 
 ## Release order
 
