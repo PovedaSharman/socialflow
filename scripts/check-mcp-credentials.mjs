@@ -42,6 +42,19 @@ const startMcpBudget = read('libraries/nestjs-libraries/src/chat/start.mcp.ts');
 const pricing = read(
   'libraries/nestjs-libraries/src/database/prisma/subscriptions/pricing.ts'
 );
+const publicScopes = read(
+  'libraries/nestjs-libraries/src/public-api/public.api.scopes.ts'
+);
+const publicGuard = read(
+  'apps/backend/src/public-api/public.api.scope.guard.ts'
+);
+const publicController = read(
+  'apps/backend/src/public-api/routes/v1/public.integrations.controller.ts'
+);
+const publicAuth = read(
+  'apps/backend/src/services/auth/public.auth.middleware.ts'
+);
+const mcpDocs = read('docs/MCP_CREDENTIALS.md');
 
 const invariants = [
   [
@@ -114,6 +127,18 @@ const invariants = [
       pricing.includes('mcp_calls_per_month') &&
       pricing.includes('storage_bytes'),
     'MCP must expose audit:read listing and enforce monthly call budgets from plan config',
+  ],
+  [
+    publicScopes.includes('evaluatePublicApiScope') &&
+      publicScopes.includes("type === 'now'") &&
+      publicScopes.includes("'posts:publish'") &&
+      publicGuard.includes('evaluatePublicApiScope') &&
+      publicController.includes('PublicApiScopeGuard') &&
+      publicAuth.includes("authKind: 'legacy'") &&
+      publicAuth.includes("authKind: 'scoped'") &&
+      mcpDocs.includes('Legacy credential compatibility') &&
+      mcpDocs.includes('PublicApiScopeGuard'),
+    'public REST must enforce scopes independently of MCP tool checks',
   ],
 ];
 

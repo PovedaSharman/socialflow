@@ -48,6 +48,7 @@ export class PublicAuthMiddleware implements NestMiddleware {
           ...org,
           users: [{ role: 'OWNER' }],
           mcpScopes: [...DEFAULT_MCP_SCOPES],
+          authKind: 'oauth',
         };
       } else if (auth.startsWith(API_CREDENTIAL_PREFIX)) {
         const resolved =
@@ -75,6 +76,7 @@ export class PublicAuthMiddleware implements NestMiddleware {
           users: [{ role: 'OWNER' }],
           mcpScopes: resolved.scopes,
           apiCredentialId: resolved.credentialId,
+          authKind: 'scoped',
         };
       } else {
         const org = await this._organizationService.getOrgByApiKey(auth);
@@ -95,6 +97,7 @@ export class PublicAuthMiddleware implements NestMiddleware {
           ...org,
           users: [{ role: 'OWNER' }],
           mcpScopes: [...DEFAULT_MCP_SCOPES],
+          authKind: 'legacy',
         };
       }
     } catch (err) {

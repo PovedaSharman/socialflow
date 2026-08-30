@@ -296,6 +296,7 @@ No production-readiness claim is made.
 - Added MCP `audit:read` list tool, schedule-tool audit events, Redis monthly MCP call budgets from plan config, and media `storage_bytes` enforcement on upload. Pricing now declares MCP/API/storage quotas. Verification: MCP credentials audit (9 invariants) and billing-safety audit (5 invariants) under 64 MB; targeted Prettier under 128 MB. Live Redis/MCP proofs were not run.
 - Enforced monthly public API call budgets on non-GET routes, accepted hashed `sf_live_` credentials in public auth, and documented release-host schema apply (`docs/SCHEMA_APPLY.md`). Verification: billing-safety audit (6 invariants) under 64 MB.
 - Rethemed the product to a light-first white/grey canvas with emerald green accent (`#059669`), retired indigo/purple brand defaults, defaulted the theme cookie to light, and replaced hardcoded purple CTA hexes. Verification: theme-palette audit under 64 MB.
+- Enforced fail-closed public REST scope checks via `PublicApiScopeGuard` (post type → draft/schedule/publish, uploads, generation, deletion) with audited allow/deny and documented legacy credential defaults. Verification: MCP credentials audit (10 invariants) under 64 MB. Jest specs added but not executed on this laptop.
 
 ### Next (source vs release host)
 

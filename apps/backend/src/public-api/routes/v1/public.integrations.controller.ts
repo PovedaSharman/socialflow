@@ -9,6 +9,7 @@ import {
   Put,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
   UsePipes,
 } from '@nestjs/common';
@@ -61,9 +62,11 @@ import { RefreshToken } from '@gitroom/nestjs-libraries/integrations/social.abst
 import { PostValidationException } from '@gitroom/backend/api/routes/posts.validation.exception';
 import { timer } from '@gitroom/helpers/utils/timer';
 import { ioRedis } from '@gitroom/nestjs-libraries/redis/redis.service';
+import { PublicApiScopeGuard } from '@gitroom/backend/public-api/public.api.scope.guard';
 
 @ApiTags('Public API')
 @Controller('/public/v1')
+@UseGuards(PublicApiScopeGuard)
 export class PublicIntegrationsController {
   private storage = UploadFactory.createStorage();
 

@@ -1,9 +1,9 @@
 # MCP and API credentials
 
 Status: **partial** — Bearer-only instructions, production URL-secret denial,
-product scope defaults and hashed `ApiCredential` create/list/revoke APIs are
-in source. Tool-level enforcement, one-time UI display and connection proofs
-remain pending. Schema push/generate must run on an approved host.
+hashed credentials, MCP tool scopes and public REST scope enforcement are in
+source. Live create/use/revoke proofs remain pending. Schema generate/migrate
+must run on an approved host.
 
 ## Required end state
 
@@ -18,26 +18,52 @@ remain pending. Schema push/generate must run on an approved host.
 - Client instructions cover Cursor, Claude, ChatGPT-compatible remote clients
   and a generic Bearer HTTP client without embedding secrets in URLs.
 
+## Scope enforcement
+
+MCP tool handlers and `/public/v1` REST routes both enforce scopes. MCP-only
+checks do **not** protect the REST API.
+
+| Surface     | Mechanism                                        |
+| ----------- | ------------------------------------------------ |
+| MCP tools   | `missingMcpScope` per tool                       |
+| Public REST | `PublicApiScopeGuard` + `evaluatePublicApiScope` |
+
+Post create scope is taken from `body.type`:
+
+- `draft` → `posts:draft`
+- `schedule` → `posts:schedule`
+- `now` → `posts:publish`
+
+Missing, non-array or unknown scope context denies the request (fail closed).
+Allowed and denied public API calls write sanitised `AuditEvent` rows without
+content, secrets or bodies.
+
+## Legacy credential compatibility
+
+| Credential                   | `authKind` | Scopes                                               |
+| ---------------------------- | ---------- | ---------------------------------------------------- |
+| Hashed `sf_live_…`           | `scoped`   | Stored scopes on the credential                      |
+| Legacy organisation `apiKey` | `legacy`   | `DEFAULT_MCP_SCOPES` (no publish, no media:generate) |
+| OAuth `pos_…` tokens         | `oauth`    | `DEFAULT_MCP_SCOPES`                                 |
+
+Operators should migrate clients to scoped `sf_live_` credentials. Legacy keys
+remain usable for default-deny scopes until revoked, but cannot immediate-publish
+or generate media.
+
 ## Current source controls
 
 - `ApiCredential` Prisma model stores only `secretHash` and a display `prefix`.
 - `POST/GET/DELETE /user/api-credentials` create, list and revoke credentials
   for organisation admins. Create responses include the plaintext secret once.
-- MCP Bearer auth resolves `sf_live_…` secrets through the hashed table first,
-  then falls back to the legacy organisation `apiKey` with default-deny scopes.
+- MCP and public API Bearer auth resolve `sf_live_…` secrets through the hashed
+  table first, then fall back to the legacy organisation `apiKey`.
 - `areMcpUrlSecretsAllowed` denies `/mcp/:id`, `/sse/:id` and `/message/:id` in
   production unless `ALLOW_MCP_URL_SECRETS=true`.
-- Tool-level MCP enforcement uses `missingMcpScope`: schedule/now/draft map to
-  `posts:schedule` / `posts:publish` / `posts:draft`, image and video generation
-  require `media:generate`, and channel listing requires `channels:read`. The
-  in-app copilot (`ui=true`) remains session-authorised and is not limited by
-  MCP scopes.
 
 ## Operator notes
 
-1. On an approved host, run `pnpm prisma-generate` then apply the schema with the
-   documented disposable/non-production push procedure before enabling the new
-   endpoints against a database.
+1. On an approved host, generate Prisma client and apply reviewed migrations
+   (`docs/SCHEMA_APPLY.md`) before enabling new tables against a database.
 2. Keep `ALLOW_MCP_URL_SECRETS` unset in production.
 3. Prefer creating scoped `sf_live_` credentials over rotating the legacy shared
    organisation API key.
@@ -46,6 +72,5 @@ remain pending. Schema push/generate must run on an approved host.
 pnpm check:mcp-credentials
 ```
 
-Runtime create/use/revoke tests, tool-level scope enforcement and client
-connection proofs remain pending on an approved host. The Access page includes
-a one-time secret create/list/revoke UI for hashed credentials.
+Runtime create/use/revoke tests and client connection proofs remain pending on
+an approved host.
