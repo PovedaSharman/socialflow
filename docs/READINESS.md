@@ -30,6 +30,8 @@ Assessment date: 30 August 2026
   request APIs, credential create/revoke audits, settings UI, `/monitor/live` +
   `/monitor/ready`, auth IP throttling, backup/monitoring runbook
   (`docs/OPS_BACKUP_MONITORING.md`).
+- Storage quota source controls: trusted sizes, Redis reservation, advisory-lock
+  insert checks and `check:storage-quota` (runtime concurrency pending).
 
 ## Not yet verified (requires approved release host or external systems)
 

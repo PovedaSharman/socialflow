@@ -53,11 +53,17 @@ export class GenerateImageTool implements AgentToolInterface {
           org
         );
 
-        const file = await this.storage.uploadSimple(
-          'data:image/png;base64,' + image
-        );
+        const dataUrl = 'data:image/png;base64,' + image;
+        const knownSize = Buffer.from(image, 'base64').length;
+        const file = await this.storage.uploadSimple(dataUrl);
 
-        return this._mediaService.saveFile(org.id, file.split('/').pop(), file);
+        return this._mediaService.saveFile(
+          org.id,
+          file.split('/').pop()!,
+          file,
+          undefined,
+          knownSize
+        );
       },
     });
   }

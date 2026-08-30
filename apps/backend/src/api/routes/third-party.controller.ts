@@ -20,6 +20,7 @@ import {
   AuthorizationActions,
   Sections,
 } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+import { parseDataUrl } from '@gitroom/nestjs-libraries/upload/data.url';
 
 @ApiTags('Third Party')
 @Controller('/third-party')
@@ -96,10 +97,15 @@ export class ThirdPartyController {
     );
 
     const file = await this.storage.uploadSimple(loadedData);
+    const knownSize = parseDataUrl(
+      typeof loadedData === 'string' ? loadedData : ''
+    )?.buffer.length;
     return this._mediaService.saveFile(
       organization.id,
-      file.split('/').pop(),
-      file
+      file.split('/').pop()!,
+      file,
+      undefined,
+      knownSize
     );
   }
 
@@ -169,11 +175,16 @@ export class ThirdPartyController {
 
     const results = [];
     for (const item of downloadUrls) {
+      const knownSize = parseDataUrl(
+        typeof item.url === 'string' ? item.url : ''
+      )?.buffer.length;
       const file = await this.storage.uploadSimple(item.url);
       const saved = await this._mediaService.saveFile(
         organization.id,
-        item.name || file.split('/').pop(),
-        file
+        item.name || file.split('/').pop()!,
+        file,
+        item.name,
+        knownSize
       );
       results.push(saved);
     }

@@ -33,7 +33,12 @@ fixtures and live Stripe proofs remain pending on an approved host.
 - Plan configuration now includes `mcp_calls_per_month`, `api_calls_per_month`
   and `storage_bytes`. MCP HTTP sessions increment a Redis monthly counter and
   return HTTP 402 with `message`/`nextStep` when over budget. Media uploads
-  aggregate `fileSize` and refuse new files that would exceed storage.
+  require a trusted positive byte length (multer size, buffered download length,
+  or object-store `ContentLength` via HEAD). Redis soft-reserves capacity;
+  PostgreSQL re-checks under a per-organisation advisory lock before insert.
+  Failures release the reservation and best-effort remove the uploaded object.
+  Existing `Media.fileSize = 0` rows mean unknown size — not free capacity —
+  and should be backfilled before production hard limits.
 - Public API mutations (non-GET) increment a Redis monthly API counter via
   `PublicAuthMiddleware` and return HTTP 402 with the same denial shape when
   over budget. Auth mutations and `/public/v1/*` writes remain rate-limited by
@@ -46,6 +51,7 @@ publishable key and signing secrets from the Stripe test dashboard only.
 
 ```bash
 pnpm check:billing-safety
+pnpm check:storage-quota
 ```
 
 Checkout, portal, replay/idempotency runtime proofs and the full limit matrix

@@ -1,40 +1,95 @@
 import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { Injectable } from '@nestjs/common';
 import { SaveMediaInformationDto } from '@gitroom/nestjs-libraries/dtos/media/save.media.information.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
+import { fitsStorageQuota } from '@gitroom/nestjs-libraries/database/prisma/media/storage.quota';
+import {
+  AuthorizationActions,
+  Sections,
+  SubscriptionException,
+} from '@gitroom/backend/services/auth/permissions/permission.exception.class';
+
+type MediaCreateResult = {
+  id: string;
+  name: string;
+  originalName: string | null;
+  path: string;
+  thumbnail: string | null;
+  alt: string | null;
+  fileSize: number;
+};
 
 @Injectable()
 export class MediaRepository {
   constructor(private _media: PrismaRepository<'media'>) {}
 
-  saveFile(
+  private mediaSelect = {
+    id: true,
+    name: true,
+    originalName: true,
+    path: true,
+    thumbnail: true,
+    alt: true,
+    fileSize: true,
+  } as const;
+
+  /**
+   * Persist media under a per-organisation advisory lock so concurrent saves
+   * cannot both pass an aggregate-then-insert quota check.
+   */
+  async saveFileAtomic(
     org: string,
     fileName: string,
     filePath: string,
-    originalName?: string,
-    fileSize = 0
-  ) {
-    return this._media.model.media.create({
-      data: {
-        organization: {
-          connect: {
-            id: org,
+    originalName: string | undefined,
+    fileSize: number,
+    limitBytes: number | null
+  ): Promise<MediaCreateResult> {
+    const prisma = this._media.model as unknown as PrismaClient;
+
+    return prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${org}))`;
+
+      if (limitBytes !== null) {
+        const aggregate = await tx.media.aggregate({
+          where: {
+            organizationId: org,
+            deletedAt: null,
           },
+          _sum: {
+            fileSize: true,
+          },
+        });
+        const used = Number(aggregate._sum.fileSize || 0);
+        if (
+          !fitsStorageQuota({
+            usedBytes: used,
+            reservedBytes: 0,
+            incomingBytes: fileSize,
+            limitBytes,
+          })
+        ) {
+          throw new SubscriptionException({
+            section: Sections.STORAGE_BYTES,
+            action: AuthorizationActions.Create,
+          });
+        }
+      }
+
+      return tx.media.create({
+        data: {
+          organization: {
+            connect: {
+              id: org,
+            },
+          },
+          name: fileName,
+          path: filePath,
+          originalName: originalName || null,
+          fileSize,
         },
-        name: fileName,
-        path: filePath,
-        originalName: originalName || null,
-        fileSize: Math.max(0, Number(fileSize) || 0),
-      },
-      select: {
-        id: true,
-        name: true,
-        originalName: true,
-        path: true,
-        thumbnail: true,
-        alt: true,
-        fileSize: true,
-      },
+        select: this.mediaSelect,
+      });
     });
   }
 
@@ -62,10 +117,11 @@ export class MediaRepository {
   }
 
   deleteMedia(org: string, id: string) {
-    return this._media.model.media.update({
+    return this._media.model.media.updateMany({
       where: {
         id,
         organizationId: org,
+        deletedAt: null,
       },
       data: {
         deletedAt: new Date(),
@@ -134,6 +190,7 @@ export class MediaRepository {
         thumbnail: true,
         alt: true,
         thumbnailTimestamp: true,
+        fileSize: true,
       },
       skip: pageNum * 18,
       take: 18,

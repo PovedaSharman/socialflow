@@ -14,6 +14,13 @@ import {
   SubscriptionException,
 } from '@gitroom/backend/services/auth/permissions/permission.exception.class';
 import { pricing } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/pricing';
+import { resolveTrustedByteLength } from '@gitroom/nestjs-libraries/database/prisma/media/storage.quota';
+import {
+  claimStorageReservation,
+  releaseStorageReservation,
+} from '@gitroom/nestjs-libraries/database/prisma/media/storage.reservation';
+import { parseDataUrl } from '@gitroom/nestjs-libraries/upload/data.url';
+import { resolveObjectByteLength } from '@gitroom/nestjs-libraries/upload/object.byte.length';
 
 @Injectable()
 export class MediaService {
@@ -58,35 +65,82 @@ export class MediaService {
     }
   }
 
+  private async storageLimitForOrganization(
+    org: string
+  ): Promise<number | null> {
+    if (!process.env.STRIPE_PUBLISHABLE_KEY) {
+      return null;
+    }
+    const subscription =
+      await this._subscriptionService.getSubscriptionByOrganizationId(org);
+    const tier = subscription?.subscriptionTier || 'FREE';
+    return pricing[tier]?.storage_bytes ?? 0;
+  }
+
+  /**
+   * Persist a media row with a trusted byte length. When Stripe billing is
+   * configured, Redis soft-reserves capacity and PostgreSQL re-checks under an
+   * organisation advisory lock before insert.
+   */
   async saveFile(
     org: string,
     fileName: string,
     filePath: string,
     originalName?: string,
-    fileSize = 0
+    fileSize?: unknown
   ) {
-    if (process.env.STRIPE_PUBLISHABLE_KEY) {
-      const subscription =
-        await this._subscriptionService.getSubscriptionByOrganizationId(org);
-      const tier = subscription?.subscriptionTier || 'FREE';
-      const limit = pricing[tier]?.storage_bytes ?? 0;
-      const used = await this._mediaRepository.sumOrganizationFileSize(org);
-      const incoming = Math.max(0, Number(fileSize) || 0);
-      if (incoming > 0 && used + incoming > limit) {
-        throw new SubscriptionException({
-          section: Sections.STORAGE_BYTES,
-          action: AuthorizationActions.Create,
-        });
-      }
+    let trusted = await resolveObjectByteLength(filePath);
+    if (trusted === null) {
+      trusted = resolveTrustedByteLength(fileSize);
+    }
+    if (trusted === null) {
+      throw new HttpException(
+        'Trusted file size is required before storing media.',
+        400
+      );
     }
 
-    return this._mediaRepository.saveFile(
-      org,
-      fileName,
-      filePath,
-      originalName,
-      fileSize
-    );
+    const limitBytes = await this.storageLimitForOrganization(org);
+    let reserved = false;
+
+    try {
+      if (limitBytes !== null) {
+        const used = await this._mediaRepository.sumOrganizationFileSize(org);
+        const claimed = await claimStorageReservation({
+          organizationId: org,
+          usedBytes: used,
+          incomingBytes: trusted,
+          limitBytes,
+        });
+        if (!claimed) {
+          throw new SubscriptionException({
+            section: Sections.STORAGE_BYTES,
+            action: AuthorizationActions.Create,
+          });
+        }
+        reserved = true;
+      }
+
+      return await this._mediaRepository.saveFileAtomic(
+        org,
+        fileName,
+        filePath,
+        originalName,
+        trusted,
+        limitBytes
+      );
+    } catch (err) {
+      try {
+        await this.storage.removeFile(filePath);
+      } catch {
+        // Best-effort cleanup; quota denial must still surface.
+      }
+      throw err;
+    } finally {
+      if (reserved) {
+        await releaseStorageReservation(org, trusted);
+      }
+    }
   }
 
   getMedia(org: string, page: number, search?: string) {
@@ -153,8 +207,17 @@ export class MediaService {
             body.customParams
           );
 
+          const parsed =
+            typeof loadedData === 'string' ? parseDataUrl(loadedData) : null;
+          const knownSize = parsed?.buffer.length;
           const file = await this.storage.uploadSimple(loadedData);
-          return this.saveFile(org.id, file.split('/').pop(), file);
+          return this.saveFile(
+            org.id,
+            file.split('/').pop()!,
+            file,
+            undefined,
+            knownSize
+          );
         }
       );
     } catch (err) {

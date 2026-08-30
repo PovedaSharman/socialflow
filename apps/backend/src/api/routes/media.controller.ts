@@ -88,9 +88,21 @@ export class MediaController {
       return false;
     }
 
-    const file = await this.storage.uploadSimple(image.output);
+    const output =
+      typeof image === 'object' && image && 'output' in image
+        ? String(image.output)
+        : '';
+    const base64 = output.includes(',') ? output.split(',').pop() || '' : '';
+    const knownSize = base64 ? Buffer.from(base64, 'base64').length : undefined;
+    const file = await this.storage.uploadSimple(output);
 
-    return this._mediaService.saveFile(org.id, file.split('/').pop(), file);
+    return this._mediaService.saveFile(
+      org.id,
+      file.split('/').pop()!,
+      file,
+      undefined,
+      knownSize
+    );
   }
 
   @Post('/upload-server')
@@ -108,7 +120,7 @@ export class MediaController {
       uploadedFile.originalname,
       uploadedFile.path,
       originalName,
-      file?.size || 0
+      file.size
     );
   }
 
@@ -162,7 +174,7 @@ export class MediaController {
       getFile.originalname,
       getFile.path,
       originalName,
-      file?.size || 0
+      file.size
     );
   }
 
@@ -182,16 +194,25 @@ export class MediaController {
     // @ts-ignore
     const name = upload.Location.split('/').pop();
     const originalName = req.body?.file?.name;
+    // Prefer declared multipart size only as a hint; saveFile verifies via
+    // object-store ContentLength when the value is missing or untrusted.
+    const declaredSize = Number(req.body?.file?.size);
 
-    const saveFile = await this._mediaService.saveFile(
-      org.id,
-      name,
-      // @ts-ignore
-      upload.Location,
-      originalName || undefined
-    );
-
-    res.status(200).json({ ...upload, saved: saveFile });
+    try {
+      const saveFile = await this._mediaService.saveFile(
+        org.id,
+        name,
+        // @ts-ignore
+        upload.Location,
+        originalName || undefined,
+        Number.isFinite(declaredSize) && declaredSize > 0
+          ? declaredSize
+          : undefined
+      );
+      res.status(200).json({ ...upload, saved: saveFile });
+    } catch (err) {
+      throw err;
+    }
   }
 
   @Get('/')

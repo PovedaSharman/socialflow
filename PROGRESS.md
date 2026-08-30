@@ -305,16 +305,23 @@ No production-readiness claim is made.
   rollback/backfill notes. Root scripts now expose `prisma-migrate-deploy` /
   `prisma-migrate-status`; production docs forbid `db push --accept-data-loss`.
   Migration was **not** executed on this laptop.
+- Storage quotas now require trusted positive byte lengths, Redis soft
+  reservation, PostgreSQL advisory-lock re-check on insert, and best-effort
+  object cleanup on failure. Public API, multipart, generation, import and MCP
+  upload paths pass sizes. `Media.fileSize = 0` remains documented as unknown.
+  Verification: `check:storage-quota` (7 invariants) under 64 MB; targeted
+  Prettier under 128 MB. Jest specs added but not executed; Redis/DB concurrency
+  proofs remain pending off-host.
 - Downgraded earlier claims that soft `fileSize` aggregation alone closed storage
-  quotas; atomic reservation and trusted sizes remain Phase 1.3 work.
+  quotas; atomic reservation and trusted sizes are now in source (runtime pending).
 - Stripe webhook retry-safe claims, public API scopes and WCAG primary contrast
   (`#047857`) are in source from prior Phase 1 commits; Jest specs for those
   slices remain unexecuted here.
 
 ### Next (source vs release host)
 
-- Finish Phase 1.3–1.7 source repairs (storage quotas, audit HMAC coverage,
-  DESIGN_SYSTEM restore) before new product features.
+- Finish Phase 1.6–1.7 source repairs (audit HMAC coverage, DESIGN_SYSTEM
+  restore) before new product features.
 - Obtain Milestone 4–10 runtime evidence only on an approved disposable host using `docs/RELEASE_HOST_EVIDENCE.md`.
 - On an approved host: `pnpm prisma-migrate-deploy` for the control-plane
   migration; MCP/Stripe/privacy/browser proofs.

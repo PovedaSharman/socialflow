@@ -16,6 +16,7 @@ import { MediaService } from '@gitroom/nestjs-libraries/database/prisma/media/me
 import { UploadFactory } from '@gitroom/nestjs-libraries/upload/upload.factory';
 import { GeneratorDto } from '@gitroom/nestjs-libraries/dtos/generator/generator.dto';
 import { generationError } from '@gitroom/nestjs-libraries/openai/generation.error';
+import { parseDataUrl } from '@gitroom/nestjs-libraries/upload/data.url';
 
 const tools = !process.env.TAVILY_API_KEY
   ? []
@@ -342,12 +343,15 @@ export class AgentGraphService {
     const all = await Promise.all(
       (state.content || []).map(async (p) => {
         if (p.image) {
+          const knownSize = parseDataUrl(p.image)?.buffer.length;
           const upload = await this.storage.uploadSimple(p.image);
           const name = upload.split('/').pop()!;
           const uploadWithId = await this._mediaService.saveFile(
             state.orgId,
             name,
-            upload
+            upload,
+            undefined,
+            knownSize
           );
 
           return {
