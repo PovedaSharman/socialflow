@@ -37,6 +37,7 @@ services:
       DBNAME: temporal_test
       VISIBILITY_DBNAME: temporal_visibility_test
       ENABLE_ES: 'false'
+      TEMPORAL_ADDRESS: temporal:7233
     ports: ['127.0.0.1:7233:7233']
     healthcheck:
       test:

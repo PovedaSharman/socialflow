@@ -111,6 +111,7 @@ services:
       VISIBILITY_DBNAME: temporal_visibility
       ENABLE_ES: 'false'
       SKIP_DEFAULT_NAMESPACE_CREATION: 'false'
+      TEMPORAL_ADDRESS: temporal:7233
     networks: [private]
     healthcheck:
       test:
