@@ -567,8 +567,13 @@ export class PostActivity {
     return stored;
   }
 
-  private sealPendingResponse<T extends { pendingData?: unknown }>(result: T) {
-    if (result?.pendingData === undefined) {
+  private sealPendingResponse<T>(result: T): T {
+    if (
+      !result ||
+      typeof result !== 'object' ||
+      !('pendingData' in result) ||
+      result.pendingData === undefined
+    ) {
       return result;
     }
     return {
@@ -578,7 +583,7 @@ export class PostActivity {
           JSON.stringify(result.pendingData)
         ),
       },
-    };
+    } as T;
   }
 
   private openPendingData(pendingData: unknown) {
