@@ -2,6 +2,9 @@ name: SocialFlow staging release
 
 on:
   pull_request:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       public_url:
@@ -131,6 +134,7 @@ jobs:
         run: docker compose -f deploy/ci/docker-compose.release.yml down -v
 
   arm64-image:
+    if: github.event_name == 'workflow_dispatch'
     needs: runtime-gates
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 45
