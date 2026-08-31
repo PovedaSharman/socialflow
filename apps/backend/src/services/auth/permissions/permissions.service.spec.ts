@@ -1,6 +1,23 @@
 import { PermissionsService, roleCanAccess } from './permissions.service';
 import { AuthorizationActions, Sections } from './permission.exception.class';
 
+jest.mock(
+  '@gitroom/nestjs-libraries/database/prisma/subscriptions/subscription.service',
+  () => ({ SubscriptionService: class SubscriptionService {} })
+);
+jest.mock(
+  '@gitroom/nestjs-libraries/database/prisma/posts/posts.service',
+  () => ({ PostsService: class PostsService {} })
+);
+jest.mock(
+  '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service',
+  () => ({ IntegrationService: class IntegrationService {} })
+);
+jest.mock(
+  '@gitroom/nestjs-libraries/database/prisma/webhooks/webhooks.service',
+  () => ({ WebhooksService: class WebhooksService {} })
+);
+
 describe('permissions without billing', () => {
   const originalStripeKey = process.env.STRIPE_PUBLISHABLE_KEY;
   const service = new PermissionsService(

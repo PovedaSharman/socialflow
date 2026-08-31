@@ -82,7 +82,7 @@ databaseDescribe('media repository tenant isolation', () => {
     ).rejects.toBeDefined();
     await expect(
       repository.deleteMedia(organizationA, mediaB)
-    ).rejects.toBeDefined();
+    ).resolves.toEqual({ count: 0 });
 
     await expect(
       prisma.media.findUnique({ where: { id: mediaB } })

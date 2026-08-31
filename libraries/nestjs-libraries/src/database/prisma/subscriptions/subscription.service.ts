@@ -4,20 +4,10 @@ import { SubscriptionRepository } from '@gitroom/nestjs-libraries/database/prism
 import { IntegrationService } from '@gitroom/nestjs-libraries/database/prisma/integrations/integration.service';
 import { OrganizationService } from '@gitroom/nestjs-libraries/database/prisma/organizations/organization.service';
 import { Organization } from '@prisma/client';
-import dayjs from 'dayjs';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
+import { currentBillingCycleStart } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/billing-cycle';
 
-export const currentBillingCycleStart = (
-  subscriptionCreatedAt: Date,
-  now = dayjs()
-) => {
-  const createdAt = dayjs(subscriptionCreatedAt);
-  const elapsedBillingCycles = Math.max(
-    0,
-    Math.ceil(now.diff(createdAt, 'month', true))
-  );
-  return createdAt.add(elapsedBillingCycles - 1, 'month');
-};
+export { currentBillingCycleStart } from '@gitroom/nestjs-libraries/database/prisma/subscriptions/billing-cycle';
 
 @Injectable()
 export class SubscriptionService {

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { currentBillingCycleStart } from './subscription.service';
+import { currentBillingCycleStart } from './billing-cycle';
 
 describe('billing cycle calculation', () => {
   const createdAt = new Date('2025-01-15T10:00:00.000Z');

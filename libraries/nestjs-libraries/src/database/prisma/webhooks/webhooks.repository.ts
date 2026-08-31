@@ -75,34 +75,32 @@ export class WebhooksRepository {
         );
       }
 
-      const { id } = await transaction.webhooks.upsert({
-        where: {
-          id: body.id || uuidv4(),
-          organizationId: orgId,
-        },
-        create: {
-          organizationId: orgId,
-          url: body.url,
-          name: body.name,
-        },
-        update: {
-          url: body.url,
-          name: body.name,
-        },
-      });
-
-      await transaction.webhooks.update({
-        where: {
-          id,
-          organizationId: orgId,
-        },
-        data: {
-          integrations: {
-            deleteMany: {},
-            create: integrationIds.map((integrationId) => ({ integrationId })),
-          },
-        },
-      });
+      const relationshipUpdate = {
+        deleteMany: {},
+        create: integrationIds.map((integrationId) => ({ integrationId })),
+      };
+      const { id } = body.id
+        ? await transaction.webhooks.update({
+            where: {
+              id: body.id,
+              organizationId: orgId,
+              deletedAt: null,
+            },
+            data: {
+              url: body.url,
+              name: body.name,
+              integrations: relationshipUpdate,
+            },
+          })
+        : await transaction.webhooks.create({
+            data: {
+              id: uuidv4(),
+              organizationId: orgId,
+              url: body.url,
+              name: body.name,
+              integrations: relationshipUpdate,
+            },
+          });
 
       return { id };
     });
