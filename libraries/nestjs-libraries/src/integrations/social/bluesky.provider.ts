@@ -16,6 +16,7 @@ import {
   RichText,
   AppBskyEmbedVideo,
   AppBskyVideoDefs,
+  AppBskyFeedDefs,
   AtpAgent,
   BlobRef,
 } from '@atproto/api';
@@ -436,14 +437,21 @@ export class BlueskyProvider extends SocialAbstract implements SocialProvider {
       depth: 0,
     });
 
-    // @ts-ignore
-    const parentCid = parentThread.data.thread.post?.cid;
-    // @ts-ignore
-    const rootUri =
-      parentThread.data.thread.post?.record?.reply?.root?.uri || postId;
-    // @ts-ignore
-    const rootCid =
-      parentThread.data.thread.post?.record?.reply?.root?.cid || parentCid;
+    if (!AppBskyFeedDefs.isThreadViewPost(parentThread.data.thread)) {
+      throw new BadBody(
+        'bluesky',
+        '',
+        '',
+        'The parent post is unavailable for commenting.'
+      );
+    }
+    const parentPost = parentThread.data.thread.post;
+    const parentRecord = parentPost.record as {
+      reply?: { root?: { uri?: string; cid?: string } };
+    };
+    const parentCid = parentPost.cid;
+    const rootUri = parentRecord.reply?.root?.uri || postId;
+    const rootCid = parentRecord.reply?.root?.cid || parentCid;
 
     // @ts-ignore
     const { cid, uri, commit } = await agent.post({

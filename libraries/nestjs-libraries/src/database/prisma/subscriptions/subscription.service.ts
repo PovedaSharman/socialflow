@@ -219,17 +219,21 @@ export class SubscriptionService {
   }
 
   async checkCredits(organization: Organization, checkType = 'ai_images') {
-    // @ts-ignore
-    const type = organization?.subscription?.subscriptionTier || 'FREE';
+    const subscription = (
+      organization as Organization & {
+        subscription?: {
+          subscriptionTier: keyof typeof pricing;
+          createdAt: Date;
+        } | null;
+      }
+    ).subscription;
+    const type = subscription?.subscriptionTier || 'FREE';
 
-    if (type === 'FREE') {
+    if (type === 'FREE' || !subscription) {
       return { credits: 0 };
     }
 
-    // @ts-ignore
-    const checkFromMonth = currentBillingCycleStart(
-      organization.subscription.createdAt
-    );
+    const checkFromMonth = currentBillingCycleStart(subscription.createdAt);
     const imageGenerationCount =
       checkType === 'ai_images'
         ? pricing[type].image_generation_count
