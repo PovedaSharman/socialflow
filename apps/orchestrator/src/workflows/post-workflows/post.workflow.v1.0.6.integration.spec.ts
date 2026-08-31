@@ -34,14 +34,14 @@ temporalDescribe('post workflow duplicate safety', () => {
       organizationId: 'organization-a',
       integrationId: 'integration-a',
       publishDate: new Date('2025-01-01T10:00:00.000Z'),
-      releaseId: null,
+      releaseId: null as string | null,
       state: 'QUEUE',
       content: 'Safe local test post',
       settings: '{}',
       image: '[]',
       delay: 0,
       group: 'group-a',
-      intervalInDays: null,
+      intervalInDays: null as number | null,
       integration: {
         id: 'integration-a',
         organizationId: 'organization-a',
@@ -91,14 +91,14 @@ temporalDescribe('post workflow duplicate safety', () => {
           },
         ];
       },
-      updatePost: async () => undefined,
-      inAppNotification: async () => undefined,
+      updatePost: async (): Promise<void> => undefined,
+      inAppNotification: async (): Promise<void> => undefined,
       changeState: async (_id: string, state: string) => {
         states.push(state);
       },
-      sendWebhooks: async () => undefined,
-      internalPlugs: async () => [],
-      globalPlugs: async () => [],
+      sendWebhooks: async (): Promise<void> => undefined,
+      internalPlugs: async (): Promise<unknown[]> => [],
+      globalPlugs: async (): Promise<unknown[]> => [],
     };
 
     const workerConnection = await NativeConnection.connect({ address });
@@ -156,7 +156,7 @@ temporalDescribe('post workflow duplicate safety', () => {
         await runScenario('refresh');
         expect(attempts).toBe(2);
         expect(acceptedMutations).toBe(1);
-        expect(new Set(idempotencyKeys)).toHaveSize(1);
+        expect(new Set(idempotencyKeys).size).toBe(1);
 
         await runScenario('unknown');
         expect(attempts).toBe(1);
