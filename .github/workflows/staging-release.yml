@@ -116,8 +116,8 @@ jobs:
       - name: Create disposable Temporal namespace
         run: >-
           docker compose -f deploy/ci/docker-compose.release.yml exec -T temporal
-          tctl --address 127.0.0.1:7233 namespace register
-          --retention 1 socialflow-release-test
+          temporal operator namespace create --address 127.0.0.1:7233
+          --retention 24h --namespace socialflow-release-test
 
       - name: Run Temporal publish release gate
         run: pnpm test:publish-workflow:release

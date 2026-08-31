@@ -39,7 +39,11 @@ services:
       ENABLE_ES: 'false'
     ports: ['127.0.0.1:7233:7233']
     healthcheck:
-      test: [CMD-SHELL, 'tctl --address 127.0.0.1:7233 cluster health']
+      test:
+        [
+          CMD-SHELL,
+          'temporal operator cluster health --address "$$TEMPORAL_ADDRESS" | grep -q SERVING',
+        ]
       interval: 10s
       timeout: 8s
       retries: 30
