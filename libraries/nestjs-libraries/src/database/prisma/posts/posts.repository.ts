@@ -8,6 +8,7 @@ import {
   APPROVED_SUBMIT_FOR_ORDER,
   CreationMethod,
   Post,
+  Prisma,
   State,
 } from '@prisma/client';
 import {
@@ -121,7 +122,7 @@ export class PostsRepository {
   }
 
   async getPendingPostApprovals(organizationId: string) {
-    const where = {
+    const where: Prisma.PostApprovalRequestWhereInput = {
       organizationId,
       status: 'PENDING' as const,
       activeKey: { not: null },

@@ -8,7 +8,7 @@
 
 export function resolveTrustedByteLength(value: unknown): number | null {
   if (typeof value === 'bigint') {
-    if (value <= 0n || value > BigInt(Number.MAX_SAFE_INTEGER)) {
+    if (value <= BigInt(0) || value > BigInt(Number.MAX_SAFE_INTEGER)) {
       return null;
     }
     return Number(value);
