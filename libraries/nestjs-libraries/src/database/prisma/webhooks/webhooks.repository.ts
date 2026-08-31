@@ -75,10 +75,9 @@ export class WebhooksRepository {
         );
       }
 
-      const relationshipUpdate = {
-        deleteMany: {},
-        create: integrationIds.map((integrationId) => ({ integrationId })),
-      };
+      const relationships = integrationIds.map((integrationId) => ({
+        integrationId,
+      }));
       const { id } = body.id
         ? await transaction.webhooks.update({
             where: {
@@ -89,7 +88,10 @@ export class WebhooksRepository {
             data: {
               url: body.url,
               name: body.name,
-              integrations: relationshipUpdate,
+              integrations: {
+                deleteMany: {},
+                create: relationships,
+              },
             },
           })
         : await transaction.webhooks.create({
@@ -98,7 +100,7 @@ export class WebhooksRepository {
               organizationId: orgId,
               url: body.url,
               name: body.name,
-              integrations: relationshipUpdate,
+              integrations: { create: relationships },
             },
           });
 
