@@ -64,7 +64,13 @@ jobs:
           libraries/nestjs-libraries/src/database/prisma/media/storage.reservation.spec.ts
 
       - name: Type-check serially
-        run: pnpm typecheck
+        shell: bash
+        run: |
+          set -euo pipefail
+          export NODE_OPTIONS=--max-old-space-size=4096
+          pnpm exec tsc -p apps/frontend/tsconfig.json --noEmit
+          pnpm exec tsc -p apps/backend/tsconfig.json --noEmit
+          pnpm exec tsc -p apps/orchestrator/tsconfig.json --noEmit
 
   runtime-gates:
     needs: source-gates
