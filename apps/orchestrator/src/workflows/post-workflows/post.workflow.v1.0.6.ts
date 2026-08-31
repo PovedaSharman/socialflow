@@ -1,4 +1,4 @@
-import { PostActivity } from '@gitroom/orchestrator/activities/post.activity';
+import type { PostActivity } from '@gitroom/orchestrator/activities/post.activity';
 import {
   ActivityFailure,
   ApplicationFailure,
@@ -10,9 +10,9 @@ import {
   patched,
 } from '@temporalio/workflow';
 import dayjs from 'dayjs';
-import { Integration } from '@prisma/client';
+import type { Integration } from '@prisma/client';
 import { capitalize, sortBy } from 'lodash';
-import { PostResponse } from '@gitroom/nestjs-libraries/integrations/social/social.integrations.interface';
+import type { PostResponse } from '@gitroom/nestjs-libraries/integrations/social/social.integrations.interface';
 import { makeId } from '@gitroom/nestjs-libraries/services/make.is';
 import {
   type Duration,
