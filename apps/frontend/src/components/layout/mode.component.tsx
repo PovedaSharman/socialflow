@@ -8,7 +8,9 @@ export const modeEmitter = new EventEmitter();
 
 export const subscribeToMode = (listener: (mode: string) => void) => {
   modeEmitter.on('mode', listener);
-  return () => modeEmitter.off('mode', listener);
+  return () => {
+    modeEmitter.off('mode', listener);
+  };
 };
 
 const ModeComponent = () => {
