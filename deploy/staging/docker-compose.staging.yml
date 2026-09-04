@@ -76,7 +76,7 @@ services:
       - --maxmemory
       - 192mb
       - --maxmemory-policy
-      - allkeys-lru
+      - noeviction
       - --requirepass
       - ${REDIS_PASSWORD}
     volumes:

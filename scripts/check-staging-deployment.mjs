@@ -9,6 +9,10 @@ const bootstrap = read('scripts/bootstrap-disposable-database.sh');
 
 const invariants = [
   [
+    compose.includes('      - noeviction') && !compose.includes('allkeys-lru'),
+    'Redis must preserve security, idempotency and quota records under memory pressure',
+  ],
+  [
     compose.includes('mem_limit: 1536m') &&
       compose.includes('mem_limit: 1g') &&
       compose.includes('mem_limit: 768m') &&

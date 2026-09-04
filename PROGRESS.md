@@ -343,3 +343,27 @@ No production-readiness claim is made.
 - Keep `docs/READINESS.md` Definition of Done honest; do not claim production readiness without off-host evidence.
 - Continue Phase 2 product gaps only after treating inflated “Source done”
   claims as pending where runtime evidence is still missing.
+
+### 4 September 2026 review
+
+- Aligned Volta with the existing Node 22 `.nvmrc` pin and corrected contributor
+  instructions to respect the laptop resource limits and release-host workflow.
+- Staging CI now retains schema bootstrap, account/tenant and publish gate logs
+  alongside Temporal histories, including failure output; `pipefail` preserves
+  failing gate exit status.
+- Repaired the release evidence checklist's merged MCP entry and numbering.
+- All 18 bounded static audit scripts passed locally under 64 MB heaps. Runtime,
+  build and browser evidence remains pending off-host; no production-ready claim.
+
+### 4 September 2026 follow-up repairs
+
+- Verified GitHub CI success for committed `3d430cda`: production builds,
+  type-checks, account/tenant gate, schema bootstrap and Temporal publish gate.
+  Run links and evidence limits are now in `docs/READINESS.md`.
+- Changed staging Redis to `noeviction` to preserve quota, OAuth and idempotency
+  records under memory pressure; writes fail when capacity is exhausted.
+- Accessibility tests now reject every violation in the selected WCAG A/AA tags,
+  use the configured frontend hostname, and verify real session cookies instead
+  of requiring development-only response headers. Added bounded suite timeouts
+  and rejection of accidentally focused tests in CI.
+- Browser/runtime checks for these local edits remain pending off-host.
