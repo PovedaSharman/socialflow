@@ -380,3 +380,6 @@ No production-readiness claim is made.
   frontend, backend and orchestrator build serially with the Dockerfile's 4 GB
   heap instead of the root script's 2 GB override, which exhausted the backend
   compiler during the ARM image build.
+- Raised the one-shot staging migration container from 512 MB to 1 GB after the
+  guarded Prisma bootstrap was killed during client initialization. Application
+  service limits and the host-wide resource boundary remain unchanged.

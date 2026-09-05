@@ -15,6 +15,7 @@ const invariants = [
   [
     compose.includes('mem_limit: 1536m') &&
       compose.includes('mem_limit: 1g') &&
+      (compose.match(/mem_limit: 1g/g) || []).length === 2 &&
       compose.includes('mem_limit: 768m') &&
       compose.includes('${UPLOAD_HOST_PATH}:/uploads') &&
       compose.includes('max-size: 10m'),
