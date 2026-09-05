@@ -376,3 +376,7 @@ No production-readiness claim is made.
   pinned `pnpm@10.6.1` npm installation after the ARM image release exposed a
   pnpm signing-key verification failure. The locked application install remains
   unchanged.
+- Aligned the container build with the already-passing remote build workflow:
+  frontend, backend and orchestrator build serially with the Dockerfile's 4 GB
+  heap instead of the root script's 2 GB override, which exhausted the backend
+  compiler during the ARM image build.
