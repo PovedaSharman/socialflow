@@ -108,10 +108,18 @@ jobs:
         run: docker compose -f deploy/ci/docker-compose.release.yml up -d --wait
 
       - name: Bootstrap clean database and prove migration status
-        run: pnpm prisma-bootstrap-disposable
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/release-logs
+          pnpm prisma-bootstrap-disposable 2>&1 | tee artifacts/release-logs/schema-bootstrap.log
 
       - name: Run account and tenant release gate
-        run: pnpm test:account-tenant:release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/release-logs
+          pnpm test:account-tenant:release 2>&1 | tee artifacts/release-logs/account-tenant-gate.log
 
       - name: Create disposable Temporal namespace
         run: >-
@@ -120,14 +128,20 @@ jobs:
           --retention 24h --namespace socialflow-release-test
 
       - name: Run Temporal publish release gate
-        run: pnpm test:publish-workflow:release
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/release-logs
+          pnpm test:publish-workflow:release 2>&1 | tee artifacts/release-logs/publish-workflow-gate.log
 
       - name: Retain bounded release evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: release-evidence-${{ github.run_id }}
-          path: artifacts/temporal-post-safety
+          path: |
+            artifacts/temporal-post-safety
+            artifacts/release-logs
           if-no-files-found: warn
           retention-days: 7
 

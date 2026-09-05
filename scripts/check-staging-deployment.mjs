@@ -9,8 +9,13 @@ const bootstrap = read('scripts/bootstrap-disposable-database.sh');
 
 const invariants = [
   [
+    compose.includes('      - noeviction') && !compose.includes('allkeys-lru'),
+    'Redis must preserve security, idempotency and quota records under memory pressure',
+  ],
+  [
     compose.includes('mem_limit: 1536m') &&
       compose.includes('mem_limit: 1g') &&
+      (compose.match(/mem_limit: 1g/g) || []).length === 2 &&
       compose.includes('mem_limit: 768m') &&
       compose.includes('${UPLOAD_HOST_PATH}:/uploads') &&
       compose.includes('max-size: 10m'),
@@ -30,7 +35,11 @@ const invariants = [
   ],
   [
     dockerfile.includes('node:22.12.0-bookworm-slim') &&
+      dockerfile.match(/npm install --global pnpm@10\.6\.1/g)?.length === 2 &&
       dockerfile.includes('pnpm install --frozen-lockfile') &&
+      dockerfile.includes('pnpm --filter ./apps/frontend run build') &&
+      dockerfile.includes('pnpm --filter ./apps/backend run build') &&
+      dockerfile.includes('pnpm --filter ./apps/orchestrator run build') &&
       dockerfile.includes('USER node'),
     'the staging image must use pinned tooling, a locked install and non-root runtime',
   ],

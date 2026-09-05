@@ -1,18 +1,18 @@
 # Release readiness report
 
 Status: **not production-ready**  
-Assessment date: 30 August 2026
+Assessment date: 4 September 2026
 
 ## Definition of Done (must all be evidenced)
 
 | Journey / gate                                 | Status                                                                     |
 | ---------------------------------------------- | -------------------------------------------------------------------------- |
 | Register → verify email → onboard              | Source/local smoke historically recorded; re-verify on current RC off-host |
-| Connect channel → schedule/publish             | Source audits only; Temporal/OAuth runtime pending                         |
+| Connect channel → schedule/publish             | Temporal CI passed at `3d430cda`; OAuth/browser proof pending                         |
 | MCP scoped credentials                         | Source done; Prisma migrate + live proofs pending                          |
 | Stripe test billing + hard limits              | Source done; fixture matrix pending                                        |
 | Privacy export/deletion + audit                | Source done; browser + migrate pending                                     |
-| WCAG AA / responsive / production builds       | Pending off-host                                                           |
+| WCAG AA / responsive / production builds       | Builds passed at `3d430cda`; WCAG/responsive pending                         |
 | Backup restore drill + monitoring destinations | Runbook only; drill not recorded                                           |
 | Legal/infrastructure decisions                 | External blockers                                                          |
 
@@ -37,11 +37,30 @@ Assessment date: 30 August 2026
   charts, motion, responsive shell, showcase route and WCAG/viewport matrix
   (runtime axe/Playwright still pending).
 
+## Remote CI evidence checked on 4 September 2026
+
+These results apply to committed revision `3d430cda2186d6b454a27c8d73fb419a5cac5cc8`,
+not subsequent local edits. GitHub reports successful completion on 31 August:
+
+- [Build](https://github.com/PovedaSharman/socialflow/actions/runs/33385424830):
+  serial frontend, backend and orchestrator production builds on Node 22.12.0.
+- [Account and tenant gate](https://github.com/PovedaSharman/socialflow/actions/runs/33385424824):
+  disposable schema bootstrap and tenant gate; retained `account-tenant-gate-33385424824`.
+- [Staging release](https://github.com/PovedaSharman/socialflow/actions/runs/33385424782):
+  static audits, focused regressions, all three type-checks, disposable schema
+  bootstrap, tenant gate and Temporal publish gate passed. Artifact
+  `release-evidence-33385424782` was listed as unexpired when checked.
+  The ARM64 image job was skipped; no deployment is evidenced by this run.
+
+Job/step conclusions and artifact metadata were verified through the GitHub API;
+artifact contents have not been inspected. Production database migration,
+provider sandbox and browser journeys remain separate requirements.
+
 ## Not yet verified (requires approved release host or external systems)
 
 See `docs/RELEASE_HOST_EVIDENCE.md` for commands and recording rules. Summary:
 
-- Milestone 4/5 runtime gates and Temporal publish histories.
+- Inspection of retained Temporal histories and provider/browser proofs beyond the passing automated gates.
 - Full-service startup and registration-to-onboarding on the current RC.
 - Provider OAuth sandboxes and production allowlist population.
 - `pnpm prisma-migrate-deploy` for migration

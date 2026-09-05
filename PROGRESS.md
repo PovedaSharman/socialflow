@@ -343,3 +343,43 @@ No production-readiness claim is made.
 - Keep `docs/READINESS.md` Definition of Done honest; do not claim production readiness without off-host evidence.
 - Continue Phase 2 product gaps only after treating inflated “Source done”
   claims as pending where runtime evidence is still missing.
+
+### 4 September 2026 review
+
+- Aligned Volta with the existing Node 22 `.nvmrc` pin and corrected contributor
+  instructions to respect the laptop resource limits and release-host workflow.
+- Staging CI now retains schema bootstrap, account/tenant and publish gate logs
+  alongside Temporal histories, including failure output; `pipefail` preserves
+  failing gate exit status.
+- Repaired the release evidence checklist's merged MCP entry and numbering.
+- All 18 bounded static audit scripts passed locally under 64 MB heaps. Runtime,
+  build and browser evidence remains pending off-host; no production-ready claim.
+
+### 4 September 2026 follow-up repairs
+
+- Verified GitHub CI success for committed `3d430cda`: production builds,
+  type-checks, account/tenant gate, schema bootstrap and Temporal publish gate.
+  Run links and evidence limits are now in `docs/READINESS.md`.
+- Changed staging Redis to `noeviction` to preserve quota, OAuth and idempotency
+  records under memory pressure; writes fail when capacity is exhausted.
+- Accessibility tests now reject every violation in the selected WCAG A/AA tags,
+  use the configured frontend hostname, and verify real session cookies instead
+  of requiring development-only response headers. Added bounded suite timeouts
+  and rejection of accidentally focused tests in CI.
+- Browser/runtime checks for these local edits remain pending off-host.
+
+### 5 September 2026 staging deployment
+
+- Provisioned an OCI Always Free ARM64 staging host and restricted SSH ingress
+  to the operator IP; HTTP and HTTPS are the only public application ports.
+- Replaced the Node image's stale Corepack pnpm activation with an explicit,
+  pinned `pnpm@10.6.1` npm installation after the ARM image release exposed a
+  pnpm signing-key verification failure. The locked application install remains
+  unchanged.
+- Aligned the container build with the already-passing remote build workflow:
+  frontend, backend and orchestrator build serially with the Dockerfile's 4 GB
+  heap instead of the root script's 2 GB override, which exhausted the backend
+  compiler during the ARM image build.
+- Raised the one-shot staging migration container from 512 MB to 1 GB after the
+  guarded Prisma bootstrap was killed during client initialization. Application
+  service limits and the host-wide resource boundary remain unchanged.

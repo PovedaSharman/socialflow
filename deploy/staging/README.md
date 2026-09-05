@@ -119,3 +119,8 @@ docker compose --env-file staging.env -f docker-compose.staging.yml \
 
 Never attach full environment output, database dumps or unredacted Temporal
 histories to GitHub.
+
+Redis uses `noeviction`: quota counters, OAuth transactions and publication
+idempotency records must survive memory pressure until their intended expiry.
+If Redis reaches its memory limit, writes fail; investigate usage and increase
+capacity instead of enabling cache eviction on this shared instance.
