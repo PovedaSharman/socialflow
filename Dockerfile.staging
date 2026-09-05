@@ -8,7 +8,10 @@ ENV FRONTEND_URL=${STAGING_PUBLIC_URL}
 ENV NEXT_PUBLIC_BACKEND_URL=${STAGING_PUBLIC_URL}/api
 ENV NODE_OPTIONS=--max-old-space-size=4096
 
-RUN npm install --global pnpm@10.6.1
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/* \
+  && npm install --global pnpm@10.6.1
 WORKDIR /app
 COPY . .
 RUN pnpm install --frozen-lockfile
@@ -22,7 +25,7 @@ ENV NODE_ENV=staging
 ENV NODE_OPTIONS=--max-old-space-size=1024
 RUN npm install --global pnpm@10.6.1 \
   && apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates \
+  && apt-get install -y --no-install-recommends ca-certificates openssl \
   && rm -rf /var/lib/apt/lists/* \
   && mkdir -p /uploads \
   && chown node:node /uploads
