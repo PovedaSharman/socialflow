@@ -367,3 +367,12 @@ No production-readiness claim is made.
   of requiring development-only response headers. Added bounded suite timeouts
   and rejection of accidentally focused tests in CI.
 - Browser/runtime checks for these local edits remain pending off-host.
+
+### 5 September 2026 staging deployment
+
+- Provisioned an OCI Always Free ARM64 staging host and restricted SSH ingress
+  to the operator IP; HTTP and HTTPS are the only public application ports.
+- Replaced the Node image's stale Corepack pnpm activation with an explicit,
+  pinned `pnpm@10.6.1` npm installation after the ARM image release exposed a
+  pnpm signing-key verification failure. The locked application install remains
+  unchanged.

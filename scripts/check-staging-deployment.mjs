@@ -34,6 +34,7 @@ const invariants = [
   ],
   [
     dockerfile.includes('node:22.12.0-bookworm-slim') &&
+      dockerfile.match(/npm install --global pnpm@10\.6\.1/g)?.length === 2 &&
       dockerfile.includes('pnpm install --frozen-lockfile') &&
       dockerfile.includes('USER node'),
     'the staging image must use pinned tooling, a locked install and non-root runtime',
