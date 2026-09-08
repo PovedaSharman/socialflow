@@ -856,3 +856,37 @@ html[dir='rtl'] [dir='ltr'] {
   text-shadow: -1px -1px 0 black, 1px -1px 0 black, -1px 1px 0 black,
     1px 1px 0 black;
 }
+
+/* Soft Surface is the default treatment for operational cards and rows. */
+.sf-soft-card {
+  background: var(--sf-soft-surface);
+  border: 1px solid var(--sf-soft-border);
+  border-radius: 12px;
+}
+
+.sf-soft-card-interactive {
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.sf-soft-card-interactive:hover {
+  background: var(--sf-soft-surface-hover);
+  border-color: var(--sf-border);
+}
+
+.sf-soft-card-interactive[aria-current='true'],
+.sf-soft-card-interactive[data-selected='true'] {
+  background: var(--sf-soft-surface-selected);
+  border-color: var(--sf-primary);
+}
+
+.sf-soft-row {
+  background: var(--sf-soft-surface);
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-soft-card-interactive {
+    transition: none;
+  }
+}
