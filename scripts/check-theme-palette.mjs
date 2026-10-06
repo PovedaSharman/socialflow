@@ -67,13 +67,20 @@ const invariants = [
     'brand default, env example and light --sf-primary must match',
   ],
   [
-    colors.includes('--sf-canvas: #f4f6f5') &&
+    colors.includes('--sf-canvas: #fafafb') &&
       !colors.includes('--sf-primary: #4f46e5') &&
-      !colors.includes('--sf-primary: #818cf8'),
-    'light theme must use white/grey canvas without indigo primary',
+      !colors.includes('--sf-primary: #818cf8') &&
+      !/#(047857|065f46|10b981|34d399|6ee7b7)\b/i.test(colors),
+    'light theme must use white/grey canvas without indigo or green brand accents',
   ],
   [
-    design.includes(lightPrimary) &&
+    contrastRatio('#56657d', '#f0f2f5') >= 4.5 &&
+      colors.includes('--new-textItemFocused: #56657d') &&
+      colors.includes('--new-boxFocused: #f0f2f5'),
+    'accent text on the focused tint must use Slate and meet 4.5:1',
+  ],
+  [
+    design.toLowerCase().includes(lightPrimary) &&
       design.toLowerCase().includes('4.5:1') &&
       design.includes('light-first') &&
       design.includes('## Interaction states') &&
@@ -85,7 +92,7 @@ const invariants = [
       design.includes('/design-system') &&
       design.includes('## WCAG and viewport test matrix') &&
       design.includes('Implemented source vs verified runtime'),
-    'design system must document accessible green primary and restored a11y sections',
+    'design system must document accessible blue-grey primary and restored a11y sections',
   ],
   [
     mode.includes("useCookie('mode', 'light')") &&
