@@ -114,8 +114,8 @@ export const ScopedApiCredentialsSection = () => {
   );
 
   return (
-    <div className="sf-soft-card overflow-hidden">
-      <div className="px-[20px] py-[14px] border-b border-softBorder">
+    <div className="bg-newBgColorInnerInner rounded-[12px] border border-newBorder overflow-hidden">
+      <div className="bg-newBgColorInner px-[20px] py-[14px] border-b border-newBorder">
         <div className="text-[15px] font-[600]">
           {t('scoped_api_credentials', 'Scoped API credentials')}
         </div>
@@ -173,7 +173,7 @@ export const ScopedApiCredentialsSection = () => {
         </div>
 
         {oneTimeSecret ? (
-          <div className="sf-soft-row flex flex-col gap-[8px] p-[16px]">
+          <div className="flex flex-col gap-[8px] border border-newBorder rounded-[8px] p-[16px] bg-newBgColorInner">
             <div className="text-[13px] font-[600]">
               {t('one_time_secret', 'One-time secret')}
             </div>
@@ -226,7 +226,7 @@ export const ScopedApiCredentialsSection = () => {
           {(data || []).map((credential) => (
             <li
               key={credential.id}
-              className="sf-soft-row flex flex-wrap items-center justify-between gap-[12px] px-[16px] py-[12px]"
+              className="flex flex-wrap items-center justify-between gap-[12px] border border-newBorder rounded-[8px] px-[16px] py-[12px]"
             >
               <div className="flex flex-col gap-[2px]">
                 <div className="text-[14px] font-[600]">{credential.name}</div>

@@ -43,37 +43,6 @@ export function DesignSystemShowcase() {
         </header>
 
         <div className="mx-auto mt-[32px] grid max-w-[1120px] gap-[24px]">
-          <ShowcaseSection title="Soft Surface cards">
-            <div className="grid grid-cols-3 gap-[12px] mobile:grid-cols-1">
-              <div className="sf-soft-card p-[16px]">
-                <div className="text-[12px] font-[600] text-muted">
-                  Scheduled
-                </div>
-                <div className="mt-[8px] text-[28px] font-[700] tabular-nums">
-                  24
-                </div>
-                <div className="mt-[4px] text-[12px] text-muted">This week</div>
-              </div>
-              <button
-                type="button"
-                className="sf-soft-card sf-soft-card-interactive p-[16px] text-left"
-              >
-                <div className="text-[14px] font-[600]">
-                  Product launch announcement
-                </div>
-                <div className="mt-[6px] text-[12px] text-muted">
-                  Awaiting approval
-                </div>
-              </button>
-              <div className="sf-soft-card p-[8px]">
-                <div className="sf-soft-row flex items-center justify-between px-[12px] py-[10px]">
-                  <span className="text-[14px] font-[600]">Instagram</span>
-                  <Badge tone="success">Healthy</Badge>
-                </div>
-              </div>
-            </div>
-          </ShowcaseSection>
-
           <ShowcaseSection title="Colour tokens">
             <div className="grid grid-cols-4 gap-[12px] tablet:grid-cols-2 xs:grid-cols-1">
               {swatches.map(([name, className]) => (
@@ -161,7 +130,7 @@ function ShowcaseSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="sf-soft-card p-[20px]">
+    <section className="rounded-[12px] border border-subtleBorder bg-surface p-[20px] shadow-sm">
       <h2 className="mb-[16px] text-[18px] font-[600]">{title}</h2>
       {children}
     </section>

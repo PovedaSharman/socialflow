@@ -6,10 +6,6 @@ SocialFlow is a working brand name supplied by one configuration module and publ
 
 The visual language is light-first and operational: white and cool grey surfaces, deep ink text and one accessible green accent for primary actions and focus. Purple and indigo brand colours are retired. Dark mode remains available as an optional charcoal theme with a lighter green accent on dark surfaces.
 
-Operational cards use the Soft Surface treatment defined in
-`VISUAL_BRAND_GUIDELINES.md`: quiet tonal fills, subtle boundaries, consistent
-12px panel radii and no resting shadow.
-
 The calendar, composer, connection health, approval state and next action receive the strongest hierarchy. Prefer calm surfaces over decorative gradients; do not reintroduce purple/indigo brand accents.
 
 ## Tokens
