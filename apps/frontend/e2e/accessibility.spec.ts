@@ -1,6 +1,8 @@
 import { expect, Page, test } from '@playwright/test';
 import axe from 'axe-core';
 
+const frontendUrl = process.env.E2E_FRONTEND_URL ?? 'http://localhost:4200';
+const cookieUrl = new URL('/', frontendUrl).href;
 const backendUrl = process.env.E2E_BACKEND_URL ?? 'http://localhost:3000';
 const mailpitUrl = process.env.E2E_MAILPIT_URL ?? 'http://localhost:8025';
 const viewports = [
@@ -33,16 +35,12 @@ async function assertWcagAa(page: Page) {
         nodes: Array<{ target: string[] }>;
       }>;
     };
-    return result.violations
-      .filter((violation) =>
-        ['serious', 'critical'].includes(violation.impact ?? '')
-      )
-      .map(({ id, impact, help, nodes }) => ({
-        id,
-        impact,
-        help,
-        targets: nodes.map((node) => node.target.join(' ')),
-      }));
+    return result.violations.map(({ id, impact, help, nodes }) => ({
+      id,
+      impact,
+      help,
+      targets: nodes.map((node) => node.target.join(' ')),
+    }));
   });
   expect(violations).toEqual([]);
 }
@@ -103,32 +101,29 @@ async function activateLocalAccount(page: Page) {
     },
   });
   expect(login.ok()).toBeTruthy();
-  const auth = login.headers().auth;
-  const showorg = login.headers().showorg;
-  expect(auth).toBeTruthy();
-  expect(showorg).toBeTruthy();
-  if (!auth || !showorg) {
-    throw new Error('Local login did not return development session headers');
-  }
-
-  await page.context().addCookies([
-    { name: 'auth', value: auth, domain: 'localhost', path: '/' },
-    { name: 'showorg', value: showorg, domain: 'localhost', path: '/' },
-  ]);
+  // API requests share the browser context's cookie jar, including HttpOnly
+  // cookies from secured release hosts. Session headers exist only in local mode.
+  const cookies = await page.context().cookies(frontendUrl);
+  expect(
+    cookies.some((cookie) => cookie.name === 'auth' && cookie.value)
+  ).toBeTruthy();
+  expect(
+    cookies.some((cookie) => cookie.name === 'showorg' && cookie.value)
+  ).toBeTruthy();
 }
 
 test('login is WCAG AA clean at key viewports', async ({ page }) => {
   for (const theme of ['dark', 'light']) {
     await page
       .context()
-      .addCookies([
-        { name: 'mode', value: theme, domain: 'localhost', path: '/' },
-      ]);
+      .addCookies([{ name: 'mode', value: theme, url: cookieUrl }]);
 
     for (const viewport of viewports) {
       await page.setViewportSize(viewport);
       await page.goto('/auth/login');
-      await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
+      await expect(
+        page.getByRole('heading', { name: 'Sign In' })
+      ).toBeVisible();
       await expect(page.locator('body')).toHaveClass(new RegExp(theme));
       await assertWcagAa(page);
       expect(
@@ -146,9 +141,7 @@ test('design system is accessible and responsive in both themes', async ({
   for (const theme of ['dark', 'light']) {
     await page
       .context()
-      .addCookies([
-        { name: 'mode', value: theme, domain: 'localhost', path: '/' },
-      ]);
+      .addCookies([{ name: 'mode', value: theme, url: cookieUrl }]);
 
     for (const viewport of viewports) {
       await page.setViewportSize(viewport);

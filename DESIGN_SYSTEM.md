@@ -4,28 +4,29 @@ SocialFlow is a working brand name supplied by one configuration module and publ
 
 ## Direction
 
-The visual language is light-first and operational: white and cool grey surfaces, deep ink text and one accessible green accent for primary actions and focus. Purple and indigo brand colours are retired. Dark mode remains available as an optional charcoal theme with a lighter green accent on dark surfaces.
+The visual language is light-first, clean and bright: white and cool grey surfaces, near-black ink text and one soft blue-grey accent (Mist) for primary actions, selection and focus. Green is reserved for semantic success only; purple, indigo and green brand accents are retired. Dark mode remains available as an optional charcoal theme with a lighter blue-grey accent and dark text on primary actions.
 
 The calendar, composer, connection health, approval state and next action receive the strongest hierarchy. Prefer calm surfaces over decorative gradients; do not reintroduce purple/indigo brand accents.
 
 ## Tokens
 
-| Purpose     | Light     | Dark      |
-| ----------- | --------- | --------- |
-| Canvas      | `#F4F6F5` | `#121416` |
-| Surface     | `#FFFFFF` | `#1A1D21` |
-| Elevated    | `#FBFCFB` | `#22262B` |
-| Text        | `#15201B` | `#F4F5F4` |
-| Muted text  | `#5F6B64` | `#A3ABA6` |
-| Border      | `#E2E7E4` | `#2E3431` |
-| Primary     | `#047857` | `#34D399` |
-| On primary  | `#FFFFFF` | `#052E1C` |
-| Success     | `#047857` | `#4ADE80` |
-| Warning     | `#9A6700` | `#FBBF24` |
-| Error       | `#B42318` | `#FB7185` |
-| Information | `#175CD3` | `#60A5FA` |
+| Purpose       | Light     | Dark      |
+| ------------- | --------- | --------- |
+| Canvas        | `#FAFAFB` | `#0F1115` |
+| Surface       | `#FFFFFF` | `#15181D` |
+| Elevated      | `#FFFFFF` | `#1B1F25` |
+| Text          | `#111318` | `#EDEFF2` |
+| Muted text    | `#5B606B` | `#A2A8B3` |
+| Border        | `#E5E7EB` | `#2A2F37` |
+| Primary       | `#64748B` | `#AEB9C8` |
+| Primary hover | `#56657D` | `#C8D0DC` |
+| On primary    | `#FFFFFF` | `#0F1115` |
+| Success       | `#2F6B4F` | `#6FCF97` |
+| Warning       | `#9A6700` | `#FBBF24` |
+| Error         | `#B42318` | `#FB7185` |
+| Information   | `#175CD3` | `#60A5FA` |
 
-Light primary `#047857` on white foreground `#FFFFFF` meets at least **4.5:1** contrast for normal text (WCAG 2.2 AA). Do not lighten the light-theme primary without re-checking contrast. Prefer `bg-btnPrimary` / `text-white` or semantic brand tokens over hard-coded hex pairs. New surfaces should use semantic tokens (`bg-canvas`, `bg-surface`, `bg-brand`, `text-content`, `border-subtleBorder`) rather than deprecated `--color-custom*` values.
+Light primary `#64748B` with white foreground `#FFFFFF` meets at least **4.5:1** contrast for normal text (WCAG 2.2 AA, 4.76:1). Do not lighten the light-theme primary without re-checking contrast. Accent-coloured text on pale tints uses Slate `#56657D` (the primary hover token), because Mist text on its own tint falls below 4.5:1. The product name and mark remain placeholders. Prefer `bg-btnPrimary` / `text-white` or semantic brand tokens over hard-coded hex pairs. New surfaces should use semantic tokens (`bg-canvas`, `bg-surface`, `bg-brand`, `text-content`, `border-subtleBorder`) rather than deprecated `--color-custom*` values.
 
 Spacing follows a 4px base: 4, 8, 12, 16, 24, 32, 48 and 64. Controls are at least 44px on touch layouts. Corners use 8px for controls and 12px for panels. Shadows are limited to menus/dialogues; borders and surface contrast carry normal grouping.
 
@@ -39,7 +40,7 @@ Every interactive control must be independently recognisable in these states:
 | -------- | ----------------------------------------------------------------------------- |
 | Default  | Clear affordance without relying on colour alone                              |
 | Hover    | Enhancement only; never the sole way to discover an action                    |
-| Focus    | Visible 2px green focus ring (`--sf-focus`) with at least 2px offset          |
+| Focus    | Visible 2px blue-grey focus ring (`--sf-focus`) with at least 2px offset      |
 | Pressed  | Distinct pressed treatment for buttons and toggles                            |
 | Selected | Selected tabs/list rows use border/background plus a non-colour cue           |
 | Disabled | Reduced contrast is allowed, but the control remains readable as disabled     |

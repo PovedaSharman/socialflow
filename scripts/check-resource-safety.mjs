@@ -36,6 +36,11 @@ const publishWorkflowRunner = read('scripts/run-publish-workflow-gate.mjs');
 
 const requirements = [
   [
+    packageJson.volta.node === read('.nvmrc').trim() &&
+      packageJson.volta.node.startsWith('22.'),
+    'Volta and nvm must select the supported Node 22 runtime.',
+  ],
+  [
     packageJson.scripts.dev === 'node ./scripts/dev-safety-notice.mjs',
     'The root dev command must remain a non-launching safety notice.',
   ],

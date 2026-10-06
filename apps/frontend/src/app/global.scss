@@ -39,7 +39,7 @@ body {
     [role='link'],
     [tabindex]
   ):focus-visible {
-  outline: 2px solid var(--sf-focus, #047857) !important;
+  outline: 2px solid var(--sf-focus, #64748b) !important;
   outline-offset: 2px;
 }
 

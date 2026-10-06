@@ -10,14 +10,12 @@
 - Social login integrations (Instagram, Facebook) and Make.com/N8N integrations.
 
 ## Developer Workflows
-- Use Node.js 20.17.0 and pnpm 8+.
-- Install dependencies: `pnpm install`
-- Build all apps: `pnpm run build`
-- Run all apps in dev mode: `pnpm run dev`
-- Test: `pnpm test` (Jest, coverage enabled)
-- Individual app scripts are in each app's `package.json` (e.g., `pnpm --filter ./apps/backend run dev`).
-- Prisma DB commands: `pnpm run prisma-generate`, `pnpm run prisma-db-push`, `pnpm run prisma-reset`.
-- Docker: `docker compose -f ./docker-compose.dev.yaml up -d`
+- Use Node.js 22 (see `.nvmrc`) and pnpm 10.6.1.
+- Follow `CURSOR_HANDOFF.md` resource limits on the development laptop: only bounded static audits (64 MB) and explicit-path formatting (128 MB).
+- Run installs, builds, Jest, type-checks, Prisma and Docker only on CI or a suitably provisioned release host; see `docs/RELEASE_HOST_EVIDENCE.md`.
+- The root `pnpm run dev` prints a safety notice and does not launch services.
+- Individual app scripts are in each app's `package.json`.
+- Apply production schema changes with `pnpm prisma-migrate-deploy`; follow `docs/SCHEMA_APPLY.md`.
 
 ## Conventions & Patterns
 - Use conventional commits (`feat:`, `fix:`, `chore:`).

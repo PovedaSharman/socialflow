@@ -1,7 +1,9 @@
 # Release-host evidence requirements
 
-Status: **not collected on the development laptop**
-Last updated: 30 August 2026
+Status: **automated CI gates passed at `3d430cda`; remaining evidence pending**
+Last updated: 4 September 2026
+
+See `docs/READINESS.md` for verified CI run links and the limits of that evidence.
 
 This workstation must not run Jest, TypeScript builds, Temporal workers,
 Compose stacks, browsers or disposable databases. The commands below are for a
@@ -66,13 +68,14 @@ Also record on an approved host:
 1. Prisma generate and `pnpm prisma-migrate-deploy` for
    `20260830120000_socialflow_control_plane` (`ApiCredential`, `AuditEvent`,
    `ConsentPreference`, `Media.fileSize`) — see `docs/SCHEMA_APPLY.md`.
-   Do not use `db push --accept-data-loss` in production.2. Scoped MCP credential create / Bearer use / revoke with tool scope denials.
-2. Stripe test checkout, portal, webhook replay and hard usage-limit matrix
+   Do not use `db push --accept-data-loss` in production.
+2. Scoped MCP credential create / Bearer use / revoke with tool scope denials.
+3. Stripe test checkout, portal, webhook replay and hard usage-limit matrix
    (including MCP/API/storage budgets).
-3. Help centre search and first-schedule onboarding browser pass.
-4. Privacy export download, consent record, deletion re-auth denial and success.
-5. `/monitor/live` and `/monitor/ready` against a running stack.
-6. A filled backup restore drill record (see `docs/OPS_BACKUP_MONITORING.md`).
+4. Help centre search and first-schedule onboarding browser pass.
+5. Privacy export download, consent record, deletion re-auth denial and success.
+6. `/monitor/live` and `/monitor/ready` against a running stack.
+7. A filled backup restore drill record (see `docs/OPS_BACKUP_MONITORING.md`).
 
 ## Milestone 10 — Definition of Done evidence
 

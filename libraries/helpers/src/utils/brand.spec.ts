@@ -16,7 +16,7 @@ describe('brandConfig', () => {
   it('uses the replaceable working brand defaults', () => {
     expect(brandConfig()).toMatchObject({
       name: 'SocialFlow',
-      primary: '#047857',
+      primary: '#64748b',
       termsUrl: '/legal/terms',
       privacyUrl: '/legal/privacy',
     });
@@ -28,7 +28,7 @@ describe('brandConfig', () => {
 
     expect(brandConfig()).toMatchObject({
       name: 'Acme Social',
-      primary: '#047857',
+      primary: '#64748b',
     });
   });
 });
